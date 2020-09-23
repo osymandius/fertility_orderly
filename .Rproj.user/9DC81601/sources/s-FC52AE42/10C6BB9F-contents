@@ -1,0 +1,48 @@
+
+data <- list(
+  pjnz = "resources/burundi_2020_04_22.pjnz",
+  population = "depends/bdi_population_gpw.csv",
+  shape = "depends/bdi_areas.geojson",
+  survey = "depends/bdi_survey_hiv_indicators.csv",
+  art_number = "depends/art_number.csv",
+  anc_testing = "depends/anc_testing.csv"
+)
+
+
+
+
+options <- list(
+  area_scope = "BDI",
+  area_level = "2",
+  calendar_quarter_t1 = "CY2016Q4",
+  calendar_quarter_t2 = "CY2019Q4",
+  calendar_quarter_t3 = "CY2020Q3",
+  survey_prevalence = "BDI2016DHS",
+  survey_art_coverage = NULL,
+  survey_recently_infected = NULL,
+  include_art_t1 = "true",
+  include_art_t2 = "true",
+  anc_prevalence_year1 = 2017,
+  anc_prevalence_year2 = 2019,
+  anc_art_coverage_year1 = 2017,
+  anc_art_coverage_year2 = 2019,
+  spectrum_population_calibration = "national",
+  spectrum_plhiv_calibration_level = "national",
+  spectrum_plhiv_calibration_strat = "sex_age_coarse",
+  spectrum_artnum_calibration_level = "national",
+  spectrum_artnum_calibration_strat = "sex_age_coarse",
+  spectrum_infections_calibration_level = "national",
+  spectrum_infections_calibration_strat = "sex_age_coarsee",
+  artattend = "true",
+  artattend_t2 = "true",
+  artattend_log_gamma_offset = -4,
+  rng_seed = 28,
+  no_of_samples = 100,
+  max_iter = 250,
+  permissive = "true",
+  outer_verbose = TRUE
+)
+
+out <- hintr_run_model(data, options)
+
+file.copy(out$spectrum_path, "naomi-output.zip")

@@ -1,0 +1,23 @@
+script: MWI_asfr.R
+
+artefacts:
+  - data:
+      description: Malawi ASFR dataset
+      filenames:
+        - MWI_dhs_asfr.csv
+        - MWI_mics_asfr.csv
+
+packages:
+  - demogsurv
+  - dplyr
+  - rdhs
+  - pointr
+  - countrycode
+  - dfertility
+
+depends:
+  data-survey:
+    id: latest
+      use:
+        depends/MWI_dhs_survey.csv: MWI_dhs_survey.csv
+        depends/MWI_mics_survey.csv: MWI_mics_survey.csv

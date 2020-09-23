@@ -1,0 +1,157 @@
+library(tidyverse)
+library(sf)
+library(naomi)
+library(pointr)
+
+#' Download data from sharepoint
+sharepoint <- pointr::pointr$new("https://imperiallondon.sharepoint.com/")
+path <- "https://imperiallondon.sharepoint.com/"
+urls <- list(raw = "sites/HIVInferenceGroup-WP/Shared%20Documents/Analytical%20datasets/naomi-data/BDI/data/bdi_areas.geojson",
+             dhis = "sites/HIVInferenceGroup-WP/Shared%20Documents/Analytical%20datasets/naomi-data/BDI/data-raw/areas/dhis/burundi-geographic-data-dhis2-pull_naomi_format.geojson",
+             dhis_map = "sites/HIVInferenceGroup-WP/Shared%20Documents/Analytical%20datasets/naomi-data/BDI/data-raw/areas/dhis/crosswalk.csv",
+             psnu = "sites/HIVInferenceGroup-WP/Shared%20Documents/Data/PEPFAR/datim_psnu/AvenirImperial%20PSNU%20List_2020-02-03.csv") %>%
+  lapply(URLencode)
+files <- lapply(urls, sharepoint$download)
+
+
+#' Recode types and accents
+raw <- read_sf(files$raw) %>%
+  mutate(area_level = as.integer(area_level),
+         display = as.logical(display),
+         area_name = sub("^DS ", "", area_name) %>%
+           stringr::str_to_title())
+
+pryr::object_size(raw)
+
+#' Simplify boundaries to reduce file size
+raw_wide <- spread_areas(raw)
+
+bdi_wide <- raw_wide %>%
+  rmapshaper::ms_simplify(0.2)
+
+pryr::object_size(raw_wide)
+pryr::object_size(bdi_wide)
+
+ggplot() +
+  geom_sf(data = bdi_wide, color = "red", fill = NA) +
+  geom_sf(data = raw_wide, color = "black", fill = NA)
+
+bdi <- bdi_wide %>%
+  rename_all(~sub("area\\_", "", .)) %>%
+  mutate(spectrum_region_code = 0L) %>%
+  gather_areas()
+
+bdi_area_hierarchy <- bdi %>%
+  mutate(center = st_point_on_surface(bdi$geometry),
+         center_x = st_coordinates(center)[,1],
+         center_y = st_coordinates(center)[,2],
+         center = NULL) %>%
+  as.data.frame %>%
+  select(-geometry)
+
+write_csv(bdi_area_hierarchy, "bdi_area_hierarchy.csv", na = "")
+
+pryr::object_size(bdi)
+
+st_drop_geometry(raw) %>% count(area_level, area_level_label)
+
+bdi_areas <- bdi %>%
+  left_join(select(st_drop_geometry(raw), area_id, area_sort_order)) %>%
+  mutate(center = sf::st_point_on_surface(geometry),
+         center_x = sf::st_coordinates(center)[,1],
+         center_y = sf::st_coordinates(center)[,2],
+         center = NULL,
+         area_level_label = recode(area_level,
+                                   `0` = "Pays",
+                                   `1` = "Région",
+                                   `2` = "District Sanitaire"),
+         display = TRUE) %>%
+  select(names(raw)) %>%
+  arrange(area_level, area_sort_order)
+
+
+#' Save boundaries
+sf::st_write(bdi_areas, "bdi_areas.geojson", delete_dsn = TRUE)
+
+#' Plot hierarchy
+bdi_areas <- read_sf(files$raw) %>%
+  group_by(area_level) %>%
+  mutate(label = sprintf("%s (%d)", area_level_label, n())) %>%
+  ungroup() %>%
+  mutate(label = fct_reorder(label, area_level)) %>%
+  ggplot() +
+  geom_sf() +
+  facet_wrap(~label, nrow = 1) +
+  naomi:::th_map()
+
+ggsave("bdi_area_hierarchy.png", h = 6, w = 12)
+
+
+#' # Map Datim and DHIS
+
+bdi_areas <- read_sf(files$raw)
+areas_wide <- spread_areas(bdi_areas)
+
+#' DHIS
+
+dhis <- read_sf(files$dhis)
+dhis_map <- read_csv(files$dhis_map)
+
+dhis <- dhis %>%
+  left_join(dhis_map, by = "area_id") %>%
+  mutate(map_id = dhis2_id,
+         area_id = NULL,
+         dhis2_id = NULL,
+         pepfar_id = NULL) %>%
+  left_join(dhis_map, by = c("parent_area_id" = "area_id")) %>%
+  mutate(parent_map_id = dhis2_id,
+         parent_area_id = NULL,
+         dhis2_id = NULL,
+         pepfar_id = NULL) %>%
+  select(area_id = map_id, parent_area_id = parent_map_id,area_name, area_level) %>%
+  spread_areas() %>%
+  rename_all(~sub("area\\_", "map\\_", .))
+
+area_map_dhis <- st_join(areas_wide, dhis, largest = TRUE) %>%
+  st_drop_geometry() %>%
+  {bind_rows(
+     transmute(., area_id = area_id1, map_level = 1, map_name = map_name1, map_id = map_id1),
+     transmute(., area_id = area_id2, map_level = 2, map_name = map_name2, map_id = map_id2)
+   )} %>%
+  distinct() %>%
+  mutate(source = "DHIS")
+
+write_csv(area_map_dhis, "bdi_area_map_dhis.csv", na = "")
+
+#' Datim
+
+psnu <- read_csv(files$psnu)
+
+datim <- bind_rows(
+  distinct(psnu, map_id = ancestor2_uid, map_name = ancestor2, map_level = 0),
+  distinct(psnu, map_id = ancestor1_uid, map_name = ancestor1, map_level = 1),
+  distinct(psnu, map_id = uid, map_name = ou_name, map_level = 2)
+) %>%
+  mutate(map_source = "Datim")
+
+bdi_area_map_datim <- st_drop_geometry(bdi_areas) %>%
+  transmute(
+    area_id,
+    map_level = area_level,
+    map_name = if_else(map_level == 2, "DS ", "") %>%
+      paste0(area_name) %>%
+      recode("Karuzi" = "Karusi",
+             "Bujumbura Rural" = "Bujumbura",
+             "DS Bujumbura Centre" = "DS Bujumbura centre",
+             "DS Bujumbura Nord" = "DS Bujumbura nord",
+             "DS Bujumbura Sud" = "DS Bujumbura sud"
+             )
+  ) %>%
+  full_join(
+    datim,
+    by = c("map_name", "map_level")
+  ) %>%
+  select(area_id, map_level, map_name, map_id, map_source)
+
+write_csv(bdi_area_map_datim, "bdi_area_map_datim.csv", na = "")
+

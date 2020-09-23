@@ -1,0 +1,72 @@
+library(tidyverse)
+library(sf)
+library(naomi)
+
+
+#' Download data from sharepoint
+sharepoint <- pointr::pointr$new("https://imperiallondon.sharepoint.com/")
+path <- "https://imperiallondon.sharepoint.com/"
+urls <- list(areas = "sites/HIVInferenceGroup-WP/Shared%20Documents/Analytical%20datasets/naomi-data/BDI/data/bdi_areas.geojson",
+             gpw_agesex = "sites/HIVInferenceGroup-WP/Shared%20Documents/Analytical%20datasets/naomi-data/BDI/data-raw/population/BDI_GPW_agesex2010.csv",
+             gpw_total = "sites/HIVInferenceGroup-WP/Shared%20Documents/Analytical%20datasets/naomi-data/BDI/data-raw/population/BDI_GPW_yearly.csv",
+             spec = "sites/HIVInferenceGroup-WP/Shared%20Documents/Analytical%20datasets/naomi-data/BDI/data/bdi00.pjnz") %>%
+  lapply(URLencode)
+files <- lapply(urls, sharepoint$download)
+
+areas <- read_sf(files$areas)%>% st_drop_geometry()
+
+gpw_agesex <- read_csv(files$gpw_agesex) %>%
+  filter(age_group %in% naomi::get_five_year_age_groups(),
+         sex %in% c("male", "female")) %>%
+  group_by(area_id, source) %>%
+  mutate(proportion = population / sum(population)) %>%
+  ungroup()
+
+gpw_total <- read_csv(files$gpw_total) %>%
+  filter(age_group == "00+", sex == "both")
+
+pop_gpw <- gpw_total %>%
+  select(area_id, source, calendar_quarter, population) %>%
+  left_join(select(gpw_agesex, area_id, source, sex, age_group, proportion)) %>%
+  mutate(population = population * proportion,
+         source = "GPW v4.11") %>%
+  left_join(select(areas, area_id, area_name)) %>%
+  select(area_id, area_name, source, calendar_quarter, sex, age_group, population)
+
+#' Check 34 age/sex groups for all areas
+pop_gpw %>%
+  left_join(select(areas, area_id, area_level)) %>%
+  count(area_id, area_level, source, calendar_quarter) %>%
+  group_by(area_level, calendar_quarter, n) %>%
+  summarise(n_areas = n_distinct(area_id)) %>%
+  spread(calendar_quarter, n)
+
+write_csv(pop_gpw, "bdi_population_gpw.csv")
+
+#' The 80+ population was zero in GPW.
+#' Adjust 80+ population based on Spectrum ratio for 80+ / 75-79.
+
+spec <- extract_pjnz_naomi(files$spec)
+
+spec80pl <- spec %>%
+  filter(age >= 75) %>%
+  mutate(age_group = case_when(age %in% 75:79 ~ "75-79",
+                               age == 80 ~ "80+"),
+         calendar_quarter = paste0("CY", year, "Q2")) %>%
+  count(spectrum_region_code, calendar_quarter, sex, age_group, wt = totpop) %>%
+  spread(age_group, n) %>%
+  mutate(ratio80pl = `80+` / `75-79`)
+
+pop_gpw_adj80pl <- pop_gpw
+
+pop_gpw_adj80pl <- pop_gpw %>%
+  spread(age_group, population) %>%
+  left_join(select(spec80pl, calendar_quarter, sex, ratio80pl)) %>%
+  mutate(`80+` = `75-79` * ratio80pl,
+         ratio80pl = NULL) %>%
+  gather(age_group, population, `00-04`:`80+`)
+
+nrow(pop_gpw)
+nrow(pop_gpw_adj80pl)
+
+write_csv(pop_gpw_adj80pl, "bdi_population_gpw_80pl_adjusted.csv")
