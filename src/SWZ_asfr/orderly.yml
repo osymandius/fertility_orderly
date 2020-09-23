@@ -1,0 +1,23 @@
+script: SWZ_asfr.R
+
+artefacts:
+  - data:
+      description: eSwatini ASFR dataset
+      filenames:
+        - SWZ_dhs_asfr.csv
+        - SWZ_mics_asfr.csv
+
+packages:
+  - demogsurv
+  - dplyr
+  - rdhs
+  - pointr
+  - countrycode
+  - dfertility
+
+depends:
+  data-survey:
+    id: latest
+      use:
+        depends/SWZ_dhs_survey.csv: SWZ_dhs_survey.csv
+        depends/SWZ_mics_survey.csv: SWZ_mics_survey.csv

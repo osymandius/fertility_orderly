@@ -1,0 +1,23 @@
+script: MOZ_asfr.R
+
+artefacts:
+  - data:
+      description: Mozambique ASFR dataset
+      filenames:
+        - MOZ_dhs_asfr.csv
+        - MOZ_mics_asfr.csv
+
+packages:
+  - demogsurv
+  - dplyr
+  - rdhs
+  - pointr
+  - countrycode
+  - dfertility
+
+depends:
+  data-survey:
+    id: latest
+      use:
+        depends/MOZ_dhs_survey.csv: MOZ_dhs_survey.csv
+        depends/MOZ_mics_survey.csv: MOZ_mics_survey.csv

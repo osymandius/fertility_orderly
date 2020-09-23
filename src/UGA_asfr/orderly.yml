@@ -1,10 +1,10 @@
-script: ETH_asfr.R
+script: UGA_asfr.R
 
 artefacts:
   - data:
-      description: Ethiopia ASFR dataset
+      description: UGA ASFR dataset
       filenames:
-        - ETH_dhs_asfr.csv
+        - UGA_dhs_asfr.csv
 
 packages:
   - demogsurv
@@ -18,4 +18,4 @@ depends:
   data-survey:
     id: latest
       use:
-        depends/ETH_dhs_survey.csv: ETH_dhs_survey.csv
+        depends/UGA_dhs_survey.csv: UGA_dhs_survey.csv

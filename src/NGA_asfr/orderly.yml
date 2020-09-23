@@ -1,0 +1,23 @@
+script: NGA_asfr.R
+
+artefacts:
+  - data:
+      description: NGA ASFR dataset
+      filenames:
+        - NGA_dhs_asfr.csv
+        - NGA_mics_asfr.csv
+
+packages:
+  - demogsurv
+  - dplyr
+  - rdhs
+  - pointr
+  - countrycode
+  - dfertility
+
+depends:
+  data-survey:
+    id: latest
+      use:
+        depends/NGA_dhs_survey.csv: NGA_dhs_survey.csv
+        depends/NGA_mics_survey.csv: NGA_mics_survey.csv

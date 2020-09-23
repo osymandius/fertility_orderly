@@ -1,0 +1,23 @@
+script: CMR_asfr.R
+
+artefacts:
+  - data:
+      description: CMR ASFR dataset
+      filenames:
+        - CMR_dhs_asfr.csv
+        - CMR_mics_asfr.csv
+
+packages:
+  - demogsurv
+  - dplyr
+  - rdhs
+  - pointr
+  - countrycode
+  - dfertility
+
+depends:
+  data-survey:
+    id: latest
+      use:
+        depends/CMR_dhs_survey.csv: CMR_dhs_survey.csv
+        depends/CMR_mics_survey.csv: CMR_mics_survey.csv

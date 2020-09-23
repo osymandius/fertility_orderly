@@ -1,0 +1,23 @@
+script: LSO_asfr.R
+
+artefacts:
+  - data:
+      description: Lesotho ASFR dataset
+      filenames:
+        - LSO_dhs_asfr.csv
+        - LSO_mics_asfr.csv
+
+packages:
+  - demogsurv
+  - dplyr
+  - rdhs
+  - pointr
+  - countrycode
+  - dfertility
+
+depends:
+  data-survey:
+    id: latest
+      use:
+        depends/LSO_dhs_survey.csv: LSO_dhs_survey.csv
+        depends/LSO_mics_survey.csv: LSO_mics_survey.csv

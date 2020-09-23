@@ -1,5 +1,5 @@
 areas_long <- "pointr_link_to_areas"
-clusters <- read.csv("depends/MWI_dhs_survey.csv")
+clusters <- read.csv("depends/GIN_dhs_survey.csv")
 
 ## Get surveys for which we have clusters. Split into country list.
 surveys <- dhs_surveys(surveyIds = unique(clusters$DHS_survey_id)) %>%
@@ -7,9 +7,9 @@ surveys <- dhs_surveys(surveyIds = unique(clusters$DHS_survey_id)) %>%
               select(c(DHS_survey_id, survey_id, iso3)) %>% 
               distinct, 
             by=c("SurveyId" = "DHS_survey_id")) %>%
-  filter(iso3 == "MWI")
+  filter(iso3 == "GIN")
 
-cluster_areas <- assign_cluster_area(clusters, 5)
+cluster_areas <- assign_cluster_area(clusters, 2)
 
 dat <- clusters_to_surveys(surveys, cluster_areas, single_tips = TRUE)
 
@@ -24,12 +24,12 @@ asfr <- Map(calc_asfr, dat$ir,
   type.convert %>%
   filter(period<=survyear) %>%
   rename(age_group = agegr) %>%
-  mutate(iso3 = "MWI") %>%
+  mutate(iso3 = "GIN") %>%
   select(-country)
 
-write_csv(asfr, "MWI_dhs_asfr.csv")
+write_csv(asfr, "GIN_dhs_asfr.csv")
 
-mics_dat <- read.csv("depends/MWI_mics_dat.csv")
+mics_dat <- read.csv("depends/GIN_mics_dat.csv")
 
 mics_asfr <- Map(calc_asfr, mics_dat$wm,
                  by = list(~area_id + survey_id),
@@ -52,4 +52,4 @@ mics_asfr <- Map(calc_asfr, mics_dat$wm,
   filter(period <= survyear) %>%
   rename(age_group = agegr)
 
-write_csv(mics_asfr, "MWI_mics_asfr.csv")
+write_csv(mics_asfr, "GIN_mics_asfr.csv")

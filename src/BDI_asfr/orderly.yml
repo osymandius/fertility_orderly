@@ -1,0 +1,23 @@
+script: BDI_asfr.R
+
+artefacts:
+  - data:
+      description: BDI ASFR dataset
+      filenames:
+        - BDI_dhs_asfr.csv
+        - BDI_mics_asfr.csv
+
+packages:
+  - demogsurv
+  - dplyr
+  - rdhs
+  - pointr
+  - countrycode
+  - dfertility
+
+depends:
+  data-survey:
+    id: latest
+      use:
+        depends/BDI_dhs_survey.csv: BDI_dhs_survey.csv
+        depends/BDI_mics_survey.csv: BDI_mics_survey.csv

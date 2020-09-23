@@ -1,0 +1,23 @@
+script: BFA_asfr.R
+
+artefacts:
+  - data:
+      description: BFA ASFR dataset
+      filenames:
+        - BFA_dhs_asfr.csv
+        - BFA_mics_asfr.csv
+
+packages:
+  - demogsurv
+  - dplyr
+  - rdhs
+  - pointr
+  - countrycode
+  - dfertility
+
+depends:
+  data-survey:
+    id: latest
+      use:
+        depends/BFA_dhs_survey.csv: BFA_dhs_survey.csv
+        depends/BFA_mics_survey.csv: BFA_mics_survey.csv
