@@ -1,9 +1,5 @@
-iso3_c <- "BDI"
-lower_iso3_c <- tolower(iso3_c)
-
-orderly_pull_archive(paste0(lower_iso3_c, "_data_areas"))
-
-clusters <- read.csv(paste0("depends/", iso3_c, "_dhs_survey.csv"))
+areas_long <- "pointr_link_to_areas"
+clusters <- read.csv("depends/RWA_dhs_survey.csv")
 
 ## Get surveys for which we have clusters. Split into country list.
 surveys <- dhs_surveys(surveyIds = unique(clusters$DHS_survey_id)) %>%
@@ -11,7 +7,7 @@ surveys <- dhs_surveys(surveyIds = unique(clusters$DHS_survey_id)) %>%
               select(c(DHS_survey_id, survey_id, iso3)) %>% 
               distinct, 
             by=c("SurveyId" = "DHS_survey_id")) %>%
-  filter(iso3 == iso3_c)
+  filter(iso3 == "RWA")
 
 cluster_areas <- assign_cluster_area(clusters, 2)
 
@@ -28,14 +24,12 @@ asfr <- Map(calc_asfr, dat$ir,
   type.convert %>%
   filter(period<=survyear) %>%
   rename(age_group = agegr) %>%
-  mutate(iso3 = iso3_c) %>%
+  mutate(iso3 = "RWA") %>%
   select(-country)
 
-paste0(iso3_c, "_dhs_asfr.csv")
+write_csv(asfr, "RWA_dhs_asfr.csv")
 
-write_csv(asfr, paste0(iso3_c, "_dhs_asfr.csv"))
-
-mics_dat <- read.csv(paste0("depends/", iso3_c, "_mics_dat.csv"))
+mics_dat <- read.csv("depends/RWA_mics_dat.csv")
 
 mics_asfr <- Map(calc_asfr, mics_dat$wm,
                  by = list(~area_id + survey_id),
@@ -58,4 +52,4 @@ mics_asfr <- Map(calc_asfr, mics_dat$wm,
   filter(period <= survyear) %>%
   rename(age_group = agegr)
 
-write_csv(mics_asfr, paste0(iso3_c, "_mics_asfr.csv"))
+write_csv(mics_asfr, "RWA_mics_asfr.csv")

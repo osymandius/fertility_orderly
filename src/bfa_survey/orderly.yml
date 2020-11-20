@@ -1,0 +1,31 @@
+script: bfa_survey.R
+
+artefacts:
+  - data:
+      description: survey indicator dataset
+      filenames:
+        - bfa_survey_clusters.csv
+
+packages:
+  - dplyr
+  - forcats
+  - haven
+  - ggplot2
+  - naomi
+  - parallel
+  - rdhs
+  - readr
+  - sf
+  - spud
+  - survey
+  - tidyr
+
+global_resources:
+  resources/utils_areas.R: utils_areas.R
+
+depends:
+  bfa_data_areas:
+    id: latest
+    use:
+      depends/bfa_areas.geojson: bfa_areas.geojson
+

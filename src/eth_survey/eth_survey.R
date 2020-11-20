@@ -1,8 +1,7 @@
 #' ISO3 country code
-iso3 <- "RWA"
+iso3 <- "ETH"
 
-areas <- read_sf("depends/rwa_areas.geojson")
-
+areas <- read_sf("depends/eth_areas.geojson")
 areas_wide <- spread_areas(areas)
 
 surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%
@@ -12,6 +11,16 @@ survey_meta <- create_survey_meta_dhs(surveys)
 
 survey_region_boundaries <- create_survey_boundaries_dhs(surveys)
 
+#' Note that both Harari and Gambella in 2016 DHS are survey_region_id = 8.
+#' Action: recode survey boundaries to 9 = Harari
+
+survey_region_boundaries <- survey_region_boundaries %>%
+  mutate(
+    survey_region_id = case_when(
+      survey_id == "ETH2016DHS" & survey_region_name == "Harari" ~ 9,
+      TRUE ~ survey_region_id
+    )
+  )
 
 surveys <- surveys_add_dhs_regvar(surveys, survey_region_boundaries)
 
@@ -21,19 +30,12 @@ survey_region_areas <- allocate_areas_survey_regions(areas_wide, survey_region_b
 
 validate_survey_region_areas(survey_region_areas)
 
-ggplot() +
-  geom_sf(data = areas_wide %>% filter(area_name1 == "Kigali City"), aes(fill=area_name2)) +
-  geom_sf(data = survey_region_boundaries %>% filter(survey_id == "RWA2000DHS", survey_region_name == "kigali ville (pvk)"), fill=NA, size=2)
-
-ggplot() +
-  geom_sf(data = areas_wide %>% filter(area_name1 == "Kigali City"), aes(fill=area_name2)) +
-  geom_sf(data = survey_region_boundaries %>% filter(survey_id == "RWA2005DHS", survey_region_name == "ville de kigali"), fill=NA, size=2)
-
 survey_regions <- create_survey_regions_dhs(survey_region_areas)
 
 #' # Survey clusters dataset
 
 survey_clusters <- create_survey_clusters_dhs(surveys)
+
 
 #' Snap survey clusters to areas
 
