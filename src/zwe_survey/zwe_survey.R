@@ -3,7 +3,6 @@ orderly::orderly_pull_archive("zwe_data_areas")
 iso3 <- "ZWE"
 
 areas <- read_sf("depends/zwe_areas.geojson")
-areas <- read_sf("~/Imperial College London/HIV Inference Group - WP - Documents/Analytical datasets/naomi-data/ZWE/data/zwe_areas.geojson")
 areas_wide <- spread_areas(areas)
 
 surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%
