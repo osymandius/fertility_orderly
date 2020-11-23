@@ -2,7 +2,6 @@ orderly_pull_archive("civ_data_areas")
 #' ISO3 country code
 iso3 <- "CIV"
 
-areas <- read_sf("~/Imperial College London/HIV Inference Group - WP - Documents/Analytical datasets/naomi-data/CIV/data/civ_areas.geojson")
 areas <- read_sf("depends/civ_areas.geojson")
 areas_wide <- spread_areas(areas)
 
