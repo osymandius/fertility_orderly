@@ -43,7 +43,7 @@ survey_region_areas <- survey_region_areas %>%
       survey_id == "MWI2015DHS" & area_id5 == "MWI_5_33" ~ "Blantyre City",
       TRUE ~ survey_region_name))
 
-validate_survey_region_areas(survey_region_areas)
+validate_survey_region_areas(survey_region_areas, survey_region_boundaries)
 
 survey_regions <- create_survey_regions_dhs(survey_region_areas)
 

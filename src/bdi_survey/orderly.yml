@@ -4,33 +4,24 @@ artefacts:
   - data:
       description: survey indicator dataset
       filenames:
-        - bdi_survey_clusters.csv
+        - bdi_dhs_clusters.csv
   - staticgraph:
-      description: Overlay boundaries with 2010 DHS
+      description: Check DHS region cluster assignment
       filenames:
-        - check/check-overlay-boundaries.png
+        - check/bdi_dhs-cluster-check.pdf
 
 
 packages:
   - dplyr
-  - forcats
-  - haven
   - ggplot2
+  - haven
   - naomi
-  - parallel
+  - naomi.utils
   - rdhs
-  - readr
   - sf
-  - spud
-  - survey
-  - tidyr
-
-global_resources:
-  resources/utils_areas.R: utils_areas.R
 
 depends:
   bdi_data_areas:
     id: latest
     use:
       depends/bdi_areas.geojson: bdi_areas.geojson
-

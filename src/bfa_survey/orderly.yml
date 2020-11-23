@@ -4,28 +4,24 @@ artefacts:
   - data:
       description: survey indicator dataset
       filenames:
-        - bfa_survey_clusters.csv
+        - bfa_dhs_clusters.csv
+  - staticgraph:
+      description: Check DHS region cluster assignment
+      filenames:
+        - check/bfa_dhs-cluster-check.pdf
+
 
 packages:
   - dplyr
-  - forcats
-  - haven
   - ggplot2
+  - haven
   - naomi
-  - parallel
+  - naomi.utils
   - rdhs
-  - readr
   - sf
-  - spud
-  - survey
-  - tidyr
-
-global_resources:
-  resources/utils_areas.R: utils_areas.R
 
 depends:
   bfa_data_areas:
     id: latest
     use:
       depends/bfa_areas.geojson: bfa_areas.geojson
-

@@ -1,4 +1,5 @@
-#' ISO3 country code
+orderly_pull_archive("zmb_data_areas")
+
 iso3 <- "ZMB"
 
 areas <- read_sf("depends/zmb_areas.geojson")
@@ -15,10 +16,12 @@ surveys <- surveys_add_dhs_regvar(surveys, survey_region_boundaries)
 #REGVAR for ZMB2013DHS is incorrectly coded as v024, should be hv024
 surveys$REGVAR[surveys$survey_id == "ZMB2013DHS"] <- "hv024"
 
+survey_region_boundaries <- st_make_valid(survey_region_boundaries)
+
 #' Allocate each area to survey region
 
 survey_region_areas <- allocate_areas_survey_regions(areas_wide, survey_region_boundaries)
-validate_survey_region_areas(survey_region_areas)
+validate_survey_region_areas(survey_region_areas, survey_region_boundaries)
 
 survey_regions <- create_survey_regions_dhs(survey_region_areas)
 

@@ -1,3 +1,5 @@
+orderly::orderly_pull_archive("rwa_data_areas")
+
 #' ISO3 country code
 iso3 <- "RWA"
 

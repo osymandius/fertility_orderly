@@ -10,7 +10,7 @@ surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%
 survey_meta <- create_survey_meta_dhs(surveys)
 
 survey_region_boundaries <- create_survey_boundaries_dhs(surveys)
-
+survey_region_boundaries <- st_make_valid(survey_region_boundaries)
 
 surveys <- surveys_add_dhs_regvar(surveys, survey_region_boundaries)
 
@@ -18,7 +18,7 @@ surveys <- surveys_add_dhs_regvar(surveys, survey_region_boundaries)
 
 survey_region_areas <- allocate_areas_survey_regions(areas_wide, survey_region_boundaries)
 
-validate_survey_region_areas(survey_region_areas)
+validate_survey_region_areas(survey_region_areas, survey_region_boundaries)
 
 survey_regions <- create_survey_regions_dhs(survey_region_areas)
 
