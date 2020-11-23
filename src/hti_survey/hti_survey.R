@@ -205,4 +205,4 @@ survey_clusters <- survey_clusters %>%
             geoloc_area_id = area_id,
             geoloc_distance = distance)
 
-write.csv(survey_clusters %>% filter(!is.na(geoloc_area_id)), "gin_survey_clusters.csv")
+write_csv(survey_clusters %>% filter(!is.na(geoloc_area_id)), "gin_survey_clusters.csv")

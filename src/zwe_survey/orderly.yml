@@ -5,6 +5,8 @@ artefacts:
       description: survey indicator dataset
       filenames:
         - zwe_dhs_clusters.csv
+        - zwe_mics_women.csv
+        - zwe_mics_births_to_women.csv
   - staticgraph:
       description: Check DHS region cluster assignment
       filenames:
@@ -13,6 +15,7 @@ artefacts:
 
 packages:
   - dplyr
+  - dfertility
   - forcats
   - haven
   - ggplot2
@@ -24,7 +27,11 @@ packages:
   - sf
   - spud
   - survey
+  - stringr
   - tidyr
+
+global_resources:
+  resources/MICS_indicators.csv: MICS_indicators.csv
 
 depends:
   zwe_data_areas:

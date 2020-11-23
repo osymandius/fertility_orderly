@@ -39,4 +39,4 @@ pdf(paste0("check/", tolower(iso3), "_dhs-cluster-check.pdf"), h = 5, w = 7)
 p_coord_check
 dev.off()
 
-write.csv(survey_clusters, paste0(tolower(iso3), "_dhs_clusters.csv"))
+write_csv(survey_clusters, paste0(tolower(iso3), "_dhs_clusters.csv"))

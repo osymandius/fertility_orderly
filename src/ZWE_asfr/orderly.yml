@@ -1,23 +1,26 @@
-script: ZWE_asfr.R
+script: zwe_asfr.R
 
 artefacts:
   - data:
       description: Zimbabwe ASFR dataset
       filenames:
-        - ZWE_dhs_asfr.csv
-        - ZWE_mics_asfr.csv
+        - zwe_dhs_asfr.csv
+        # - zwe_mics_asfr.csv
 
 packages:
   - demogsurv
   - dplyr
   - rdhs
-  - pointr
   - countrycode
   - dfertility
 
 depends:
-  data-survey:
+  zwe_survey:
     id: latest
-      use:
-        depends/ZWE_dhs_survey.csv: ZWE_dhs_survey.csv
-        depends/ZWE_mics_survey.csv: ZWE_mics_survey.csv
+    use:
+      depends/zwe_dhs_clusters.csv: zwe_dhs_clusters.csv
+      # depends/zwe_mics_survey.csv: zwe_mics_survey.csv
+  zwe_data_areas:
+    id: latest
+    use:
+      depends/zwe_areas.geojson: zwe_areas.geojson

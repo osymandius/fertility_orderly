@@ -1,55 +1,59 @@
-areas_long <- "pointr_link_to_areas"
-clusters <- read.csv("depends/ZWE_dhs_survey.csv")
+areas <- read_sf("depends/zwe_areas.geojson")
+clusters <- read.csv("depends/zwe_dhs_clusters.csv")
+
+areas_wide <- spread_areas(areas)
+areas_long <- areas %>% st_drop_geometry
+
+iso3 <- "ZWE"
 
 ## Get surveys for which we have clusters. Split into country list.
-surveys <- dhs_surveys(surveyIds = unique(clusters$DHS_survey_id)) %>%
-  left_join(clusters %>% 
-              select(c(DHS_survey_id, survey_id, iso3)) %>% 
-              distinct, 
-            by=c("SurveyId" = "DHS_survey_id")) %>%
-  filter(iso3 == "ZWE")
+clusters <- clusters %>%
+  mutate(DHS_survey_id = str_replace(survey_id, iso3, dhs_countries()$DHS_CountryCode[dhs_countries()$ISO3_CountryCode == iso3]))
 
-cluster_areas <- assign_cluster_area(clusters, 2)
+surveys <- dhs_surveys(surveyIds = unique(clusters$DHS_survey_id)) %>%
+  left_join(clusters %>% select(survey_id, DHS_survey_id) %>% distinct, by=c("SurveyId" = "DHS_survey_id"))
+
+cluster_areas <- assign_cluster_area(clusters, areas_wide, 2)
 
 dat <- clusters_to_surveys(surveys, cluster_areas, single_tips = TRUE)
 
 asfr <- Map(calc_asfr, dat$ir,
-            by = list(~country + surveyid + survtype + survyear + area_id),
+            by = list(~survey_id + survtype + survyear + area_id),
             tips = dat$tips_surv,
             agegr= list(3:10*5),
             period = list(1995:2017),
             strata = list(NULL),
+            varmethod = list("none"),
             counts = TRUE) %>%
   bind_rows %>%
   type.convert %>%
   filter(period<=survyear) %>%
   rename(age_group = agegr) %>%
-  mutate(iso3 = "ZWE") %>%
-  select(-country)
+  mutate(iso3 = iso3)
 
-write_csv(asfr, "ZWE_dhs_asfr.csv")
+write_csv(asfr, "zwe_dhs_asfr.csv")
 
-mics_dat <- read.csv("depends/ZWE_mics_dat.csv")
-
-mics_asfr <- Map(calc_asfr, mics_dat$wm,
-                 by = list(~area_id + survey_id),
-                 tips = list(c(0,15)),
-                 agegr= list(3:10*5),
-                 period = list(1995:2019),
-                 clusters = list(~cluster),
-                 strata = list(NULL),
-                 id = list("unique_id"),
-                 dob = list("wdob"),
-                 intv = list("doi"),
-                 weight = list("weight"),
-                 varmethod = list("none"),
-                 bhdata = bh_df,
-                 bvars = list("cdob"),
-                 counts = TRUE) %>%
-  bind_rows %>%
-  type.convert() %>%
-  separate(col=survey_id, into=c(NA, "survyear", NA), sep=c(3,7), remove = FALSE, convert = TRUE) %>%
-  filter(period <= survyear) %>%
-  rename(age_group = agegr)
-
-write_csv(mics_asfr, "ZWE_mics_asfr.csv")
+# mics_dat <- read.csv("depends/zwe_mics_dat.csv")
+# 
+# mics_asfr <- Map(calc_asfr, mics_dat$wm,
+#                  by = list(~area_id + survey_id),
+#                  tips = list(c(0,15)),
+#                  agegr= list(3:10*5),
+#                  period = list(1995:2019),
+#                  clusters = list(~cluster),
+#                  strata = list(NULL),
+#                  id = list("unique_id"),
+#                  dob = list("wdob"),
+#                  intv = list("doi"),
+#                  weight = list("weight"),
+#                  varmethod = list("none"),
+#                  bhdata = bh_df,
+#                  bvars = list("cdob"),
+#                  counts = TRUE) %>%
+#   bind_rows %>%
+#   type.convert() %>%
+#   separate(col=survey_id, into=c(NA, "survyear", NA), sep=c(3,7), remove = FALSE, convert = TRUE) %>%
+#   filter(period <= survyear) %>%
+#   rename(age_group = agegr)
+# 
+# write_csv(mics_asfr, "zwe_mics_asfr.csv")
