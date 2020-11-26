@@ -5,9 +5,16 @@ artefacts:
       description: nam ASFR dataset
       filenames:
         - nam_dhs_asfr.csv
+        - nam_fr_plot.csv
 
 packages:
   - demogsurv
+  - tidyr
+  - haven
+  - readr
+  - stringr
+  - naomi
+  - sf
   - dplyr
   - rdhs
   - countrycode

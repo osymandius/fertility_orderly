@@ -5,6 +5,10 @@ artefacts:
       description: fertility indicator dataset
       filenames:
         - nam_fr.csv
+  - staticgraph:
+      description: Validate admin-1 TFRs
+      filenames:
+        - check/nam_tfr_admin1.pdf
 
 
 packages:
@@ -35,4 +39,5 @@ depends:
     id: latest
     use:
       depends/nam_dhs_asfr.csv: nam_dhs_asfr.csv
+      depends/nam_fr_plot.csv: nam_fr_plot.csv
 

@@ -7,9 +7,16 @@ artefacts:
         - civ_dhs_asfr.csv
         - civ_mics_asfr.csv
         - civ_asfr.csv
+        - civ_fr_plot.csv
 
 packages:
   - demogsurv
+  - tidyr
+  - haven
+  - readr
+  - stringr
+  - naomi
+  - sf
   - dplyr
   - rdhs
   - countrycode

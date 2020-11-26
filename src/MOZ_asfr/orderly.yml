@@ -1,23 +1,35 @@
-script: MOZ_asfr.R
+script: moz_asfr.R
 
 artefacts:
   - data:
-      description: Mozambique ASFR dataset
+      description: moz ASFR dataset
       filenames:
-        - MOZ_dhs_asfr.csv
-        - MOZ_mics_asfr.csv
+        - moz_dhs_asfr.csv
+        - moz_mics_asfr.csv
+        - moz_asfr.csv
+        - moz_fr_plot.csv
 
 packages:
   - demogsurv
+  - tidyr
+  - haven
+  - readr
+  - stringr
+  - naomi
+  - sf
   - dplyr
   - rdhs
-  - pointr
   - countrycode
   - dfertility
 
 depends:
-  data-survey:
+  moz_survey:
     id: latest
-      use:
-        depends/MOZ_dhs_survey.csv: MOZ_dhs_survey.csv
-        depends/MOZ_mics_survey.csv: MOZ_mics_survey.csv
+    use:
+      depends/moz_dhs_clusters.csv: moz_dhs_clusters.csv
+      depends/moz_mics_women.csv: moz_mics_women.csv
+      depends/moz_mics_births_to_women.csv: moz_mics_births_to_women.csv
+  moz_data_areas:
+    id: latest
+    use:
+      depends/moz_areas.geojson: moz_areas.geojson

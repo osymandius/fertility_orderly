@@ -5,7 +5,10 @@ artefacts:
       description: fertility indicator dataset
       filenames:
         - bfa_fr.csv
-
+  - staticgraph:
+      description: Validate admin-1 TFRs
+      filenames:
+        - check/bfa_tfr_admin1.pdf
 
 packages:
   - dplyr

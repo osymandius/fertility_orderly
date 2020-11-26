@@ -5,9 +5,16 @@ artefacts:
       description: tza ASFR dataset
       filenames:
         - tza_dhs_asfr.csv
+        - tza_fr_plot.csv
 
 packages:
   - demogsurv
+  - tidyr
+  - haven
+  - readr
+  - stringr
+  - naomi
+  - sf
   - dplyr
   - rdhs
   - countrycode

@@ -7,9 +7,16 @@ artefacts:
         - lso_dhs_asfr.csv
         - lso_mics_asfr.csv
         - lso_asfr.csv
+        - lso_fr_plot.csv
 
 packages:
   - demogsurv
+  - tidyr
+  - haven
+  - readr
+  - stringr
+  - naomi
+  - sf
   - dplyr
   - rdhs
   - countrycode

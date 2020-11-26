@@ -7,9 +7,16 @@ artefacts:
         - cod_dhs_asfr.csv
         - cod_mics_asfr.csv
         - cod_asfr.csv
+        - cod_fr_plot.csv
 
 packages:
   - demogsurv
+  - tidyr
+  - haven
+  - readr
+  - stringr
+  - naomi
+  - sf
   - dplyr
   - rdhs
   - countrycode

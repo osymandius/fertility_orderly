@@ -1,10 +1,10 @@
-areas <- read_sf("depends/zmb_areas.geojson")
-clusters <- read.csv("depends/zmb_dhs_clusters.csv")
+iso3 <- "ZMB"
+
+areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
+clusters <- read.csv(paste0("depends/", tolower(iso3), "_dhs_clusters.csv"))
 
 areas_wide <- spread_areas(areas)
 areas_long <- areas %>% st_drop_geometry
-
-iso3 <- "ZMB"
 
 clusters <- clusters %>%
   filter(!is.na(longitude)) %>%
@@ -24,44 +24,16 @@ cluster_list <- clusters %>%
 
 names(cluster_list) <- surveys$survey_id
 
-ird <- dhs_datasets(fileType = "IR", fileFormat = "flat", surveyIds = surveys$SurveyId)
-
-ird <- ird %>%
-  mutate(path = unlist(get_datasets(.))) %>%
-  bind_rows()
-
-ir <- lapply(ird$path, readRDS) %>%
-  lapply(function(x) {class(x) <- "data.frame"
-  return(x)}) %>%
-  Map(function(ir, surveys) {
-    mutate(ir,
-           surveyid = surveys$survey_id,
-           country = surveys$CountryName,
-           survyear = surveys$SurveyYear,
-           survtype = surveys$SurveyType)
-  }, ., group_split(surveys, SurveyId))
-
+ir <- get_fertility_surveys(surveys)
 names(ir) <- names(cluster_list)
 
-ir <- Map(ir_by_area, ir, cluster_list[names(ir)], n=1:length(ir), total=length(ir)) %>%
-  unlist(recursive = FALSE)
-
-survey_type <- ir %>%
-  lapply("[", "survtype") %>%
-  lapply(unique) %>%
-  bind_rows
-
-tips_surv <- list("DHS" = c(0:15), "MIS" = c(0:5), "AIS" = c(0:5))[survey_type$survtype]
-
-dat <- list()
-dat$ir <- ir
-dat$tips_surv <- tips_surv
+dat <- map_ir_to_areas(ir, cluster_list)
 
 asfr <- Map(calc_asfr, dat$ir,
             by = list(~survey_id + survtype + survyear + area_id),
             tips = dat$tips_surv,
             agegr= list(3:10*5),
-            period = list(1995:2017),
+            period = list(1995:2020),
             strata = list(NULL),
             varmethod = list("none"),
             counts = TRUE) %>%
@@ -71,4 +43,61 @@ asfr <- Map(calc_asfr, dat$ir,
   rename(age_group = agegr) %>%
   mutate(iso3 = iso3)
 
-write_csv(asfr, "zmb_dhs_asfr.csv")
+write_csv(asfr, paste0(tolower(iso3), "_dhs_asfr.csv"))
+
+### ADMIN-1 ASFR FOR PLOTTING
+
+cluster_list_admin1 <- clusters %>%
+  left_join(areas_wide %>% st_drop_geometry, by=c("geoloc_area_id" = "area_id")) %>%
+  rename(area_id = area_id1) %>%
+  select(survey_id, cluster_id, area_id) %>%
+  group_by(survey_id) %>%
+  group_split
+
+names(cluster_list_admin1) <- surveys$survey_id
+
+dat_admin1 <- map_ir_to_areas(ir, cluster_list_admin1, single_tips = FALSE)
+dat_admin1$ir <- lapply(dat_admin1$ir, zap_labels)
+
+asfr_admin1 <- Map(calc_asfr, dat_admin1$ir,
+                   by = list(~survey_id + survtype + survyear + area_id),
+                   tips = dat_admin1$tips_surv,
+                   agegr= list(3:10*5),
+                   period = list(1995:2020),
+                   strata = list(NULL),
+                   varmethod = list("none"),
+                   counts = TRUE) %>%
+  bind_rows %>%
+  type.convert %>%
+  filter(period<=survyear) %>%
+  rename(age_group = agegr) %>%
+  mutate(iso3 = iso3,
+         variable = "asfr")
+
+# tfr_admin1 <- Map(calc_tfr, dat_admin1$ir,
+#                   by = list(~survey_id + survtype + survyear + area_id),
+#                   tips = dat_admin1$tips_surv,
+#                   agegr= list(3:10*5),
+#                   period = list(1995:2020)) %>%
+#   bind_rows %>%
+#   type.convert %>%
+#   filter(period<=survyear) %>%
+#   mutate(iso3 = iso3,
+#          variable = "tfr")
+
+tfr_admin1 <- asfr_admin1 %>%
+  group_by(iso3, survey_id, survtype, survyear, area_id, period, tips, variable) %>%
+  summarise(tfr = 5*sum(asfr)) %>%
+  mutate(variable = "tfr")
+
+
+plot <- asfr_admin1 %>%
+  select(-c(births, pys)) %>%
+  rename(value = asfr) %>%
+  bind_rows(
+    tfr_admin1 %>%
+      # select(-se_tfr) %>%
+      rename(value = tfr)
+  )
+
+write_csv(plot, paste0(tolower(iso3), "_fr_plot.csv"))

@@ -5,7 +5,10 @@ artefacts:
       description: fertility indicator dataset
       filenames:
         - zmb_fr.csv
-
+  - staticgraph:
+      description: Validate admin-1 TFRs
+      filenames:
+        - check/zmb_tfr_admin1.pdf
 
 packages:
   - dplyr

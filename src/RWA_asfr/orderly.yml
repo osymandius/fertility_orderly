@@ -5,9 +5,16 @@ artefacts:
       description: rwa ASFR dataset
       filenames:
         - rwa_dhs_asfr.csv
+        - rwa_fr_plot.csv
 
 packages:
   - demogsurv
+  - tidyr
+  - haven
+  - readr
+  - stringr
+  - naomi
+  - sf
   - dplyr
   - rdhs
   - countrycode

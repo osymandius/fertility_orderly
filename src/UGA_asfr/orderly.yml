@@ -5,9 +5,16 @@ artefacts:
       description: uga ASFR dataset
       filenames:
         - uga_dhs_asfr.csv
+        - uga_fr_plot.csv
 
 packages:
   - demogsurv
+  - tidyr
+  - haven
+  - readr
+  - stringr
+  - naomi
+  - sf
   - dplyr
   - rdhs
   - countrycode

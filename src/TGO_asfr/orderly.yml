@@ -7,9 +7,16 @@ artefacts:
         - tgo_dhs_asfr.csv
         - tgo_mics_asfr.csv
         - tgo_asfr.csv
+        - tgo_fr_plot.csv
 
 packages:
   - demogsurv
+  - tidyr
+  - haven
+  - readr
+  - stringr
+  - naomi
+  - sf
   - dplyr
   - rdhs
   - countrycode

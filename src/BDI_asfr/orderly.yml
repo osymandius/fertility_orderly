@@ -7,9 +7,16 @@ artefacts:
         - bdi_dhs_asfr.csv
         - bdi_mics_asfr.csv
         - bdi_asfr.csv
+        - bdi_fr_plot.csv
 
 packages:
   - demogsurv
+  - tidyr
+  - haven
+  - readr
+  - stringr
+  - naomi
+  - sf
   - dplyr
   - rdhs
   - countrycode

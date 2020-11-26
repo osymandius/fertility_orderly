@@ -5,9 +5,16 @@ artefacts:
       description: zmb ASFR dataset
       filenames:
         - zmb_dhs_asfr.csv
+        - zmb_fr_plot.csv
 
 packages:
   - demogsurv
+  - tidyr
+  - haven
+  - readr
+  - stringr
+  - naomi
+  - sf
   - dplyr
   - rdhs
   - countrycode

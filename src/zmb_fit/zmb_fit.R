@@ -135,3 +135,27 @@ fit <- naomi::sample_tmb(fit, random_only=TRUE)
 tmb_results <- dfertility::tmb_outputs(fit, mf, areas) 
 
 write_csv(tmb_results, paste0(tolower(iso3), "_fr.csv"))
+
+fr_plot <- read.csv("depends/nam_fr_plot.csv")
+
+fr_plot <- fr_plot %>%
+  left_join(areas %>% st_drop_geometry() %>% select(area_id, area_name))
+
+tfr_plot <- tmb_results %>%
+  filter(area_level == 1, variable == "tfr") %>%
+  ggplot(aes(x=period, y=median)) +
+    geom_line() +
+    geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
+    geom_point(data = fr_plot %>% filter(variable == "tfr", value <10), aes(y=value, color=survey_id)) +
+    facet_wrap(~area_name, ncol=5) +
+    labs(y="TFR", x=element_blank(), color="Survey ID", title=paste(iso3, "| Provincial TFR")) +
+    theme_minimal() +
+    theme(
+      legend.position = "bottom",
+      text = element_text(size=14)
+    )
+
+dir.create("check")
+pdf(paste0("check/", tolower(iso3), "_tfr_admin1.pdf"), h = 12, w = 20)
+tfr_plot
+dev.off()
