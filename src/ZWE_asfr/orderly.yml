@@ -5,7 +5,8 @@ artefacts:
       description: Zimbabwe ASFR dataset
       filenames:
         - zwe_dhs_asfr.csv
-        # - zwe_mics_asfr.csv
+        - zwe_mics_asfr.csv
+        - zwe_asfr.csv
 
 packages:
   - demogsurv
@@ -19,7 +20,8 @@ depends:
     id: latest
     use:
       depends/zwe_dhs_clusters.csv: zwe_dhs_clusters.csv
-      # depends/zwe_mics_survey.csv: zwe_mics_survey.csv
+      depends/zwe_mics_women.csv: zwe_mics_women.csv
+      depends/zwe_mics_births_to_women.csv: zwe_mics_births_to_women.csv
   zwe_data_areas:
     id: latest
     use:

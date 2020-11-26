@@ -1,21 +1,24 @@
-script: TZA_asfr.R
+script: tza_asfr.R
 
 artefacts:
   - data:
-      description: TZA ASFR dataset
+      description: tza ASFR dataset
       filenames:
-        - TZA_dhs_asfr.csv
+        - tza_dhs_asfr.csv
 
 packages:
   - demogsurv
   - dplyr
   - rdhs
-  - pointr
   - countrycode
   - dfertility
 
 depends:
-  data-survey:
+  tza_survey:
     id: latest
-      use:
-        depends/TZA_dhs_survey.csv: TZA_dhs_survey.csv
+    use:
+      depends/tza_dhs_clusters.csv: tza_dhs_clusters.csv
+  tza_data_areas:
+    id: latest
+    use:
+      depends/tza_areas.geojson: tza_areas.geojson

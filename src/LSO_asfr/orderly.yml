@@ -1,23 +1,28 @@
-script: LSO_asfr.R
+script: lso_asfr.R
 
 artefacts:
   - data:
-      description: Lesotho ASFR dataset
+      description: lso ASFR dataset
       filenames:
-        - LSO_dhs_asfr.csv
-        - LSO_mics_asfr.csv
+        - lso_dhs_asfr.csv
+        - lso_mics_asfr.csv
+        - lso_asfr.csv
 
 packages:
   - demogsurv
   - dplyr
   - rdhs
-  - pointr
   - countrycode
   - dfertility
 
 depends:
-  data-survey:
+  lso_survey:
     id: latest
-      use:
-        depends/LSO_dhs_survey.csv: LSO_dhs_survey.csv
-        depends/LSO_mics_survey.csv: LSO_mics_survey.csv
+    use:
+      depends/lso_dhs_clusters.csv: lso_dhs_clusters.csv
+      depends/lso_mics_women.csv: lso_mics_women.csv
+      depends/lso_mics_births_to_women.csv: lso_mics_births_to_women.csv
+  lso_data_areas:
+    id: latest
+    use:
+      depends/lso_areas.geojson: lso_areas.geojson

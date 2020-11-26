@@ -10,7 +10,26 @@ areas_wide <- spread_areas(areas)
 surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%
   filter(as.numeric(SurveyYear) > 1994)
 
-survey_meta <- create_survey_meta_dhs(surveys)
+# survey_meta <- create_survey_meta_dhs(surveys)
+
+#' This is the contents of naomi.utils::create_survey_meta_dhs. Unpacked to get around 2 reports for 2005 DHS which fails the duplicated check
+publications <- rdhs::dhs_publications(surveyIds = surveys$SurveyId)
+final_rep <- dplyr::filter(publications, PublicationTitle == 
+                             "Final Report")
+final_rep <- dplyr::select(final_rep, SurveyId, report_url = PublicationURL) %>%
+  dplyr::group_by(SurveyId) %>%
+  dplyr::filter(row_number() == 1)
+
+surveys <- dplyr::left_join(surveys, final_rep, by = "SurveyId")
+surveys$dataset_url <- paste0("https://dhsprogram.com/methodology/survey/survey-display-", 
+                              surveys$SurveyNum, ".cfm")
+survey_meta <- dplyr::transmute(surveys, survey_id, country = CountryName, 
+                                survey_type = SurveyType, survey_year = SurveyYear, 
+                                fieldwork_start = FieldworkStart, fieldwork_end = FieldworkEnd, 
+                                survey_mid_calendar_quarter, female_age_min = MinAgeWomen, 
+                                female_age_max = MaxAgeWomen, male_age_min = MinAgeMen, 
+                                male_age_max = MaxAgeMen, report_ref = NA_character_, 
+                                report_url = report_url, dataset_url, notes = NA_character_)
 
 
 #' The 2005 DHS was initially conducted based on 12 former prefectures. The data
@@ -95,9 +114,18 @@ survey_clusters <- create_survey_clusters_dhs(surveys)
 
 survey_clusters <- assign_dhs_cluster_areas(survey_clusters, survey_region_areas)
 
+#' 2000 DHS, 2013 and 2017 MIS has no GPS coordinates. Assign clusters to areas using survey region id
+survey_clusters <- survey_clusters %>%
+  left_join(survey_regions %>% 
+              filter(survey_id %in% c("RWA2000DHS", "RWA2013MIS", "RWA2017MIS"))
+            ) %>%
+  mutate(geoloc_area_id = ifelse(is.na(geoloc_area_id) & !is.na(survey_region_area_id), survey_region_area_id, geoloc_area_id)) %>%
+  select(-c(survey_region_name, survey_region_area_id)) 
+
 p_coord_check <- plot_survey_coordinate_check(survey_clusters,
                                               survey_region_boundaries,
                                               survey_region_areas)
+
 
 dir.create("check")
 pdf(paste0("check/", tolower(iso3), "_dhs-cluster-check.pdf"), h = 5, w = 7)

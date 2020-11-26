@@ -1,4 +1,4 @@
-orderly_pull_archive("eth_data_areas")
+
 #' ISO3 country code
 iso3 <- "ETH"
 

@@ -41,3 +41,28 @@ p_coord_check
 dev.off()
 
 write_csv(survey_clusters, paste0(tolower(iso3), "_dhs_clusters.csv"))
+
+# ics_indicators <- read_csv("resources/MICS_indicators.csv") %>%
+mics_indicators <- read_csv("resources/MICS_indicators.csv") %>%
+  pivot_longer(-c(label, id, filetype), names_to = "survey_id")
+
+mics_survey_data <- create_surveys_mics(iso3, mics_indicators)
+
+fertility_mics_data <- transform_mics(mics_survey_data, mics_indicators)
+
+fertility_mics_data$hh <- fertility_mics_data$hh %>%
+  mutate(
+    mics_area_name_label = case_when(
+      mics_area_name_label == "Hauts-Bassins" ~ "Hauts Bassins",
+      mics_area_name_label == "Cascade" ~ "Cascades",
+      mics_area_name_label == "Plateau-Central" ~ "Plateau Central",
+      TRUE ~ mics_area_name_label
+    )
+  ) 
+
+mics_survey_areas <- join_survey_areas(fertility_mics_data, areas)
+
+asfr_input_data <- make_asfr_inputs(mics_survey_areas, mics_survey_data)
+
+write_csv(asfr_input_data$wm, paste0(tolower(iso3), "_mics_women.csv"))
+write_csv(asfr_input_data$births_to_women, paste0(tolower(iso3), "_mics_births_to_women.csv"))

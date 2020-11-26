@@ -1,23 +1,28 @@
-script: CMR_asfr.R
+script: cmr_asfr.R
 
 artefacts:
   - data:
-      description: CMR ASFR dataset
+      description: cmr ASFR dataset
       filenames:
-        - CMR_dhs_asfr.csv
-        - CMR_mics_asfr.csv
+        - cmr_dhs_asfr.csv
+        - cmr_mics_asfr.csv
+        - cmr_asfr.csv
 
 packages:
   - demogsurv
   - dplyr
   - rdhs
-  - pointr
   - countrycode
   - dfertility
 
 depends:
-  data-survey:
+  cmr_survey:
     id: latest
-      use:
-        depends/CMR_dhs_survey.csv: CMR_dhs_survey.csv
-        depends/CMR_mics_survey.csv: CMR_mics_survey.csv
+    use:
+      depends/cmr_dhs_clusters.csv: cmr_dhs_clusters.csv
+      depends/cmr_mics_women.csv: cmr_mics_women.csv
+      depends/cmr_mics_births_to_women.csv: cmr_mics_births_to_women.csv
+  cmr_data_areas:
+    id: latest
+    use:
+      depends/cmr_areas.geojson: cmr_areas.geojson

@@ -1,30 +1,75 @@
-areas_long <- "pointr_link_to_areas"
-clusters <- "depends/UGA_dhs_survey.csv"
+areas <- read_sf("depends/uga_areas.geojson")
+clusters <- read.csv("depends/uga_dhs_clusters.csv")
 
-## Get surveys for which we have clusters. Split into country list.
+areas_wide <- spread_areas(areas)
+areas_long <- areas %>% st_drop_geometry
+
+iso3 <- "UGA"
+
+clusters <- clusters %>%
+  filter(!is.na(longitude), !survey_id %in% c("UGA2011DHS", "UGA2011AIS")) %>%
+  mutate(DHS_survey_id = str_replace(survey_id, iso3, dhs_countries()$DHS_CountryCode[dhs_countries()$ISO3_CountryCode == iso3]))
+
 surveys <- dhs_surveys(surveyIds = unique(clusters$DHS_survey_id)) %>%
-  left_join(clusters %>% 
-              select(c(DHS_survey_id, survey_id, iso3)) %>% 
-              distinct, 
-            by=c("SurveyId" = "DHS_survey_id")) %>%
-  filter(iso3 == "UGA")
+  left_join(clusters %>% select(survey_id, DHS_survey_id) %>% distinct, by=c("SurveyId" = "DHS_survey_id")) %>%
+  filter(!survey_id %in% c("UGA2011DHS", "UGA2011AIS"))
 
-cluster_areas <- assign_cluster_area(clusters, 2)
+# cluster_areas <- assign_cluster_area(clusters, areas_wide, 3)
+# 
+# dat <- clusters_to_surveys(iso3, surveys, cluster_areas, level = 3, single_tips = TRUE)
 
-dat <- clusters_to_surveys(surveys, cluster_areas, single_tips = TRUE)
+cluster_list <- clusters %>%
+  rename(area_id = geoloc_area_id) %>%
+  group_by(survey_id) %>%
+  group_split
+
+names(cluster_list) <- surveys$survey_id
+
+ird <- dhs_datasets(fileType = "IR", fileFormat = "flat", surveyIds = surveys$SurveyId)
+
+ird <- ird %>%
+  mutate(path = unlist(get_datasets(.))) %>%
+  bind_rows()
+
+ir <- lapply(ird$path, readRDS) %>%
+  lapply(function(x) {class(x) <- "data.frame"
+  return(x)}) %>%
+  Map(function(ir, surveys) {
+    mutate(ir,
+           surveyid = surveys$survey_id,
+           country = surveys$CountryName,
+           survyear = surveys$SurveyYear,
+           survtype = surveys$SurveyType)
+  }, ., group_split(surveys, SurveyId))
+
+names(ir) <- names(cluster_list)
+
+ir <- Map(ir_by_area, ir, cluster_list[names(ir)], n=1:length(ir), total=length(ir)) %>%
+  unlist(recursive = FALSE)
+
+survey_type <- ir %>%
+  lapply("[", "survtype") %>%
+  lapply(unique) %>%
+  bind_rows
+
+tips_surv <- list("DHS" = c(0:15), "MIS" = c(0:5), "AIS" = c(0:5))[survey_type$survtype]
+
+dat <- list()
+dat$ir <- ir
+dat$tips_surv <- tips_surv
 
 asfr <- Map(calc_asfr, dat$ir,
-            by = list(~country + surveyid + survtype + survyear + area_id),
+            by = list(~survey_id + survtype + survyear + area_id),
             tips = dat$tips_surv,
             agegr= list(3:10*5),
             period = list(1995:2017),
             strata = list(NULL),
+            varmethod = list("none"),
             counts = TRUE) %>%
   bind_rows %>%
   type.convert %>%
   filter(period<=survyear) %>%
   rename(age_group = agegr) %>%
-  mutate(iso3 = "UGA") %>%
-  select(-country)
+  mutate(iso3 = iso3)
 
-write_csv(asfr, "UGA_dhs_asfr.csv")
+write_csv(asfr, "uga_dhs_asfr.csv")

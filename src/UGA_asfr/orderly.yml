@@ -1,21 +1,24 @@
-script: UGA_asfr.R
+script: uga_asfr.R
 
 artefacts:
   - data:
-      description: UGA ASFR dataset
+      description: uga ASFR dataset
       filenames:
-        - UGA_dhs_asfr.csv
+        - uga_dhs_asfr.csv
 
 packages:
   - demogsurv
   - dplyr
   - rdhs
-  - pointr
   - countrycode
   - dfertility
 
 depends:
-  data-survey:
+  uga_survey:
     id: latest
-      use:
-        depends/UGA_dhs_survey.csv: UGA_dhs_survey.csv
+    use:
+      depends/uga_dhs_clusters.csv: uga_dhs_clusters.csv
+  uga_data_areas:
+    id: latest
+    use:
+      depends/uga_areas.geojson: uga_areas.geojson

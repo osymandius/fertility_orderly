@@ -1,21 +1,28 @@
-script: KEN_asfr.R
+script: ken_asfr.R
 
 artefacts:
   - data:
-      description: KEN ASFR dataset
+      description: ken ASFR dataset
       filenames:
-        - KEN_dhs_asfr.csv
+        - ken_dhs_asfr.csv
+        - ken_mics_asfr.csv
+        - ken_asfr.csv
 
 packages:
   - demogsurv
   - dplyr
   - rdhs
-  - pointr
   - countrycode
   - dfertility
 
 depends:
-  data-survey:
+  ken_survey:
     id: latest
-      use:
-        depends/KEN_dhs_survey.csv: KEN_dhs_survey.csv
+    use:
+      depends/ken_dhs_clusters.csv: ken_dhs_clusters.csv
+      depends/ken_mics_women.csv: ken_mics_women.csv
+      depends/ken_mics_births_to_women.csv: ken_mics_births_to_women.csv
+  ken_data_areas:
+    id: latest
+    use:
+      depends/ken_areas.geojson: ken_areas.geojson

@@ -15,7 +15,7 @@ surveys <- dhs_surveys(surveyIds = unique(clusters$DHS_survey_id)) %>%
 
 cluster_areas <- assign_cluster_area(clusters, areas_wide, 2)
 
-dat <- clusters_to_surveys(surveys, cluster_areas, single_tips = TRUE)
+dat <- clusters_to_surveys(iso3, surveys, cluster_areas, level = 2, single_tips = TRUE)
 
 asfr <- Map(calc_asfr, dat$ir,
             by = list(~survey_id + survtype + survyear + area_id),
@@ -33,27 +33,47 @@ asfr <- Map(calc_asfr, dat$ir,
 
 write_csv(asfr, "zwe_dhs_asfr.csv")
 
-# mics_dat <- read.csv("depends/zwe_mics_dat.csv")
-# 
-# mics_asfr <- Map(calc_asfr, mics_dat$wm,
-#                  by = list(~area_id + survey_id),
-#                  tips = list(c(0,15)),
-#                  agegr= list(3:10*5),
-#                  period = list(1995:2019),
-#                  clusters = list(~cluster),
-#                  strata = list(NULL),
-#                  id = list("unique_id"),
-#                  dob = list("wdob"),
-#                  intv = list("doi"),
-#                  weight = list("weight"),
-#                  varmethod = list("none"),
-#                  bhdata = bh_df,
-#                  bvars = list("cdob"),
-#                  counts = TRUE) %>%
-#   bind_rows %>%
-#   type.convert() %>%
-#   separate(col=survey_id, into=c(NA, "survyear", NA), sep=c(3,7), remove = FALSE, convert = TRUE) %>%
-#   filter(period <= survyear) %>%
-#   rename(age_group = agegr)
-# 
-# write_csv(mics_asfr, "zwe_mics_asfr.csv")
+
+
+mics_wm <- read.csv("depends/zwe_mics_women.csv") %>%
+# mics_wm <- read.csv("draft/zwe_survey/20201123-204826-542293e7/zwe_mics_women.csv") %>%
+  arrange(survey_id) %>%
+  group_by(survey_id) %>%
+  group_split()
+
+mics_births_to_women <- read.csv("depends/zwe_mics_births_to_women.csv") %>%
+# mics_births_to_women <- read.csv("draft/zwe_survey/20201123-204826-542293e7/zwe_mics_births_to_women.csv") %>% 
+  arrange(survey_id) %>%
+  group_by(survey_id) %>%
+  group_split()
+
+mics_asfr <- Map(calc_asfr, mics_wm,
+                 by = list(~area_id + survey_id),
+                 tips = list(c(0:15)),
+                 agegr= list(3:10*5),
+                 period = list(1995:2019),
+                 clusters = list(~cluster),
+                 strata = list(NULL),
+                 id = list("unique_id"),
+                 dob = list("wdob"),
+                 intv = list("doi"),
+                 weight = list("weight"),
+                 varmethod = list("none"),
+                 bhdata = mics_births_to_women,
+                 bvars = list("cdob"),
+                 counts = TRUE) %>%
+  bind_rows %>%
+  type.convert() %>%
+  separate(col=survey_id, into=c(NA, "survyear", NA), sep=c(3,7), remove = FALSE, convert = TRUE) %>%
+  filter(period <= survyear) %>%
+  rename(age_group = agegr) %>%
+  mutate(survtype = "MICS",
+         iso3 = iso3
+  )
+
+write_csv(mics_asfr, "zwe_mics_asfr.csv")
+
+asfr <- asfr %>%
+  bind_rows(mics_asfr)
+
+write_csv(asfr, "zwe_asfr.csv")

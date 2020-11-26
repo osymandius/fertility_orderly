@@ -1,21 +1,24 @@
-script: ZMB_asfr.R
+script: zmb_asfr.R
 
 artefacts:
   - data:
-      description: ZMB ASFR dataset
+      description: zmb ASFR dataset
       filenames:
-        - ZMB_dhs_asfr.csv
+        - zmb_dhs_asfr.csv
 
 packages:
   - demogsurv
   - dplyr
   - rdhs
-  - pointr
   - countrycode
   - dfertility
 
 depends:
-  data-survey:
+  zmb_survey:
     id: latest
-      use:
-        depends/ZMB_dhs_survey.csv: ZMB_dhs_survey.csv
+    use:
+      depends/zmb_dhs_clusters.csv: zmb_dhs_clusters.csv
+  zmb_data_areas:
+    id: latest
+    use:
+      depends/zmb_areas.geojson: zmb_areas.geojson

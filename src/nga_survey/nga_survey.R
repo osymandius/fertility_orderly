@@ -11,6 +11,14 @@ survey_meta <- create_survey_meta_dhs(surveys)
 
 survey_region_boundaries <- create_survey_boundaries_dhs(surveys)
 
+survey_region_boundaries <- survey_region_boundaries %>%
+  mutate(
+    survey_region_id = case_when(
+      survey_id == "NGA2015MIS" & survey_region_id == 206 ~ 260,
+      survey_id == "NGA2015MIS" & survey_region_id == 301 ~ 310,
+      TRUE ~ survey_region_id
+    )
+  )
 
 surveys <- surveys_add_dhs_regvar(surveys, survey_region_boundaries)
 
@@ -40,3 +48,30 @@ p_coord_check
 dev.off()
 
 write_csv(survey_clusters, paste0(tolower(iso3), "_dhs_clusters.csv"))
+
+mics_indicators <- read_csv("resources/MICS_indicators.csv") %>%
+  pivot_longer(-c(label, id, filetype), names_to = "survey_id")
+
+mics_survey_data <- create_surveys_mics(iso3, mics_indicators)
+
+fertility_mics_data <- transform_mics(mics_survey_data, mics_indicators)
+
+fertility_mics_data$hh <- fertility_mics_data$hh %>%
+  mutate(
+    mics_area_name_label = case_when(
+      survey_id == "NGA2007MICS" & mics_area_name_label == "Plataeu" ~ "Plateau",
+      survey_id == "NGA2007MICS" & mics_area_name_label == "Abuja Fct" ~ "FCT",
+      survey_id == "NGA2007MICS" & mics_area_name_label == "Akwa-Ibom" ~ "Akwa Ibom",
+      survey_id == "NGA2007MICS" & mics_area_name_label == "Cross-Rivers" ~ "Cross River",
+      survey_id == "NGA2011MICS" & mics_area_name_label == "Fct (Abuja)" ~ "FCT",
+      survey_id == "NGA2016MICS" & mics_area_name_label == "Fct Abuja" ~ "FCT",
+      TRUE ~ mics_area_name_label
+    )
+  )
+
+mics_survey_areas <- join_survey_areas(fertility_mics_data, areas)
+
+asfr_input_data <- make_asfr_inputs(mics_survey_areas, mics_survey_data)
+
+write_csv(asfr_input_data$wm, paste0(tolower(iso3), "_mics_women.csv"))
+write_csv(asfr_input_data$births_to_women, paste0(tolower(iso3), "_mics_births_to_women.csv"))

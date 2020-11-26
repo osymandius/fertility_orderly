@@ -66,4 +66,36 @@ dev.off()
 
 write_csv(survey_clusters, paste0(tolower(iso3), "_dhs_clusters.csv"))
 
-# devtools::load_all("~/Documents/GitHub/naomi.utils/")
+mics_indicators <- read_csv("resources/MICS_indicators.csv") %>%
+  pivot_longer(-c(label, id, filetype), names_to = "survey_id")
+
+mics_survey_data <- create_surveys_mics(iso3, mics_indicators)
+
+fertility_mics_data <- transform_mics(mics_survey_data, mics_indicators)
+
+fertility_mics_data$hh <- fertility_mics_data$hh %>%
+  mutate(
+    mics_area_name_label = case_when(
+      survey_id == "MWI2006MICS" & mics_area_name_label == "Nkhata Bay" ~ "Nkhatabay",
+      TRUE ~ mics_area_name_label
+    )
+  )
+
+#' Likoma not sampled in either survey
+#' Mzimba North/South not present because joined Mzima is - corrected below
+#' Neno: Divided into two districts - unclear how to deal with this. 
+mics_survey_areas <- join_survey_areas(fertility_mics_data, areas, warn=TRUE)
+
+#' 2013 MICS is largely at area_level = 5 except for Mzimba. Set warn=TRUE in join_survey_areas above to permit invalid data to complete, and add area_id in for Mzimba manually below
+mics_survey_areas$hh <- mics_survey_areas$hh %>%
+  mutate(
+    area_id = case_when(
+      survey_id == "MWI2013MICS" & mics_area_name_label == "Mzimba" ~ "MWI_3_05",
+      TRUE ~ area_id
+    )
+  )
+
+asfr_input_data <- make_asfr_inputs(mics_survey_areas, mics_survey_data)
+
+write_csv(asfr_input_data$wm, paste0(tolower(iso3), "_mics_women.csv"))
+write_csv(asfr_input_data$births_to_women, paste0(tolower(iso3), "_mics_births_to_women.csv"))

@@ -5,6 +5,8 @@ artefacts:
       description: survey indicator dataset
       filenames:
         - tgo_dhs_clusters.csv
+        - tgo_mics_women.csv
+        - tgo_mics_births_to_women.csv
   - staticgraph:
       description: Check DHS region cluster assignment
       filenames:
@@ -13,18 +15,18 @@ artefacts:
 
 packages:
   - dplyr
-  - forcats
+  - dfertility
   - haven
   - ggplot2
   - naomi
   - naomi.utils
-  - parallel
-  - rdhs
   - readr
   - sf
   - spud
-  - survey
-  - tidyr
+  - stringr
+
+global_resources:
+  resources/MICS_indicators.csv: MICS_indicators.csv
 
 depends:
   tgo_data_areas:

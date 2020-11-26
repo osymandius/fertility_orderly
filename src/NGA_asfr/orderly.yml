@@ -1,23 +1,28 @@
-script: NGA_asfr.R
+script: nga_asfr.R
 
 artefacts:
   - data:
-      description: NGA ASFR dataset
+      description: nga ASFR dataset
       filenames:
-        - NGA_dhs_asfr.csv
-        - NGA_mics_asfr.csv
+        - nga_dhs_asfr.csv
+        - nga_mics_asfr.csv
+        - nga_asfr.csv
 
 packages:
   - demogsurv
   - dplyr
   - rdhs
-  - pointr
   - countrycode
   - dfertility
 
 depends:
-  data-survey:
+  nga_survey:
     id: latest
-      use:
-        depends/NGA_dhs_survey.csv: NGA_dhs_survey.csv
-        depends/NGA_mics_survey.csv: NGA_mics_survey.csv
+    use:
+      depends/nga_dhs_clusters.csv: nga_dhs_clusters.csv
+      depends/nga_mics_women.csv: nga_mics_women.csv
+      depends/nga_mics_births_to_women.csv: nga_mics_births_to_women.csv
+  nga_data_areas:
+    id: latest
+    use:
+      depends/nga_areas.geojson: nga_areas.geojson

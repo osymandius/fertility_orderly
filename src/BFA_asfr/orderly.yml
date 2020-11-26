@@ -1,23 +1,28 @@
-script: BFA_asfr.R
+script: bfa_asfr.R
 
 artefacts:
   - data:
-      description: BFA ASFR dataset
+      description: bfa ASFR dataset
       filenames:
-        - BFA_dhs_asfr.csv
-        - BFA_mics_asfr.csv
+        - bfa_dhs_asfr.csv
+        - bfa_mics_asfr.csv
+        - bfa_asfr.csv
 
 packages:
   - demogsurv
   - dplyr
   - rdhs
-  - pointr
   - countrycode
   - dfertility
 
 depends:
-  data-survey:
+  bfa_survey:
     id: latest
-      use:
-        depends/BFA_dhs_survey.csv: BFA_dhs_survey.csv
-        depends/BFA_mics_survey.csv: BFA_mics_survey.csv
+    use:
+      depends/bfa_dhs_clusters.csv: bfa_dhs_clusters.csv
+      depends/bfa_mics_women.csv: bfa_mics_women.csv
+      depends/bfa_mics_births_to_women.csv: bfa_mics_births_to_women.csv
+  bfa_data_areas:
+    id: latest
+    use:
+      depends/bfa_areas.geojson: bfa_areas.geojson

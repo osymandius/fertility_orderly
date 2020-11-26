@@ -1,23 +1,28 @@
-script: CIV_asfr.R
+script: civ_asfr.R
 
 artefacts:
   - data:
-      description: CIV ASFR dataset
+      description: civ ASFR dataset
       filenames:
-        - CIV_dhs_asfr.csv
-        - CIV_mics_asfr.csv
+        - civ_dhs_asfr.csv
+        - civ_mics_asfr.csv
+        - civ_asfr.csv
 
 packages:
   - demogsurv
   - dplyr
   - rdhs
-  - pointr
   - countrycode
   - dfertility
 
 depends:
-  data-survey:
+  civ_survey:
     id: latest
-      use:
-        depends/CIV_dhs_survey.csv: CIV_dhs_survey.csv
-        depends/CIV_mics_survey.csv: CIV_mics_survey.csv
+    use:
+      depends/civ_dhs_clusters.csv: civ_dhs_clusters.csv
+      depends/civ_mics_women.csv: civ_mics_women.csv
+      depends/civ_mics_births_to_women.csv: civ_mics_births_to_women.csv
+  civ_data_areas:
+    id: latest
+    use:
+      depends/civ_areas.geojson: civ_areas.geojson

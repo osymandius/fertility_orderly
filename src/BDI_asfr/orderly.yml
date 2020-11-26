@@ -1,23 +1,28 @@
-script: BDI_asfr.R
+script: bdi_asfr.R
 
 artefacts:
   - data:
-      description: BDI ASFR dataset
+      description: bdi ASFR dataset
       filenames:
-        - BDI_dhs_asfr.csv
-        - BDI_mics_asfr.csv
+        - bdi_dhs_asfr.csv
+        - bdi_mics_asfr.csv
+        - bdi_asfr.csv
 
 packages:
   - demogsurv
   - dplyr
   - rdhs
-  - pointr
   - countrycode
   - dfertility
 
 depends:
-  data-survey:
+  bdi_survey:
     id: latest
-      use:
-        depends/BDI_dhs_survey.csv: BDI_dhs_survey.csv
-        depends/BDI_mics_survey.csv: BDI_mics_survey.csv
+    use:
+      depends/bdi_dhs_clusters.csv: bdi_dhs_clusters.csv
+      depends/bdi_mics_women.csv: bdi_mics_women.csv
+      depends/bdi_mics_births_to_women.csv: bdi_mics_births_to_women.csv
+  bdi_data_areas:
+    id: latest
+    use:
+      depends/bdi_areas.geojson: bdi_areas.geojson

@@ -1,23 +1,28 @@
-script: TGO_asfr.R
+script: tgo_asfr.R
 
 artefacts:
   - data:
-      description: TGO ASFR dataset
+      description: tgo ASFR dataset
       filenames:
-        - TGO_dhs_asfr.csv
-        - TGO_mics_asfr.csv
+        - tgo_dhs_asfr.csv
+        - tgo_mics_asfr.csv
+        - tgo_asfr.csv
 
 packages:
   - demogsurv
   - dplyr
   - rdhs
-  - pointr
   - countrycode
   - dfertility
 
 depends:
-  data-survey:
+  tgo_survey:
     id: latest
-      use:
-        depends/TGO_dhs_survey.csv: TGO_dhs_survey.csv
-        depends/TGO_mics_survey.csv: TGO_mics_survey.csv
+    use:
+      depends/tgo_dhs_clusters.csv: tgo_dhs_clusters.csv
+      depends/tgo_mics_women.csv: tgo_mics_women.csv
+      depends/tgo_mics_births_to_women.csv: tgo_mics_births_to_women.csv
+  tgo_data_areas:
+    id: latest
+    use:
+      depends/tgo_areas.geojson: tgo_areas.geojson

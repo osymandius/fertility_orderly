@@ -16,19 +16,14 @@ artefacts:
 packages:
   - dplyr
   - dfertility
-  - forcats
   - haven
   - ggplot2
   - naomi
   - naomi.utils
-  - parallel
-  - rdhs
   - readr
   - sf
   - spud
-  - survey
   - stringr
-  - tidyr
 
 global_resources:
   resources/MICS_indicators.csv: MICS_indicators.csv

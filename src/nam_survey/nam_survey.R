@@ -1,9 +1,7 @@
-orderly_pull_archive("nam_data_areas")
-
 #' ISO3 country code
 iso3 <- "NAM"
 
-areas <- read_sf("depends/nam_areas.geojson")
+areas <- st_make_valid(read_sf("depends/nam_areas.geojson"))
 areas_wide <- spread_areas(areas)
 
 surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%

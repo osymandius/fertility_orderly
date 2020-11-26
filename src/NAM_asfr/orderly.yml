@@ -1,21 +1,25 @@
-script: NAM_asfr.R
+script: nam_asfr.R
 
 artefacts:
   - data:
-      description: NAM ASFR dataset
+      description: nam ASFR dataset
       filenames:
-        - NAM_dhs_asfr.csv
+        - nam_dhs_asfr.csv
 
 packages:
   - demogsurv
   - dplyr
   - rdhs
-  - pointr
   - countrycode
   - dfertility
+  - stringr
 
 depends:
-  data-survey:
+  nam_survey:
     id: latest
-      use:
-        depends/NAM_dhs_survey.csv: NAM_dhs_survey.csv
+    use:
+      depends/nam_dhs_clusters.csv: nam_dhs_clusters.csv
+  nam_data_areas:
+    id: latest
+    use:
+      depends/nam_areas.geojson: nam_areas.geojson

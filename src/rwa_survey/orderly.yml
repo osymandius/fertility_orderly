@@ -2,11 +2,14 @@ script: rwa_survey.R
 
 artefacts:
   - data:
-      description: Survey clusters dataset
+      description: survey indicator dataset
       filenames:
         - rwa_dhs_clusters.csv
+  - staticgraph:
+      description: Check DHS region cluster assignment
+      filenames:
+        - check/rwa_dhs-cluster-check.pdf
 
-displayname: Rwanda DHS survey clusters
 
 packages:
   - dplyr
@@ -16,6 +19,7 @@ packages:
   - naomi.utils
   - rdhs
   - sf
+  - readr
 
 depends:
   rwa_data_areas:

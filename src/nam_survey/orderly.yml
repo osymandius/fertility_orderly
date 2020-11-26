@@ -19,6 +19,7 @@ packages:
   - naomi.utils
   - rdhs
   - sf
+  - readr
 
 depends:
   nam_data_areas:

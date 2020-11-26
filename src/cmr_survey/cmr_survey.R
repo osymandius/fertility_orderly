@@ -1,7 +1,7 @@
 #' ISO3 country code
 iso3 <- "CMR"
 
-areas <- read_sf("~/Imperial College London/HIV Inference Group - WP - Documents/Analytical datasets/naomi-data/CMR/data/cmr_areas.geojson")
+# areas <- read_sf("~/Imperial College London/HIV Inference Group - WP - Documents/Analytical datasets/naomi-data/CMR/data/cmr_areas.geojson")
 areas <- read_sf("depends/cmr_areas.geojson")
 areas_wide <- spread_areas(areas)
 
@@ -59,3 +59,41 @@ p_coord_check
 dev.off()
 
 write_csv(survey_clusters, paste0(tolower(iso3), "_dhs_clusters.csv"))
+
+mics_indicators <- read_csv("resources/MICS_indicators.csv") %>%
+# mics_indicators <- read_csv("resources/MICS_indicators.csv") %>%
+  pivot_longer(-c(label, id, filetype), names_to = "survey_id")
+
+mics_survey_data <- create_surveys_mics(iso3, mics_indicators)
+
+fertility_mics_data <- transform_mics(mics_survey_data, mics_indicators)
+
+fertility_mics_data$hh <- fertility_mics_data$hh %>%
+  mutate(
+    mics_area_name_label = case_when(
+      
+      #' The 2000 survey groups the admin1 areas into 5 regions. When we can aggregate to any area of choice, coming back and improve this mapping
+      survey_id == "CMR2000MICS" ~ "Cameroon",
+      
+      survey_id == "CMR2006MICS" & mics_area_name_label == "Centre" ~ "Centre (sans Yaoundé)",
+      survey_id == "CMR2006MICS" & mics_area_name_label == "Extreme Nord" ~ "Extreme-Nord",
+      survey_id == "CMR2006MICS" & mics_area_name_label == "Littoral" ~ "Littoral (sans Douala)",
+      survey_id == "CMR2006MICS" & mics_area_name_label == "Nord Ouest" ~ "Nord-Ouest",
+      survey_id == "CMR2006MICS" & mics_area_name_label == "Sud Ouest" ~ "Sud-Ouest",
+      survey_id == "CMR2006MICS" & mics_area_name_label == "Yaounde" ~ "Yaoundé",
+      
+      survey_id == "CMR2014MICS" & mics_area_name_label == "Centre (Sans Yaoundã©)" ~ "Centre (sans Yaoundé)",
+      survey_id == "CMR2014MICS" & mics_area_name_label == "Littoral (Sans Douala)" ~ "Littoral (sans Douala)",
+      survey_id == "CMR2014MICS" & mics_area_name_label == "Extrãªme-Nord" ~ "Extreme-Nord",
+      survey_id == "CMR2014MICS" & mics_area_name_label == "Yaoundã©" ~ "Yaoundé",
+      
+      TRUE ~ mics_area_name_label
+    )
+  )
+
+mics_survey_areas <- join_survey_areas(fertility_mics_data, areas)
+
+asfr_input_data <- make_asfr_inputs(mics_survey_areas, mics_survey_data)
+
+write_csv(asfr_input_data$wm, paste0(tolower(iso3), "_mics_women.csv"))
+write_csv(asfr_input_data$births_to_women, paste0(tolower(iso3), "_mics_births_to_women.csv"))

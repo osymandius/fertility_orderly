@@ -1,21 +1,25 @@
-script: ETH_asfr.R
+script: eth_asfr.R
 
 artefacts:
   - data:
-      description: Ethiopia ASFR dataset
+      description: eth ASFR dataset
       filenames:
-        - ETH_dhs_asfr.csv
+        - eth_dhs_asfr.csv
 
 packages:
   - demogsurv
   - dplyr
   - rdhs
-  - pointr
   - countrycode
   - dfertility
+  - stringr
 
 depends:
-  data-survey:
+  eth_survey:
     id: latest
-      use:
-        depends/ETH_dhs_survey.csv: ETH_dhs_survey.csv
+    use:
+      depends/eth_dhs_clusters.csv: eth_dhs_clusters.csv
+  eth_data_areas:
+    id: latest
+    use:
+      depends/eth_areas.geojson: eth_areas.geojson

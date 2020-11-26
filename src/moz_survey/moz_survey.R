@@ -49,3 +49,108 @@ p_coord_check
 dev.off()
 
 write_csv(survey_clusters, paste0(tolower(iso3), "_dhs_clusters.csv"))
+
+
+mics_indicators <- read_csv("resources/MICS_indicators.csv") %>%
+  pivot_longer(-c(label, id, filetype), names_to = "survey_id")
+
+mics_survey_data <- create_surveys_mics(iso3, mics_indicators)
+
+filter_mics_moz <- function(dat, mics_indicators) {
+  
+  indicators <- filter(mics_indicators,
+                       survey_id == "MOZ2008MICS",
+                       label != "dataset name"
+  )
+  
+  wm <- dat$wm
+  colnames(wm) <- tolower(colnames(wm))
+  wm <- wm %>%
+    select(c(filter(indicators, filetype == "wm")$value), "memid")
+  colnames(wm) <- filter(indicators, filetype == "wm")$id
+  
+  bh <- dat$bh
+  colnames(bh) <- tolower(colnames(bh))
+  bh <- bh %>%
+    select(filter(indicators, filetype == "bh")$value)
+  colnames(bh) <- filter(indicators, filetype == "bh")$id
+  
+  
+  hh <- dat$hh
+  colnames(hh) <- tolower(colnames(hh))
+  hh <- hh %>%
+    select(filter(indicators, filetype == "hh")$value)
+  colnames(hh) <- filter(indicators, filetype == "hh")$id
+  
+  df <- list()
+  df$wm <- wm %>%
+    mutate(survey_id = "MOZ2008MICS") %>%
+    filter(!is.na(wdob), !is.na(cluster), !is.na(hh_number), !is.na(line_number), !is.na(doi)) %>%
+    arrange(cluster, hh_number, line_number) %>%
+    mutate(unique_id = group_indices(., cluster, hh_number, line_number))
+  
+  df$bh <- bh %>%
+    mutate(survey_id = "MOZ2008MICS")
+  
+  df$hh <- hh %>%
+    mutate(survey_id = "MOZ2008MICS",
+           area_level = as.numeric(filter(indicators, id == "mics_area_level")$value)
+    )
+  
+  return(df)
+  
+  
+}
+
+mics_dat <- filter_mics_moz(mics_survey_data[[1]], mics_indicators)
+
+wm <- mics_dat %>%
+  lapply("[[", "wm") %>%
+  bind_rows(.id = "survey_id")
+
+hh <- mics_dat %>%
+  lapply("[[", "hh") %>%
+  lapply(function(x) {
+    x %>%
+      left_join(data.frame(mics_area_name = attr(x$mics_area_name, "labels"),
+                           mics_area_name_label = str_to_title(
+                             names(attr(x$mics_area_name, "labels")))
+      )
+      ) %>%
+      select(-mics_area_name)
+    
+  }) %>%
+  bind_rows(.id = "survey_id")
+
+bh <- mics_dat %>%
+  lapply("[[", "bh") %>%
+  bind_rows(.id = "survey_id")
+
+df <- list()
+df$wm <- wm
+df$hh <- hh
+df$bh <- bh
+
+fertility_mics_data <- transform_mics(mics_survey_data, mics_indicators)
+
+fertility_mics_data$hh <- fertility_mics_data$hh %>%
+  mutate(
+    mics_area_name_label = case_when(
+      survey_id == "MOZ2008MICS" & mics_area_name_label == "Maputo Cidade" ~ "Cidade de Maputo",
+      TRUE ~ mics_area_name_label
+    )
+  )
+ 
+mics_survey_areas <- join_survey_areas(fertility_mics_data, areas)
+
+wm <- mics_survey_areas$wm %>%
+  left_join(mics_survey_areas$hh %>% select(survey_id, cluster, hh_number, area_id))
+
+births_to_women <- mics_survey_areas$wm %>%
+  select(survey_id, cluster, hh_number, line_number, unique_id) %>%
+  left_join(mics_survey_areas$bh %>% select(survey_id, cluster, hh_number, line_number, cdob)) %>%
+  select(survey_id, unique_id, cdob) %>%
+  filter(!is.na(cdob))
+
+write_csv(wm, paste0(tolower(iso3), "_mics_women.csv"))
+write_csv(births_to_women, paste0(tolower(iso3), "_mics_births_to_women.csv"))
