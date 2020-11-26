@@ -137,7 +137,7 @@ tmb_results <- dfertility::tmb_outputs(fit, mf, areas)
 
 write_csv(tmb_results, paste0(tolower(iso3), "_fr.csv"))
 
-fr_plot <- read.csv("depends/nam_fr_plot.csv")
+fr_plot <- read.csv(paste0("depends/", tolower(iso3), "_fr_plot.csv"))
 
 fr_plot <- fr_plot %>%
   left_join(areas %>% st_drop_geometry() %>% select(area_id, area_name))
