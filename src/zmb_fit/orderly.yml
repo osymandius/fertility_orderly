@@ -37,5 +37,6 @@ depends:
   zmb_asfr:
     id: latest
     use:
+      depends/zmb_fr_plot.csv: zmb_fr_plot.csv
       depends/zmb_dhs_asfr.csv: zmb_dhs_asfr.csv
 

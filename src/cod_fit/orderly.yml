@@ -37,6 +37,7 @@ depends:
   cod_asfr:
     id: latest
     use:
+      depends/cod_fr_plot.csv: cod_fr_plot.csv
       depends/cod_dhs_asfr.csv: cod_dhs_asfr.csv
       depends/cod_mics_asfr.csv: cod_mics_asfr.csv
 

@@ -37,5 +37,6 @@ depends:
   tza_asfr:
     id: latest
     use:
+      depends/tza_fr_plot.csv: tza_fr_plot.csv
       depends/tza_dhs_asfr.csv: tza_dhs_asfr.csv
 

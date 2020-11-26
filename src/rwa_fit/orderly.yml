@@ -37,5 +37,6 @@ depends:
   rwa_asfr:
     id: latest
     use:
+      depends/rwa_fr_plot.csv: rwa_fr_plot.csv
       depends/rwa_dhs_asfr.csv: rwa_dhs_asfr.csv
 

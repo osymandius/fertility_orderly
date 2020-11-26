@@ -37,6 +37,7 @@ depends:
   zwe_asfr:
     id: latest
     use:
+      depends/zwe_fr_plot.csv: zwe_fr_plot.csv
       depends/zwe_dhs_asfr.csv: zwe_dhs_asfr.csv
       depends/zwe_mics_asfr.csv: zwe_mics_asfr.csv
 

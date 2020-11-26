@@ -37,5 +37,6 @@ depends:
   uga_asfr:
     id: latest
     use:
+      depends/uga_fr_plot.csv: uga_fr_plot.csv
       depends/uga_dhs_asfr.csv: uga_dhs_asfr.csv
 

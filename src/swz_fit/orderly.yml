@@ -37,6 +37,7 @@ depends:
   swz_asfr:
     id: latest
     use:
+      depends/swz_fr_plot.csv: swz_fr_plot.csv
       depends/swz_dhs_asfr.csv: swz_dhs_asfr.csv
       depends/swz_mics_asfr.csv: swz_mics_asfr.csv
 

@@ -37,5 +37,6 @@ depends:
   eth_asfr:
     id: latest
     use:
+      depends/eth_fr_plot.csv: eth_fr_plot.csv
       depends/eth_dhs_asfr.csv: eth_dhs_asfr.csv
 

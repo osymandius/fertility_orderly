@@ -37,6 +37,7 @@ depends:
   tgo_asfr:
     id: latest
     use:
+      depends/tgo_fr_plot.csv: tgo_fr_plot.csv
       depends/tgo_dhs_asfr.csv: tgo_dhs_asfr.csv
       depends/tgo_mics_asfr.csv: tgo_mics_asfr.csv
 
