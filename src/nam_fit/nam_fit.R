@@ -43,7 +43,14 @@ tmb_int$data <- list(M_obs = mf$district$M_obs,
                      A_tfr_out = mf$out$A_tfr_out,
                      mics_toggle = mf$mics_toggle,
                      out_toggle = mf$out_toggle,
-                     eth_toggle = 0
+                     eth_toggle = 0,
+                     X_spike_2000_dhs = model.matrix(~0 + spike_2000, mf$district$obs %>% filter(ais_dummy==0)),
+                     X_spike_1999_dhs = model.matrix(~0 + spike_1999, mf$district$obs %>% filter(ais_dummy==0)),
+                     X_spike_2001_dhs = model.matrix(~0 + spike_2001, mf$district$obs %>% filter(ais_dummy==0)),
+                     
+                     X_spike_2000_ais = model.matrix(~0 + spike_2000, mf$district$obs %>% filter(ais_dummy == 1)),
+                     X_spike_1999_ais = model.matrix(~0 + spike_1999, mf$district$obs %>% filter(ais_dummy == 1)),
+                     X_spike_2001_ais = model.matrix(~0 + spike_2001, mf$district$obs %>% filter(ais_dummy == 1))
 )
 
 tmb_int$par <- list(
@@ -91,7 +98,20 @@ tmb_int$par <- list(
   lag_logit_eta3_phi_age = 3.658756756
 )
 
-tmb_int$random <- c("beta_0", "u_spatial_str", "u_age", "u_period", "beta_tips_dummy", "u_tips", "eta1", "eta2", "eta3", "omega1", "omega2")
+tmb_int$random <- c("beta_0",
+                    "u_spatial_str",
+                    "u_age",
+                    "u_period",
+                    "beta_tips_dummy",
+                    "u_tips",
+                    "beta_spike_2000",
+                    "beta_spike_1999",
+                    "beta_spike_2001",
+                    "omega1",
+                    "omega2",
+                    "eta1",
+                    "eta2",
+                    "eta3")
 
 if(mf$mics_toggle) {
   tmb_int$data <- c(tmb_int$data, 
@@ -100,7 +120,11 @@ if(mf$mics_toggle) {
                     "R_tips_mics" = mf$R$R_tips_mics,
                     "births_obs_mics" = list(mf$mics$obs$births),
                     "log_offset_mics" = list(log(mf$mics$obs$pys)),
-                    "A_mics" = mf$mics$A_mics)
+                    "A_mics" = mf$mics$A_mics,
+                    "X_spike_2000_mics" = model.matrix(~0 + spike_2000, mf$mics$obs),
+                    "X_spike_1999_mics" = model.matrix(~0 + spike_1999, mf$mics$obs),
+                    "X_spike_2001_mics" = model.matrix(~0 + spike_2001, mf$mics$obs)
+                    )
   tmb_int$par <- c(tmb_int$par,
                    "u_tips_mics" = list(rep(0, ncol(mf$Z$Z_tips_mics)))
   )
@@ -196,7 +220,18 @@ tfr_plot <- tmb_results %>%
       text = element_text(size=14)
     )
 
+district_tfr <- tmb_results %>%
+  filter(area_level == 2, variable == "tfr") %>%
+  ggplot(aes(x=period, y=median)) +
+  geom_line() +
+  geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
+  facet_wrap(~area_name, ncol=8) +
+  theme_minimal() +
+  labs(y="TFR", x=element_blank(), title=paste(iso3, "| District TFR"))
+
 dir.create("check")
 pdf(paste0("check/", tolower(iso3), "_tfr_admin1.pdf"), h = 12, w = 20)
 tfr_plot
+pdf(paste0("check/", tolower(iso3), "_tfr_district.pdf"), h = 12, w = 20)
+district_tfr
 dev.off()

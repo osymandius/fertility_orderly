@@ -134,6 +134,10 @@ mics_asfr <- Map(calc_asfr, mics_wm_asfr,
          iso3 = iso3
   )
 
+#' MICS surveys in West Africa around 2005 only recorded up to 5 years preceding survey
+mics_asfr <- mics_asfr %>%
+  filter(!(survey_id == "BFA2006MICS" & period <= 2001))
+
 # For plotting:
 mics_asfr_plot <- Map(calc_asfr, mics_wm_asfr,
                       by = list(~area_id + survey_id),
@@ -159,6 +163,9 @@ mics_asfr_plot <- Map(calc_asfr, mics_wm_asfr,
          iso3 = iso3,
          variable = "asfr"
   )
+
+mics_asfr_plot <- mics_asfr_plot %>%
+  filter(!(survey_id == "BFA2006MICS" & period <= 2001))
 
 mics_wm_tfr <- mics_wm_asfr %>%
   bind_rows %>%
@@ -187,6 +194,9 @@ mics_tfr <- Map(calc_tfr, mics_wm_tfr,
   mutate(iso3 = iso3,
          survtype = "MICS",
          variable = "tfr")
+
+mics_tfr <- mics_tfr %>%
+  filter(!(survey_id == "BFA2006MICS" & period <= 2001))
 
 write_csv(mics_asfr, paste0(tolower(iso3), "_mics_asfr.csv"))
 

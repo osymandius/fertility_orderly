@@ -107,7 +107,11 @@ tmb_int$random <- c("beta_0", "u_spatial_str", "u_age", "u_period", "beta_tips_d
 #                     "R_tips_mics" = mf$R$R_tips_mics,
 #                     "log_offset_mics" = log(filter(mf$observations$obs, mics_dummy == 1)$pys),
 #                     "births_obs_mics" = filter(mf$observations$obs, mics_dummy==1)$births,
-#                     "A_mics" = mf$mics$A_mics)
+#                     "A_mics" = mf$mics$A_mics,
+                    "X_spike_2000_mics" = model.matrix(~0 + spike_2000, mf$mics$obs),
+                    "X_spike_1999_mics" = model.matrix(~0 + spike_1999, mf$mics$obs),
+                    "X_spike_2001_mics" = model.matrix(~0 + spike_2001, mf$mics$obs)
+                    )
 #   tmb_int$par <- c(tmb_int$par,
 #                    "u_tips_mics" = list(rep(0, ncol(mf$Z$Z_tips_mics)))
 #   )
