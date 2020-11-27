@@ -41,7 +41,8 @@ tmb_int$data <- list(M_obs = mf$district$M_obs,
                      A_asfr_out = mf$out$A_asfr_out,
                      A_tfr_out = mf$out$A_tfr_out,
                      mics_toggle = mf$mics_toggle,
-                     out_toggle = mf$out_toggle
+                     out_toggle = mf$out_toggle,
+                     eth_toggle = 0
 )
 
 tmb_int$par <- list(
