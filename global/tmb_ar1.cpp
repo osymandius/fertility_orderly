@@ -166,21 +166,21 @@ Type objective_function<Type>::operator() ()
   // nll -= Type(-0.5) * (u_period * (R_period * u_period)).sum();
   // nll -= dnorm(u_period.sum(), Type(0), Type(0.01) * u_period.size(), true);
 
-  PARAMETER(lag_logit_phi_period);
+  // PARAMETER(lag_logit_phi_period);
   
-  nll -= dnorm(lag_logit_phi_period, Type(0), Type(sqrt(1/0.15)), true);
-  Type phi_period = 2*exp(lag_logit_phi_period)/(1+exp(lag_logit_phi_period))-1;
+  // nll -= dnorm(lag_logit_phi_period, Type(0), Type(sqrt(1/0.15)), true);
+  // Type phi_period = 2*exp(lag_logit_phi_period)/(1+exp(lag_logit_phi_period))-1;
   
-  nll += AR1(Type(phi_period))(u_period);
+  // nll += AR1(Type(phi_period))(u_period);
 
-  //   PARAMETER_VECTOR(lag_logit_ar2_phi_period);
+    PARAMETER_VECTOR(lag_logit_ar2_phi_period);
 
-  // nll -= dnorm(lag_logit_ar2_phi_period, Type(0), Type(sqrt(1/0.15)), true).sum();
-  // vector<Type> ar2_phi_period = 2*exp(lag_logit_ar2_phi_period)/(1+exp(lag_logit_ar2_phi_period)) -1;
+  nll -= dnorm(lag_logit_ar2_phi_period, Type(0), Type(sqrt(1/0.15)), true).sum();
+  vector<Type> ar2_phi_period = 2*exp(lag_logit_ar2_phi_period)/(1+exp(lag_logit_ar2_phi_period)) -1;
 
-  // ARk_t<Type> ar2_period(ar2_phi_period);
+  ARk_t<Type> ar2_period(ar2_phi_period);
 
-  // nll += ar2_period(u_period);
+  nll += ar2_period(u_period);
 
   ///
 

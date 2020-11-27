@@ -80,6 +80,7 @@ tmb_int$par <- list(
   
   u_period = rep(0, ncol(mf$Z$Z_period)),
   log_prec_rw_period = 0,
+lag_logit_phi_period = 0,
   
   u_spatial_str = rep(0, ncol(mf$Z$Z_spatial)),
   log_prec_spatial = 0

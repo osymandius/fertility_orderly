@@ -4,10 +4,11 @@ population <- read.csv(paste0("depends/", tolower(iso3), "_population_gpw.csv"))
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
 asfr <- read.csv(paste0("depends/", tolower(iso3), "_dhs_asfr.csv"))
 
+# debugonce(make_model_frames)
 mf <- dfertility::make_model_frames(iso3, population, asfr, mics_asfr=NULL, areas, model_level =2, project=2020)
 
-TMB::compile("resources/tmb_regular.cpp")               # Compile the C++ file
-dyn.load(dynlib("resources/tmb_regular"))
+TMB::compile("global/tmb_ar1.cpp")               # Compile the C++ file
+dyn.load(dynlib("global/tmb_ar1"))
 
 tmb_int <- list()
 
@@ -51,40 +52,43 @@ tmb_int$par <- list(
   beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
   # beta_urban_dummy = rep(0, ncol(X_urban_dummy)),
   u_tips = rep(0, ncol(mf$Z$Z_tips)),
-  log_prec_rw_tips = 0,
+  log_prec_rw_tips = 5.952751057,
   
   u_age = rep(0, ncol(mf$Z$Z_age)),
-  log_prec_rw_age = 0,
+  log_prec_rw_age = 1.200289582,
   
   # u_country = rep(0, ncol(mf$Z$Z_country)),
   # log_prec_country = 0,
   
   omega1 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_age))),
-  log_prec_omega1 = 0,
-  lag_logit_omega1_phi_age = 0,
+  log_prec_omega1 = 9.921401819,
+  lag_logit_omega1_phi_age = 0.125913846,
   
   omega2 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_period))),
-  log_prec_omega2 = 0,
-  lag_logit_omega2_phi_period = 0,
+  log_prec_omega2 = 7.406561742,
+  lag_logit_omega2_phi_period = -0.983030653,
   
   u_period = rep(0, ncol(mf$Z$Z_period)),
+  # log_prec_rw_period = 5.950742385,
   log_prec_rw_period = 0,
+  lag_logit_phi_period = 0,
+  lag_logit_ar2_phi_period = c(0,0),
   
   u_spatial_str = rep(0, ncol(mf$Z$Z_spatial)),
-  log_prec_spatial = 0,
+  log_prec_spatial = 9.904655446,
   
   eta1 = array(0, c(ncol(mf$Z$Z_country), ncol(mf$Z$Z_period), ncol(mf$Z$Z_age))),
-  log_prec_eta1 = 0,
-  lag_logit_eta1_phi_age = 0,
-  lag_logit_eta1_phi_period = 0,
+  log_prec_eta1 = 2.655949618,
+  lag_logit_eta1_phi_age = 2.531602079,
+  lag_logit_eta1_phi_period = 4.714228565,
   #
   eta2 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_period))),
-  log_prec_eta2 = 0,
-  lag_logit_eta2_phi_period = 0,
+  log_prec_eta2 = 6.932968652,
+  lag_logit_eta2_phi_period = -1.850375768,
   #
   eta3 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_age))),
-  log_prec_eta3 = 0,
-  lag_logit_eta3_phi_age = 0
+  log_prec_eta3 = 2.475220973,
+  lag_logit_eta3_phi_age = 3.658756756
 )
 
 tmb_int$random <- c("beta_0", "u_spatial_str", "u_age", "u_period", "beta_tips_dummy", "u_tips", "eta1", "eta2", "eta3", "omega1", "omega2")
@@ -110,8 +114,25 @@ if(mf$mics_toggle) {
 
 f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
                                 parameters = tmb_int$par,
-                                DLL = "tmb_regular",
+                                DLL = "tmb_ar1",
                                 silent=0,
+                                # map = list(
+                                #   log_prec_rw_tips = factor(NA),
+                                #   log_prec_omega1 = factor(NA),
+                                #   lag_logit_omega1_phi_age = factor(NA),
+                                #   log_prec_omega2 = factor(NA),
+                                #   lag_logit_omega2_phi_period = factor(NA),
+                                #   log_prec_spatial = factor(NA),
+                                #   log_prec_eta1 = factor(NA),
+                                #   lag_logit_eta1_phi_age = factor(NA),
+                                #   lag_logit_eta1_phi_period = factor(NA),
+                                #   log_prec_eta2 = factor(NA),
+                                #   lag_logit_eta2_phi_period = factor(NA),
+                                #   log_prec_eta3 = factor(NA),
+                                #   lag_logit_eta3_phi_age = factor(NA),
+                                #   log_prec_rw_age = factor(NA),
+                                #   log_prec_rw_period = factor(NA)
+                                # ),
                                 checkParameterOrder=FALSE)
 })
 
@@ -119,8 +140,25 @@ parallel::mccollect(f)
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                   parameters = tmb_int$par,
-                  DLL = "tmb_regular",
+                  DLL = "tmb_ar1",
                   random = tmb_int$random,
+                  # map = list(
+                  #   log_prec_rw_tips = factor(NA),
+                  #   log_prec_omega1 = factor(NA),
+                  #   lag_logit_omega1_phi_age = factor(NA),
+                  #   log_prec_omega2 = factor(NA),
+                  #   lag_logit_omega2_phi_period = factor(NA),
+                  #   # log_prec_spatial = factor(NA),
+                  #   # log_prec_eta1 = factor(NA),
+                  #   # lag_logit_eta1_phi_age = factor(NA),
+                  #   # lag_logit_eta1_phi_period = factor(NA),
+                  #   # log_prec_eta2 = factor(NA),
+                  #   # lag_logit_eta2_phi_period = factor(NA),
+                  #   # log_prec_eta3 = factor(NA),
+                  #   # lag_logit_eta3_phi_age = factor(NA),
+                  #   log_prec_rw_age = factor(NA),
+                  #   log_prec_rw_period = factor(NA)
+                  # ),
                   hessian = FALSE)
 
 f <- stats::nlminb(obj$par, obj$fn, obj$gr)
@@ -131,7 +169,9 @@ fit <- c(f, obj = list(obj))
 # fit$sdreport <- sdreport(fit$obj, fit$par)
 
 class(fit) <- "naomi_fit"  # this is hacky...
-fit <- naomi::sample_tmb(fit, random_only=TRUE)
+fit <- naomi::sample_tmb(fit, random_only=FALSE)
+
+fit$sdreport <- sdreport(fit$obj)
 
 tmb_results <- dfertility::tmb_outputs(fit, mf, areas) 
 
