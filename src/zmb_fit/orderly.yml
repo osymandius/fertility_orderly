@@ -9,6 +9,7 @@ artefacts:
       description: Validate admin-1 TFRs
       filenames:
         - check/zmb_tfr_admin1.pdf
+        - check/zmb_tfr_district.pdf
 
 packages:
   - dplyr

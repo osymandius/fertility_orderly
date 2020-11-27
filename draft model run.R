@@ -235,7 +235,18 @@ tfr_plot <- tmb_results %>%
       text = element_text(size=14)
     )
 
-dir.create("check")
+dir.create("~/Downloads/check2")
 pdf(paste0("check/", tolower(iso3), "_tfr_admin1.pdf"), h = 12, w = 20)
 tfr_plot
 dev.off()
+
+district_tfr <- tmb_results %>%
+  filter(area_level == 2, variable == "tfr") %>%
+  ggplot(aes(x=period, y=median)) +
+  geom_line() +
+  geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
+  facet_wrap(~area_name, ncol=8) +
+  theme_minimal() +
+  labs(y="TFR", x=element_blank(), title=paste(iso3, "| District TFR"))
+
+pdf(paste0("~/Downloads/check2/thing.pdf"), h = 10, w = 20)

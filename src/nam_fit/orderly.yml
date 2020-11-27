@@ -9,6 +9,7 @@ artefacts:
       description: Validate admin-1 TFRs
       filenames:
         - check/nam_tfr_admin1.pdf
+        - check/nam_tfr_district.pdf
 
 
 packages:
