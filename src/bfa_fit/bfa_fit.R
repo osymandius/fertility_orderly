@@ -124,9 +124,9 @@ if(mf$mics_toggle) {
                     "births_obs_mics" = list(mf$mics$obs$births),
                     "log_offset_mics" = list(log(mf$mics$obs$pys)),
                     "A_mics" = mf$mics$A_mics,
-                    "X_spike_2000_mics" = model.matrix(~0 + spike_2000, mf$mics$obs),
-                    "X_spike_1999_mics" = model.matrix(~0 + spike_1999, mf$mics$obs),
-                    "X_spike_2001_mics" = model.matrix(~0 + spike_2001, mf$mics$obs)
+                    "X_spike_2000_mics" = list(model.matrix(~0 + spike_2000, mf$mics$obs)),
+                    "X_spike_1999_mics" = list(model.matrix(~0 + spike_1999, mf$mics$obs)),
+                    "X_spike_2001_mics" = list(model.matrix(~0 + spike_2001, mf$mics$obs))
                     )
   tmb_int$par <- c(tmb_int$par,
                    "u_tips_mics" = list(rep(0, ncol(mf$Z$Z_tips_mics)))
