@@ -7,8 +7,8 @@ mics_asfr <- read.csv(paste0("depends/", tolower(iso3), "_mics_asfr.csv"))
 
 mf <- dfertility::make_model_frames(iso3, population, asfr, mics_asfr, areas, model_level =2, project=2020)
 
-TMB::compile("resources/tmb_regular.cpp")               # Compile the C++ file
-dyn.load(dynlib("resources/tmb_regular"))
+# TMB::compile("resources/tmb_regular.cpp")               # Compile the C++ file
+# dyn.load(dynlib("resources/tmb_regular"))
 
 tmb_int <- list()
 
@@ -71,6 +71,7 @@ tmb_int$par <- list(
   u_period = rep(0, ncol(mf$Z$Z_period)),
   log_prec_rw_period = 0,
 lag_logit_phi_period = 0,
+# lag_logit_ar2_phi_period = c(0,0),
   
   u_spatial_str = rep(0, ncol(mf$Z$Z_spatial)),
   log_prec_spatial = 0,
@@ -110,18 +111,18 @@ if(mf$mics_toggle) {
 #   )
 # }
 
-f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
-                                parameters = tmb_int$par,
-                                DLL = "tmb_regular",
-                                silent=0,
-                                checkParameterOrder=FALSE)
-})
-
-parallel::mccollect(f)
+# f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
+#                                parameters = tmb_int$par,
+#                                DLL = "dfertility",
+#                                silent=0,
+#                                checkParameterOrder=FALSE)
+# })
+#
+# parallel::mccollect(f)
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                   parameters = tmb_int$par,
-                  DLL = "tmb_regular",
+                  DLL = "dfertility",
                   random = tmb_int$random,
                   hessian = FALSE)
 
