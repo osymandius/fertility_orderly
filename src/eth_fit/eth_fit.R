@@ -182,6 +182,7 @@ district_tfr <- tmb_results %>%
 dir.create("check")
 pdf(paste0("check/", tolower(iso3), "_tfr_admin1.pdf"), h = 12, w = 20)
 tfr_plot
+dev.off()
 pdf(paste0("check/", tolower(iso3), "_tfr_district.pdf"), h = 12, w = 20)
 district_tfr
 dev.off()
