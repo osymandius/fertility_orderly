@@ -1,7 +1,3 @@
-orderly::orderly_pull_archive("swz_data_areas")
-
-areas <- read_sf("~/Imperial College London/HIV Inference Group - WP - Documents/Analytical datasets/naomi-data/SWZ/data/swz_areas.geojson")
-#' ISO3 country code
 iso3 <- "SWZ"
 
 areas <- read_sf("depends/swz_areas.geojson")

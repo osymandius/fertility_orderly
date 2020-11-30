@@ -24,7 +24,7 @@ packages:
   - Matrix
 
 global_resources:
-  resources/tmb_regular.cpp: tmb_regular.cpp
+  resources/tmb_nb_spike_eth.cpp: tmb_nb_spike_eth.cpp
 
 depends:
   eth_data_areas:

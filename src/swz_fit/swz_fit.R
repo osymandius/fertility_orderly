@@ -43,7 +43,15 @@ tmb_int$data <- list(M_obs = mf$district$M_obs,
                      A_tfr_out = mf$out$A_tfr_out,
                      mics_toggle = mf$mics_toggle,
                      out_toggle = mf$out_toggle,
-                     eth_toggle=0
+                     eth_toggle=0,
+                     
+                     X_spike_2000_dhs = model.matrix(~0 + spike_2000, mf$district$obs %>% filter(ais_dummy==0)),
+                     X_spike_1999_dhs = model.matrix(~0 + spike_1999, mf$district$obs %>% filter(ais_dummy==0)),
+                     X_spike_2001_dhs = model.matrix(~0 + spike_2001, mf$district$obs %>% filter(ais_dummy==0)),
+                     
+                     X_spike_2000_ais = model.matrix(~0 + spike_2000, mf$district$obs %>% filter(ais_dummy == 1)),
+                     X_spike_1999_ais = model.matrix(~0 + spike_1999, mf$district$obs %>% filter(ais_dummy == 1)),
+                     X_spike_2001_ais = model.matrix(~0 + spike_2001, mf$district$obs %>% filter(ais_dummy == 1))
 )
 
 tmb_int$par <- list(

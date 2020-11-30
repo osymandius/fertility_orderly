@@ -1,17 +1,11 @@
-iso3 <- "COD"
+iso3 <- "LSO"
 
-population <- read.csv(paste0("depends/", tolower(iso3), "_population_gpw.csv"))
+population <- read.csv(paste0("depends/", tolower(iso3), "_population_census16.csv"))
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
 asfr <- read.csv(paste0("depends/", tolower(iso3), "_dhs_asfr.csv"))
 mics_asfr <- read.csv(paste0("depends/", tolower(iso3), "_mics_asfr.csv"))
 
-population <- population %>%
-  rename(age_group_label = age_group) %>%
-  left_join(get_age_groups() %>% select(age_group, age_group_label)) %>%
-  select(-age_group_label)
-
-debugonce(make_model_frames)
-mf <- dfertility::make_model_frames(iso3, population, asfr, mics_asfr, areas, model_level =3, project=2020)
+mf <- dfertility::make_model_frames(iso3, population, asfr, mics_asfr, areas, model_level =2, project=2020)
 
 # TMB::compile("resources/tmb_regular.cpp")               # Compile the C++ file
 # dyn.load(dynlib("resources/tmb_regular"))
@@ -63,8 +57,7 @@ tmb_int$par <- list(
   beta_0 = 0,
   
   beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
-  # beta_urban_dummy = rep(0, ncol(mf$Z$X_urban_dummy)),
-  
+  # beta_urban_dummy = rep(0, ncol(X_urban_dummy)),
   u_tips = rep(0, ncol(mf$Z$Z_tips)),
   log_prec_rw_tips = 0,
   
@@ -140,6 +133,11 @@ if(mf$mics_toggle) {
   )
 }
 
+# if(iso3 == "ETH") {
+#   tmb_int$par <- c(tmb_int$par,
+#                    "beta_urban_dummy" = rep(0, ncol(mf$Z$X_urban_dummy))
+#   )
+# }
 
 # f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
 #                                parameters = tmb_int$par,
@@ -176,7 +174,7 @@ fr_plot <- fr_plot %>%
   left_join(areas %>% st_drop_geometry() %>% select(area_id, area_name))
 
 tfr_plot <- tmb_results %>%
-  filter(area_level == 2, variable == "tfr") %>%
+  filter(area_level == 1, variable == "tfr") %>%
   ggplot(aes(x=period, y=median)) +
     geom_line() +
     geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
@@ -190,7 +188,7 @@ tfr_plot <- tmb_results %>%
     )
 
 district_tfr <- tmb_results %>%
-  filter(area_level == 3, variable == "tfr") %>%
+  filter(area_level == 2, variable == "tfr") %>%
   ggplot(aes(x=period, y=median)) +
   geom_line() +
   geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +

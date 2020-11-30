@@ -5,18 +5,31 @@ remote:
       url: https://imperiallondon.sharepoint.com
       site: HIVInferenceGroup-WP
       path: Shared Documents/orderly/naomi-data-orderly
-  mics:
+
+  naomi_2021:
     driver: orderly.sharepoint::orderly_remote_sharepoint
     args:
       url: https://imperiallondon.sharepoint.com
       site: HIVInferenceGroup-WP
-      path: Shared Documents/orderly/mics
+      path: Shared Documents/orderly/naomi-orderly-naomi2
+  # mics:
+  #   driver: orderly.sharepoint::orderly_remote_sharepoint
+  #   args:
+  #     url: https://imperiallondon.sharepoint.com
+  #     site: HIVInferenceGroup-WP
+  #     path: Shared Documents/orderly/mics
   fertility:
     driver: orderly.sharepoint::orderly_remote_sharepoint
     args:
       url: https://imperiallondon.sharepoint.com
       site: HIVInferenceGroup-WP
       path: Shared Documents/orderly/fertility
+  malawi:
+    driver: orderly.sharepoint::orderly_remote_sharepoint
+    args:
+      url: https://imperiallondon.sharepoint.com
+      site: HIVInferenceGroup-WP
+      path: Shared Documents/orderly/mwi-hiv-orderly
 
 global_resources:
   global

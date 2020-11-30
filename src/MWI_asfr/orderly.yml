@@ -1,11 +1,13 @@
-script: MWI_asfr.R
+script: mwi_asfr.R
 
 artefacts:
   - data:
-      description: Malawi ASFR dataset
+      description: mwi ASFR dataset
       filenames:
-        - MWI_dhs_asfr.csv
-        - MWI_mics_asfr.csv
+        - mwi_dhs_asfr.csv
+        - mwi_mics_asfr.csv
+        - mwi_asfr.csv
+        - mwi_fr_plot.csv
 
 packages:
   - demogsurv
@@ -17,13 +19,17 @@ packages:
   - sf
   - dplyr
   - rdhs
-  - pointr
   - countrycode
   - dfertility
 
 depends:
-  data-survey:
+  mwi_survey:
     id: latest
-      use:
-        depends/MWI_dhs_survey.csv: MWI_dhs_survey.csv
-        depends/MWI_mics_survey.csv: MWI_mics_survey.csv
+    use:
+      depends/mwi_dhs_clusters.csv: mwi_dhs_clusters.csv
+      depends/mwi_mics_women.csv: mwi_mics_women.csv
+      depends/mwi_mics_births_to_women.csv: mwi_mics_births_to_women.csv
+  mwi_data_areas:
+    id: latest
+    use:
+      depends/mwi_areas.geojson: mwi_areas.geojson

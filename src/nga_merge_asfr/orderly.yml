@@ -1,0 +1,37 @@
+script: nga_merge_asfr.R
+
+artefacts:
+  - data:
+      description: nga ASFR dataset
+      filenames:
+        - nga_dhs_asfr.csv
+        - nga_mics_asfr.csv
+        - nga_asfr.csv
+        - nga_fr_plot.csv
+
+packages:
+  - demogsurv
+  - tidyr
+  - haven
+  - readr
+  - stringr
+  - naomi
+  - sf
+  - dplyr
+  - rdhs
+  - countrycode
+  - dfertility
+
+depends:
+  nga_asfr:
+    id: latest
+    use:
+      depends/nga_dhs_asfr.csv: nga_dhs_asfr.csv
+      depends/nga_asfr_admin1.csv: nga_asfr_admin1.csv
+      depends/nga_tfr_admin1.csv: nga_tfr_admin1.csv
+  nga_mics_asfr:
+    id: latest
+    use:
+      depends/nga_mics_asfr.csv: nga_mics_asfr.csv
+      depends/nga_mics_asfr_admin1.csv: nga_mics_asfr_admin1.csv
+      depends/nga_mics_tfr_admin1.csv: nga_mics_tfr_admin1.csv

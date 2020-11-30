@@ -2,7 +2,7 @@
 iso3 <- "MWI"
 
 areas <- read_sf("depends/mwi_areas.geojson")
-areas <- read_sf("~/Imperial College London/HIV Inference Group - WP - Documents/Analytical datasets/naomi-data/MWI/data/mwi_areas.geojson")
+# areas <- read_sf("~/Imperial College London/HIV Inference Group - WP - Documents/Analytical datasets/naomi-data/MWI/data/mwi_areas.geojson")
 areas_wide <- spread_areas(areas)
 
 surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%

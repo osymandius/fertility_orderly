@@ -1,14 +1,12 @@
-script: nga_asfr.R
+script: nga_mics_asfr.R
 
 artefacts:
   - data:
       description: nga ASFR dataset
       filenames:
-        - nga_dhs_asfr.csv
-        # - nga_mics_asfr.csv
-        - nga_asfr_admin1.csv
-        - nga_tfr_admin1.csv
-        # - nga_fr_plot.csv
+        - nga_mics_asfr.csv
+        - nga_mics_asfr_admin1.csv
+        - nga_mics_tfr_admin1.csv
 
 packages:
   - demogsurv
@@ -27,7 +25,8 @@ depends:
   nga_survey:
     id: latest
     use:
-      depends/nga_dhs_clusters.csv: nga_dhs_clusters.csv
+      depends/nga_mics_women.csv: nga_mics_women.csv
+      depends/nga_mics_births_to_women.csv: nga_mics_births_to_women.csv
   nga_data_areas:
     id: latest
     use:

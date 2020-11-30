@@ -6,8 +6,8 @@ asfr <- read.csv(paste0("depends/", tolower(iso3), "_dhs_asfr.csv"))
 
 mf <- dfertility::make_model_frames(iso3, population, asfr, mics_asfr=NULL, areas, model_level =2, project=2020)
 
-# TMB::compile("resources/tmb_regular.cpp")               # Compile the C++ file
-# dyn.load(dynlib("resources/tmb_regular"))
+TMB::compile("resources/tmb_nb_spike_eth.cpp")               # Compile the C++ file
+dyn.load(dynlib("resources/tmb_nb_spike_eth"))
 
 tmb_int <- list()
 
@@ -102,8 +102,21 @@ lag_logit_phi_period = 0,
   lag_logit_eta3_phi_age = 0
 )
 
-tmb_int$random <- c("beta_0", "u_spatial_str", "u_age", "u_period", "beta_tips_dummy", "beta_urban_dummy", "u_tips", "eta1", "eta2", "eta3", "omega1", "omega2")
-
+tmb_int$random <- c("beta_0",
+                    "u_spatial_str",
+                    "u_age",
+                    "u_period",
+                    "beta_tips_dummy",
+                    "beta_urban_dummy",
+                    "u_tips",
+                    "beta_spike_2000",
+                    "beta_spike_1999",
+                    "beta_spike_2001",
+                    "omega1",
+                    "omega2",
+                    "eta1",
+                    "eta2",
+                    "eta3")
 if(mf$mics_toggle) {
   tmb_int$data <- c(tmb_int$data, 
                     "M_obs_mics" = mf$mics$M_obs_mics,
@@ -133,7 +146,7 @@ if(mf$mics_toggle) {
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                   parameters = tmb_int$par,
-                  DLL = "dfertility",
+                  DLL = "tmb_nb_spike_eth",
                   random = tmb_int$random,
                   hessian = FALSE)
 

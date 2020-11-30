@@ -1,17 +1,16 @@
-iso3 <- "COD"
+iso3 <- "MWI"
 
-population <- read.csv(paste0("depends/", tolower(iso3), "_population_gpw.csv"))
+population <- read.csv(paste0("depends/", tolower(iso3), "_population_census18.csv"))
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
 asfr <- read.csv(paste0("depends/", tolower(iso3), "_dhs_asfr.csv"))
 mics_asfr <- read.csv(paste0("depends/", tolower(iso3), "_mics_asfr.csv"))
 
-population <- population %>%
-  rename(age_group_label = age_group) %>%
-  left_join(get_age_groups() %>% select(age_group, age_group_label)) %>%
-  select(-age_group_label)
+# population <- population %>%
+#   rename(age_group_label = age_group) %>%
+#   left_join(get_age_groups() %>% select(age_group, age_group_label)) %>%
+#   select(-age_group_label)
 
-debugonce(make_model_frames)
-mf <- dfertility::make_model_frames(iso3, population, asfr, mics_asfr, areas, model_level =3, project=2020)
+mf <- dfertility::make_model_frames(iso3, population, asfr, mics_asfr, areas, model_level =5, project=2020)
 
 # TMB::compile("resources/tmb_regular.cpp")               # Compile the C++ file
 # dyn.load(dynlib("resources/tmb_regular"))
@@ -176,7 +175,7 @@ fr_plot <- fr_plot %>%
   left_join(areas %>% st_drop_geometry() %>% select(area_id, area_name))
 
 tfr_plot <- tmb_results %>%
-  filter(area_level == 2, variable == "tfr") %>%
+  filter(area_level == 1, variable == "tfr") %>%
   ggplot(aes(x=period, y=median)) +
     geom_line() +
     geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
@@ -190,7 +189,7 @@ tfr_plot <- tmb_results %>%
     )
 
 district_tfr <- tmb_results %>%
-  filter(area_level == 3, variable == "tfr") %>%
+  filter(area_level == 5, variable == "tfr") %>%
   ggplot(aes(x=period, y=median)) +
   geom_line() +
   geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +

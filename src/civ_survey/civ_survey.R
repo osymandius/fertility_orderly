@@ -1,4 +1,3 @@
-orderly_pull_archive("civ_data_areas")
 #' ISO3 country code
 iso3 <- "CIV"
 

@@ -28,6 +28,11 @@ names(cluster_list) <- surveys$survey_id
 ir <- get_fertility_surveys(surveys)
 names(ir) <- names(cluster_list)
 
+cols_edit <- c("v008", "v011", "b3_01", "b3_02", "b3_03", "b3_04", "b3_05", "b3_06", "b3_07", "b3_08", "b3_09", "b3_10", "b3_11", "b3_12", "b3_13", "b3_14", "b3_15", "b3_16", "b3_17", "b3_18", "b3_19", "b3_20")
+
+ir <- ir %>%
+  lapply(function(x) x %>% mutate_at(.vars = cols_edit, .funs = ~(.+92)))
+
 dat <- map_ir_to_areas(ir, cluster_list)
 
 asfr <- Map(calc_asfr, dat$ir,
@@ -41,8 +46,10 @@ asfr <- Map(calc_asfr, dat$ir,
   bind_rows %>%
   type.convert %>%
   filter(period<=survyear) %>%
-  rename(age_group = agegr) %>%
-  mutate(iso3 = iso3)
+  # rename(age_group = agegr) %>%
+  mutate(iso3 = iso3) %>%
+  left_join(get_age_groups() %>% select(age_group, age_group_label), by=c("agegr" = "age_group_label")) %>%
+  select(-agegr)
 
 write_csv(asfr, paste0(tolower(iso3), "_dhs_asfr.csv"))
 
@@ -71,9 +78,11 @@ asfr_admin1 <- Map(calc_asfr, dat_admin1$ir,
   bind_rows %>%
   type.convert %>%
   filter(period<=survyear) %>%
-  rename(age_group = agegr) %>%
+  # rename(age_group = agegr) %>%
   mutate(iso3 = iso3,
-         variable = "asfr")
+         variable = "asfr")  %>%
+  left_join(get_age_groups() %>% select(age_group, age_group_label), by=c("agegr" = "age_group_label")) %>%
+  select(-agegr)
 
 tfr_admin1 <- Map(calc_tfr, dat_admin1$ir,
                   by = list(~survey_id + survtype + survyear + area_id),
