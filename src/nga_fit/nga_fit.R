@@ -1,14 +1,19 @@
-iso3 <- "ETH"
+iso3 <- "NGA"
 
-population <- read.csv(paste0("depends/", tolower(iso3), "_population_gpw.csv"))
+population <- read.csv(paste0("depends/", tolower(iso3), "_population_grid3.csv"))
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
 asfr <- read.csv(paste0("depends/", tolower(iso3), "_dhs_asfr.csv"))
+mics_asfr <- read.csv(paste0("depends/", tolower(iso3), "_mics_asfr.csv"))
 
-# debugonce(make_model_frames)
-mf <- dfertility::make_model_frames(iso3, population, asfr, mics_asfr=NULL, areas, model_level =2, project=2020)
+# population <- population %>%
+#   rename(age_group_label = age_group) %>%
+#   left_join(get_age_groups() %>% select(age_group, age_group_label)) %>%
+#   select(-age_group_label)
 
-TMB::compile("resources/tmb_nb_spike_eth_b.cpp")               # Compile the C++ file
-dyn.load(dynlib("resources/tmb_nb_spike_eth_b"))
+mf <- dfertility::make_model_frames(iso3, population, asfr, mics_asfr, areas, model_level =3, project=2020)
+
+# TMB::compile("resources/tmb_regular.cpp")               # Compile the C++ file
+# dyn.load(dynlib("resources/tmb_regular"))
 
 tmb_int <- list()
 
@@ -43,8 +48,7 @@ tmb_int$data <- list(M_obs = mf$district$M_obs,
                      A_tfr_out = mf$out$A_tfr_out,
                      mics_toggle = mf$mics_toggle,
                      out_toggle = mf$out_toggle,
-                     eth_toggle = 1,
-
+                     eth_toggle = 0,
                      X_spike_2000_dhs = model.matrix(~0 + spike_2000, mf$district$obs %>% filter(ais_dummy==0)),
                      X_spike_1999_dhs = model.matrix(~0 + spike_1999, mf$district$obs %>% filter(ais_dummy==0)),
                      X_spike_2001_dhs = model.matrix(~0 + spike_2001, mf$district$obs %>% filter(ais_dummy==0)),
@@ -58,7 +62,7 @@ tmb_int$par <- list(
   beta_0 = 0,
   
   beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
-  beta_urban_dummy = rep(0, ncol(mf$Z$X_urban_dummy)),
+  # beta_urban_dummy = rep(0, ncol(mf$Z$X_urban_dummy)),
   
   u_tips = rep(0, ncol(mf$Z$Z_tips)),
   log_prec_rw_tips = 0,
@@ -72,7 +76,7 @@ tmb_int$par <- list(
   omega1 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_age))),
   log_prec_omega1 = 0,
   lag_logit_omega1_phi_age = 0,
-
+  
   omega2 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_period))),
   log_prec_omega2 = 0,
   lag_logit_omega2_phi_period = 0,
@@ -108,7 +112,6 @@ tmb_int$random <- c("beta_0",
                     "u_age",
                     "u_period",
                     "beta_tips_dummy",
-                    "beta_urban_dummy",
                     "u_tips",
                     "beta_spike_2000",
                     "beta_spike_1999",
@@ -118,6 +121,7 @@ tmb_int$random <- c("beta_0",
                     "eta1",
                     "eta2",
                     "eta3")
+
 if(mf$mics_toggle) {
   tmb_int$data <- c(tmb_int$data, 
                     "M_obs_mics" = mf$mics$M_obs_mics,
@@ -147,7 +151,7 @@ if(mf$mics_toggle) {
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                   parameters = tmb_int$par,
-                  DLL = "tmb_nb_spike_eth_b",
+                  DLL = "dfertility",
                   random = tmb_int$random,
                   hessian = FALSE)
 
@@ -185,7 +189,7 @@ tfr_plot <- tmb_results %>%
     )
 
 district_tfr <- tmb_results %>%
-  filter(area_level == 2, variable == "tfr") %>%
+  filter(area_level == 5, variable == "tfr") %>%
   ggplot(aes(x=period, y=median)) +
   geom_line() +
   geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
