@@ -31,10 +31,10 @@ depends:
     id: latest
     use:
       depends/moz_areas.geojson: moz_areas.geojson
-  # moz_data_population:
-  #   id: latest
-  #   use:
-  #     depends/moz_population_ins.csv: moz_population_ins.csv
+  moz_data_population:
+    id: latest
+    use:
+      depends/moz_population_ins.csv: moz_population_ins.csv
   moz_asfr:
     id: latest
     use:

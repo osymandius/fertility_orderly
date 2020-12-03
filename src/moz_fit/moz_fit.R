@@ -1,7 +1,6 @@
 iso3 <- "MOZ"
 
-# population <- read.csv(paste0("depends/", tolower(iso3), "_population_knbs-census19.csv"))
-population <- read_csv("~/Imperial College London/HIV Inference Group - WP - Documents/Analytical datasets/naomi-data/MOZ/data/MOZ_population_NSO.csv")
+population <- read.csv(paste0("depends/", tolower(iso3), "_population_ins.csv"))
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
 asfr <- read.csv(paste0("depends/", tolower(iso3), "_asfr.csv"))
 

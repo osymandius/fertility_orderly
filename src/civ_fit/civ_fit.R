@@ -79,8 +79,8 @@ tmb_int$par <- list(
   u_age = rep(0, ncol(mf$Z$Z_age)),
   log_prec_rw_age = 0,
   
-  u_country = rep(0, ncol(mf$Z$Z_country)),
-  log_prec_country = 0,
+  # u_country = rep(0, ncol(mf$Z$Z_country)),
+  # log_prec_country = 0,
 
   omega1 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_age))),
   log_prec_omega1 = 0,
@@ -120,7 +120,6 @@ tmb_int$random <- c("beta_0",
                     "u_spatial_str",
                     "u_age",
                     "u_period",
-                    "u_country",
                     "beta_tips_dummy",
                     "u_tips",
                     "beta_spike_2000",
