@@ -7,13 +7,26 @@ asfr <- read.csv(paste0("depends/", tolower(iso3), "_asfr.csv"))
 asfr <- read_csv("archive/cmr_asfr/20201124-140350-53a0b873/cmr_asfr.csv")
 population <- read_csv("~/Imperial College London/HIV Inference Group - WP - Documents/Analytical datasets/naomi-data/CMR/data/cmr_population_ins.csv")
 areas <- read_sf("archive/cmr_data_areas/20201110-083355-e19453c7/cmr_areas.geojson")
+iso3 <- "CMR"
+naomi_level = 3
+project=2020
 
-areas_long <- areas %>%
-  st_drop_geometry() %>%
-  mutate(iso3 = iso3)
+asfr <- read_csv("archive/mwi_asfr/20201203-134633-90bb0868/mwi_asfr.csv")
+population <- read_csv("archive/mwi_data_population/20201125-095927-2281c97e/mwi_population_census18.csv")
+areas <- read_sf("archive/mwi_data_areas/20200929-213435-8f7790a3/mwi_areas.geojson")
+iso3 <- "MWI"
+naomi_level = 5
+project=2020
+
+asfr <- read_csv("archive/mwi_asfr/20201203-134633-90bb0868/mwi_asfr.csv")
+population <- read_csv("archive/mwi_data_population/20201125-095927-2281c97e/mwi_population_census18.csv")
+areas <- read_sf("archive/mwi_data_areas/20200929-213435-8f7790a3/mwi_areas.geojson")
+iso3 <- "MWI"
+naomi_level = 5
+project=2020
 
 debugonce(make_model_frames_dev)
-mf <- make_model_frames_dev(iso3, population, asfr, areas, naomi_level = 3, project=2020)
+mf <- make_model_frames_dev(iso3, population, asfr, areas, naomi_level = 5, project=2020)
 
 compile("global/tmb.cpp")               # Compile the C++ file
 dyn.load(dynlib("global/tmb"))
@@ -22,37 +35,57 @@ tmb_int <- list()
 
 tmb_int$data <- list(
   M_naomi_obs = mf$M_naomi_obs,
+  M_full_obs = mf$M_full_obs,
   X_tips_dummy = mf$Z$X_tips_dummy,
-  X_urban_dummy = mf$Z$X_urban_dummy,
+  # X_urban_dummy = mf$Z$X_urban_dummy,
   X_extract_dhs = mf$X_extract$X_extract_dhs,
   X_extract_ais = mf$X_extract$X_extract_ais,
   X_extract_mics = mf$X_extract$X_extract_mics,
-  Z_tips = mf$Z$Z_tips,
+  # Z_tips = mf$Z$Z_tips,
   Z_tips_dhs = mf$Z$Z_tips_dhs,
+  Z_tips_ais = mf$Z$Z_tips_ais,
   Z_age = mf$Z$Z_age,
   Z_period = mf$Z$Z_period,
   Z_spatial = mf$Z$Z_spatial,
-  Z_interaction1 = sparse.model.matrix(~0 + id.interaction1, mf$mf_model),
-  Z_interaction2 = sparse.model.matrix(~0 + id.interaction2, mf$mf_model),
-  Z_interaction3 = sparse.model.matrix(~0 + id.interaction3, mf$mf_model),
-  Z_country = mf$Z$Z_country,
-  Z_omega1 = sparse.model.matrix(~0 + id.omega1, mf$mf_model),
-  Z_omega2 = sparse.model.matrix(~0 + id.omega2, mf$mf_model),
+  # Z_interaction1 = sparse.model.matrix(~0 + id.interaction1, mf$mf_model),
+  # Z_interaction2 = sparse.model.matrix(~0 + id.interaction2, mf$mf_model),
+  # Z_interaction3 = sparse.model.matrix(~0 + id.interaction3, mf$mf_model),
+  # Z_country = mf$Z$Z_country,
+  # Z_omega1 = sparse.model.matrix(~0 + id.omega1, mf$mf_model),
+  # Z_omega2 = sparse.model.matrix(~0 + id.omega2, mf$mf_model),
   R_tips = mf$R$R_tips,
   R_age = mf$R$R_age,
   R_period = mf$R$R_period,
   R_spatial = mf$R$R_spatial,
-  R_country = mf$R$R_country,
-  rankdef_R_spatial = 1,
-  log_offset_dhs_naomi = log(filter(mf$observations$naomi_level_obs, ais_dummy ==0, mics_dummy == 0)$pys),
-  births_obs_dhs_naomi = filter(mf$observations$naomi_level_obs, ais_dummy ==0, mics_dummy==0)$births,
-  log_offset_ais_naomi = log(filter(mf$observations$naomi_level_obs, ais_dummy ==1)$pys),
-  births_obs_ais_naomi = filter(mf$observations$naomi_level_obs, ais_dummy ==1)$births,
+  # R_country = mf$R$R_country,
+  # rankdef_R_spatial = 1,
+  
+  log_offset_naomi = log(mf$observations$naomi_level_obs$pys),
+  births_obs_naomi = mf$observations$naomi_level_obs$births,
+  
+  log_offset_dhs = log(filter(mf$observations$full_obs, survtype == "DHS")$pys),
+  births_obs_dhs = filter(mf$observations$full_obs, survtype == "DHS")$births,
+  
+  log_offset_ais = log(filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS"))$pys),
+  births_obs_ais = filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS"))$births,
+  
   pop = mf$mf_model$population,
-  A_asfr_out = mf$out$A_asfr_out,
+  # A_asfr_out = mf$out$A_asfr_out,
   A_tfr_out = mf$out$A_tfr_out,
+  
+  A_full_obs = mf$observations$A_full_obs,
+  
   mics_toggle = mf$mics_toggle,
-  out_toggle = mf$out_toggle
+  
+  X_spike_2000_dhs = model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype == "DHS")),
+  X_spike_1999_dhs = model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype == "DHS")),
+  X_spike_2001_dhs = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype == "DHS")),
+  
+  X_spike_2000_ais = model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
+  X_spike_1999_ais = model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
+  X_spike_2001_ais = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS")))
+  
+  # out_toggle = mf$out_toggle
   # A_obs = mf$observations$A_obs,
 )
 
@@ -60,8 +93,8 @@ tmb_int$par <- list(
   beta_0 = 0,
   
   beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
-  # beta_urban_dummy = rep(0, ncol(X_urban_dummy)),
-  u_tips = rep(0, ncol(mf$Z$Z_tips)),
+  # # beta_urban_dummy = rep(0, ncol(X_urban_dummy)),
+  u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
   log_prec_rw_tips = 0,
   
   u_age = rep(0, ncol(mf$Z$Z_age)),
@@ -83,7 +116,12 @@ tmb_int$par <- list(
 lag_logit_phi_period = 0,
   
   u_spatial_str = rep(0, ncol(mf$Z$Z_spatial)),
-  log_prec_spatial = 0
+  log_prec_spatial = 0,
+
+  beta_spike_2000 = 0,
+  beta_spike_1999 = 0,
+  beta_spike_2001 = 0,
+  log_overdispersion = 0
   
   # eta1 = array(0, c(ncol(mf$Z$Z_country), ncol(mf$Z$Z_period), ncol(mf$Z$Z_age))),
   # log_prec_eta1 = 0,
@@ -99,32 +137,41 @@ lag_logit_phi_period = 0,
   # lag_logit_eta3_phi_age = 0
 )
 
-tmb_int$random <- c("beta_0", "u_spatial_str", "u_age", "u_period", "beta_tips_dummy", "u_tips")
-
-# if(mf$mics_toggle) {
-#   tmb_int$data <- c(tmb_int$data, 
-#                     "Z_tips_mics" = mf$Z$Z_tips_mics,
-#                     "R_tips_mics" = mf$R$R_tips_mics,
-#                     "log_offset_mics" = log(filter(mf$observations$obs, mics_dummy == 1)$pys),
-#                     "births_obs_mics" = filter(mf$observations$obs, mics_dummy==1)$births,
-#                     "A_mics" = mf$mics$A_mics,
-                    "X_spike_2000_mics" = list(model.matrix(~0 + spike_2000, mf$mics$obs)),
-                    "X_spike_1999_mics" = list(model.matrix(~0 + spike_1999, mf$mics$obs)),
-                    "X_spike_2001_mics" = list(model.matrix(~0 + spike_2001, mf$mics$obs))
+tmb_int$random <- c("beta_0",
+                    "u_spatial_str",
+                    "u_age",
+                    "u_period",
+                    "beta_tips_dummy",
+                    "u_tips",
+                    "beta_spike_2000",
+                    "beta_spike_1999",
+                    "beta_spike_2001"
                     )
-#   tmb_int$par <- c(tmb_int$par,
-#                    "u_tips_mics" = list(rep(0, ncol(mf$Z$Z_tips_mics)))
-#   )
-# }
 
-f <- mcparallel({TMB::MakeADFun(data = tmb_int$data,
+if(mf$mics_toggle) {
+  tmb_int$data <- c(tmb_int$data,
+                    "Z_tips_mics" = mf$Z$Z_tips_mics,
+                    "R_tips_mics" = mf$R$R_tips_mics,
+                    "log_offset_mics" = list(log(filter(mf$observations$full_obs, survtype == "MICS")$pys)),
+                    "births_obs_mics" = list(filter(mf$observations$full_obs, survtype == "MICS")$births),
+                    
+                    "X_spike_2000_mics" = list(model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype == "MICS"))),
+                    "X_spike_1999_mics" = list(model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype == "MICS"))),
+                    "X_spike_2001_mics" = list(model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype == "MICS")))
+)
+  tmb_int$par <- c(tmb_int$par,
+                   "u_tips_mics" = list(rep(0, ncol(mf$Z$Z_tips_mics)))
+  )
+}
+
+f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
                                 parameters = tmb_int$par,
                                 DLL = "tmb",
                                 silent=0,
                                 checkParameterOrder=FALSE)
 })
 
-mccollect(f)
+parallel::mccollect(f)
 
 obj <-  MakeADFun(data = tmb_int$data,
                   parameters = tmb_int$par,
@@ -137,12 +184,12 @@ f$par.fixed <- f$par
 f$par.full <- obj$env$last.par
 
 fit <- c(f, obj = list(obj))
-fit$sdreport <- sdreport(fit$obj, fit$par)
+# fit$sdreport <- sdreport(fit$obj, fit$par)
 
 class(fit) <- "naomi_fit"  # this is hacky...
-fit <- sample_tmb(fit, random_only=FALSE)
+fit <- naomi::sample_tmb(fit, random_only=FALSE)
 
-res <- tmb_outputs(fit, mf)
+res <- tmb_outputs(fit, mf, areas)
 
 res %>%
   filter(variable == "tfr", area_level == 1) %>%

@@ -8,7 +8,7 @@ areas_long <- areas %>% st_drop_geometry
 
 #' MOZ 2009 AIS has no complete birth history, only summary.
 clusters <- clusters %>%
-  filter(!is.na(longitude), survey_id != "MOZ2009AIS") %>%
+  filter(survey_id != "MOZ2009AIS") %>%
   mutate(DHS_survey_id = str_replace(survey_id, iso3, dhs_countries()$DHS_CountryCode[dhs_countries()$ISO3_CountryCode == iso3]))
 
 surveys <- dhs_surveys(surveyIds = unique(clusters$DHS_survey_id)) %>%
@@ -42,8 +42,10 @@ asfr <- Map(calc_asfr, dat$ir,
   bind_rows %>%
   type.convert %>%
   filter(period<=survyear) %>%
-  rename(age_group = agegr) %>%
-  mutate(iso3 = iso3)
+    # rename(age_group = agegr) %>%
+  mutate(iso3 = iso3) %>%
+  left_join(get_age_groups() %>% select(age_group, age_group_label), by=c("agegr" = "age_group_label")) %>%
+  select(-agegr)
 
 write_csv(asfr, paste0(tolower(iso3), "_dhs_asfr.csv"))
 
@@ -72,9 +74,11 @@ asfr_admin1 <- Map(calc_asfr, dat_admin1$ir,
   bind_rows %>%
   type.convert %>%
   filter(period<=survyear) %>%
-  rename(age_group = agegr) %>%
+    # rename(age_group = agegr) %>%
   mutate(iso3 = iso3,
-         variable = "asfr")
+         variable = "asfr") %>%
+  left_join(get_age_groups() %>% select(age_group, age_group_label), by=c("agegr" = "age_group_label")) %>%
+  select(-agegr)
 
 tfr_admin1 <- Map(calc_tfr, dat_admin1$ir,
                   by = list(~survey_id + survtype + survyear + area_id),
@@ -124,10 +128,12 @@ mics_asfr <- Map(calc_asfr, mics_wm_asfr,
   type.convert() %>%
   separate(col=survey_id, into=c(NA, "survyear", NA), sep=c(3,7), remove = FALSE, convert = TRUE) %>%
   filter(period <= survyear) %>%
-  rename(age_group = agegr) %>%
+  # rename(age_group = agegr) %>%
   mutate(survtype = "MICS",
          iso3 = iso3
-  )
+  )  %>%
+  left_join(get_age_groups() %>% select(age_group, age_group_label), by=c("agegr" = "age_group_label")) %>%
+  select(-agegr)
 
 # For plotting:
 mics_asfr_plot <- Map(calc_asfr, mics_wm_asfr,
@@ -149,11 +155,13 @@ mics_asfr_plot <- Map(calc_asfr, mics_wm_asfr,
   type.convert() %>%
   separate(col=survey_id, into=c(NA, "survyear", NA), sep=c(3,7), remove = FALSE, convert = TRUE) %>%
   filter(period <= survyear) %>%
-  rename(age_group = agegr) %>%
+  # rename(age_group = agegr) %>%
   mutate(survtype = "MICS",
          iso3 = iso3,
          variable = "asfr"
-  )
+  )  %>%
+  left_join(get_age_groups() %>% select(age_group, age_group_label), by=c("agegr" = "age_group_label")) %>%
+  select(-agegr)
 
 mics_wm_tfr <- mics_wm_asfr %>%
   bind_rows %>%

@@ -23,7 +23,7 @@ asfr <- Map(calc_asfr, dat$ir,
   bind_rows %>%
   type.convert %>%
   filter(period<=survyear) %>%
-  rename(age_group = agegr) %>%
+  # rename(age_group = agegr) %>%
   mutate(iso3 = "HTI") %>%
   select(-country)
 

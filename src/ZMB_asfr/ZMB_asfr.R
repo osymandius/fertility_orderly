@@ -7,7 +7,6 @@ areas_wide <- spread_areas(areas)
 areas_long <- areas %>% st_drop_geometry
 
 clusters <- clusters %>%
-  filter(!is.na(longitude)) %>%
   mutate(DHS_survey_id = str_replace(survey_id, iso3, dhs_countries()$DHS_CountryCode[dhs_countries()$ISO3_CountryCode == iso3]))
 
 surveys <- dhs_surveys(surveyIds = unique(clusters$DHS_survey_id)) %>%
@@ -40,8 +39,10 @@ asfr <- Map(calc_asfr, dat$ir,
   bind_rows %>%
   type.convert %>%
   filter(period<=survyear) %>%
-  rename(age_group = agegr) %>%
-  mutate(iso3 = iso3)
+    # rename(age_group = agegr) %>%
+  mutate(iso3 = iso3) %>%
+  left_join(get_age_groups() %>% select(age_group, age_group_label), by=c("agegr" = "age_group_label")) %>%
+  select(-agegr)
 
 write_csv(asfr, paste0(tolower(iso3), "_dhs_asfr.csv"))
 
@@ -70,9 +71,11 @@ asfr_admin1 <- Map(calc_asfr, dat_admin1$ir,
   bind_rows %>%
   type.convert %>%
   filter(period<=survyear) %>%
-  rename(age_group = agegr) %>%
+    # rename(age_group = agegr) %>%
   mutate(iso3 = iso3,
-         variable = "asfr")
+         variable = "asfr") %>%
+  left_join(get_age_groups() %>% select(age_group, age_group_label), by=c("agegr" = "age_group_label")) %>%
+  select(-agegr)
 
 # tfr_admin1 <- Map(calc_tfr, dat_admin1$ir,
 #                   by = list(~survey_id + survtype + survyear + area_id),

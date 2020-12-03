@@ -5,7 +5,7 @@ areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
 asfr <- read.csv(paste0("depends/", tolower(iso3), "_dhs_asfr.csv"))
 
 # debugonce(make_model_frames)
-mf <- dfertility::make_model_frames(iso3, population, asfr, mics_asfr=NULL, areas, model_level =2, project=2020)
+mf <- make_model_frames_dev(iso3, population, asfr,  areas, model_level =2, project=2020)
 
 TMB::compile("resources/tmb_nb_spike_eth_b.cpp")               # Compile the C++ file
 dyn.load(dynlib("resources/tmb_nb_spike_eth_b"))
