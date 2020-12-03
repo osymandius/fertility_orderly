@@ -2,10 +2,10 @@ iso3 <- "SWZ"
 
 population <- read.csv(paste0("depends/", tolower(iso3), "_world_pop_for_naomi.csv"))
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
-asfr <- read.csv(paste0("depends/", tolower(iso3), "_dhs_asfr.csv"))
-mics_asfr <- read.csv(paste0("depends/", tolower(iso3), "_mics_asfr.csv"))
+asfr <- read.csv(paste0("depends/", tolower(iso3), "_asfr.csv"))
 
-mf <- make_model_frames_dev(iso3, population, asfr,  areas, model_level =2, project=2020)
+
+mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level =2, project=2020)
 
 # TMB::compile("resources/tmb_regular.cpp")               # Compile the C++ file
 # dyn.load(dynlib("resources/tmb_regular"))

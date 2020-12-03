@@ -42,4 +42,5 @@ depends:
       depends/nga_dhs_asfr.csv: nga_dhs_asfr.csv
       depends/nga_mics_asfr.csv: nga_mics_asfr.csv
       depends/nga_fr_plot.csv: nga_fr_plot.csv
+      depends/nga_asfr.csv: nga_asfr.csv
 

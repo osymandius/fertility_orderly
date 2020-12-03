@@ -2,15 +2,15 @@ iso3 <- "NGA"
 
 population <- read.csv(paste0("depends/", tolower(iso3), "_population_grid3.csv"))
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
-asfr <- read.csv(paste0("depends/", tolower(iso3), "_dhs_asfr.csv"))
-mics_asfr <- read.csv(paste0("depends/", tolower(iso3), "_mics_asfr.csv"))
+asfr <- read.csv(paste0("depends/", tolower(iso3), "_asfr.csv"))
+
 
 # population <- population %>%
 #   rename(age_group_label = age_group) %>%
 #   left_join(get_age_groups() %>% select(age_group, age_group_label)) %>%
 #   select(-age_group_label)
 
-mf <- make_model_frames_dev(iso3, population, asfr,  areas, model_level =3, project=2020)
+mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level =3, project=2020)
 
 # TMB::compile("resources/tmb_regular.cpp")               # Compile the C++ file
 # dyn.load(dynlib("resources/tmb_regular"))

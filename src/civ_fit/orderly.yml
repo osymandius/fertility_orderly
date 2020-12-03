@@ -39,6 +39,7 @@ depends:
     id: latest
     use:
       depends/civ_fr_plot.csv: civ_fr_plot.csv
+      depends/civ_asfr.csv: civ_asfr.csv
       depends/civ_dhs_asfr.csv: civ_dhs_asfr.csv
       depends/civ_mics_asfr.csv: civ_mics_asfr.csv
 

@@ -42,4 +42,5 @@ depends:
       depends/lso_dhs_asfr.csv: lso_dhs_asfr.csv
       depends/lso_mics_asfr.csv: lso_mics_asfr.csv
       depends/lso_fr_plot.csv: lso_fr_plot.csv
+      depends/lso_asfr.csv: lso_asfr.csv
 

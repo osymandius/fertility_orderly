@@ -39,6 +39,7 @@ depends:
     id: latest
     use:
       depends/bfa_fr_plot.csv: bfa_fr_plot.csv
+      depends/bfa_asfr.csv: bfa_asfr.csv
       depends/bfa_dhs_asfr.csv: bfa_dhs_asfr.csv
       depends/bfa_mics_asfr.csv: bfa_mics_asfr.csv
 

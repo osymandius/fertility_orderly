@@ -42,4 +42,5 @@ depends:
       depends/mwi_dhs_asfr.csv: mwi_dhs_asfr.csv
       depends/mwi_mics_asfr.csv: mwi_mics_asfr.csv
       depends/mwi_fr_plot.csv: mwi_fr_plot.csv
+      depends/mwi_asfr.csv: mwi_asfr.csv
 

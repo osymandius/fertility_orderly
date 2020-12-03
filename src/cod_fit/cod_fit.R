@@ -2,12 +2,12 @@ iso3 <- "COD"
 
 population <- read.csv(paste0("depends/", tolower(iso3), "_population_gpw.csv"))
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
-asfr <- read.csv(paste0("depends/", tolower(iso3), "_dhs_asfr.csv"))
-mics_asfr <- read.csv(paste0("depends/", tolower(iso3), "_mics_asfr.csv"))
+asfr <- read.csv(paste0("depends/", tolower(iso3), "_asfr.csv"))
+
 
 
 debugonce(make_model_frames)
-mf <- make_model_frames_dev(iso3, population, asfr,  areas, model_level =3, project=2020)
+mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level =3, project=2020)
 
 # TMB::compile("resources/tmb_regular.cpp")               # Compile the C++ file
 # dyn.load(dynlib("resources/tmb_regular"))

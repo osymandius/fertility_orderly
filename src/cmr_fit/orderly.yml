@@ -41,4 +41,5 @@ depends:
       depends/cmr_fr_plot.csv: cmr_fr_plot.csv
       depends/cmr_dhs_asfr.csv: cmr_dhs_asfr.csv
       depends/cmr_mics_asfr.csv: cmr_mics_asfr.csv
+      depends/cmr_asfr.csv: cmr_asfr.csv
 

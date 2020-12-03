@@ -2,10 +2,10 @@ iso3 <- "BDI"
 
 population <- read.csv(paste0("depends/", tolower(iso3), "_population_gpw.csv"))
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
-asfr <- read.csv(paste0("depends/", tolower(iso3), "_dhs_asfr.csv"))
-mics_asfr <- read.csv(paste0("depends/", tolower(iso3), "_mics_asfr.csv"))
+asfr <- read.csv(paste0("depends/", tolower(iso3), "_asfr.csv"))
 
-mf <- make_model_frames_dev(iso3, population, asfr,  areas, model_level =2, project=2020)
+
+mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level =2, project=2020)
 
 # TMB::compile("resources/tmb_regular.cpp")               # Compile the C++ file
 # dyn.load(dynlib("resources/tmb_regular"))
@@ -79,8 +79,8 @@ tmb_int$par <- list(
   u_age = rep(0, ncol(mf$Z$Z_age)),
   log_prec_rw_age = 0,
   
-  u_country = rep(0, ncol(mf$Z$Z_country)),
-  log_prec_country = 0,
+  # u_country = rep(0, ncol(mf$Z$Z_country)),
+  # log_prec_country = 0,
 
   omega1 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_age))),
   log_prec_omega1 = 0,
@@ -120,7 +120,6 @@ tmb_int$random <- c("beta_0",
                     "u_spatial_str",
                     "u_age",
                     "u_period",
-                    "u_country",
                     "beta_tips_dummy",
                     "u_tips",
                     "beta_spike_2000",

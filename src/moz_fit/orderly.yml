@@ -41,4 +41,5 @@ depends:
       depends/moz_fr_plot.csv: moz_fr_plot.csv
       depends/moz_dhs_asfr.csv: moz_dhs_asfr.csv
       depends/moz_mics_asfr.csv: moz_mics_asfr.csv
+      depends/moz_asfr.csv: moz_asfr.csv
 

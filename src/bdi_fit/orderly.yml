@@ -40,6 +40,7 @@ depends:
     id: latest
     use:
       depends/bdi_dhs_asfr.csv: bdi_dhs_asfr.csv
+      depends/bdi_asfr.csv: bdi_asfr.csv
       depends/bdi_mics_asfr.csv: bdi_mics_asfr.csv
       depends/bdi_fr_plot.csv: bdi_fr_plot.csv
 

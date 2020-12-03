@@ -41,4 +41,5 @@ depends:
       depends/ken_fr_plot.csv: ken_fr_plot.csv
       depends/ken_dhs_asfr.csv: ken_dhs_asfr.csv
       depends/ken_mics_asfr.csv: ken_mics_asfr.csv
+      depends/ken_asfr.csv: ken_asfr.csv
 
