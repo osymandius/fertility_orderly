@@ -1,6 +1,6 @@
 iso3 <- "MOZ"
 
-population <- read.csv(paste0("depends/", tolower(iso3), "_population_ins.csv"))
+population <- read.csv(paste0("depends/", tolower(iso3), "_population_nso.csv"))
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
 asfr <- read.csv(paste0("depends/", tolower(iso3), "_asfr.csv"))
 

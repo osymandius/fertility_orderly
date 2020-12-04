@@ -1,10 +1,11 @@
-orderly_pull_archive("moz_data_areas")
+# orderly_pull_archive("moz_data_areas")
 
 #' ISO3 country code
 iso3 <- "MOZ"
 
 areas <- read_sf("depends/moz_areas.geojson")
 areas_wide <- spread_areas(areas)
+
 
 surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%
   filter(as.numeric(SurveyYear) > 1994)
@@ -36,8 +37,7 @@ survey_clusters <- survey_clusters %>%
   left_join(survey_regions %>% 
               filter(survey_id %in% c("MOZ1997DHS", "MOZ2003DHS"))) %>%
   mutate(geoloc_area_id = ifelse(is.na(geoloc_area_id) & !is.na(survey_region_area_id), survey_region_area_id, geoloc_area_id)) %>%
-  select(-c(survey_region_name, survey_region_area_id)) %>%
-  filter(geoloc_distance < 10) # Remove cluster with coordinates at ~ (lat 0,long 0)
+  select(-c(survey_region_name, survey_region_area_id)) 
 
 p_coord_check <- plot_survey_coordinate_check(survey_clusters,
                                               survey_region_boundaries,

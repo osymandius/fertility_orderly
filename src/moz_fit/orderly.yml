@@ -34,7 +34,7 @@ depends:
   moz_data_population:
     id: latest
     use:
-      depends/moz_population_ins.csv: moz_population_ins.csv
+      depends/moz_population_nso.csv: moz_population_nso.csv
   moz_asfr:
     id: latest
     use:
