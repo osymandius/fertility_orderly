@@ -6,7 +6,7 @@ asfr <- read.csv(paste0("depends/", tolower(iso3), "_asfr.csv"))
 
 
 
-debugonce(make_model_frames)
+# debugonce(make_model_frames)
 mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level =3, project=2020)
 
 # TMB::compile("resources/tmb_regular.cpp")               # Compile the C++ file
@@ -81,8 +81,8 @@ tmb_int$par <- list(
   u_age = rep(0, ncol(mf$Z$Z_age)),
   log_prec_rw_age = 0,
   
-  u_country = rep(0, ncol(mf$Z$Z_country)),
-  log_prec_country = 0,
+  # u_country = rep(0, ncol(mf$Z$Z_country)),
+  # log_prec_country = 0,
 
   omega1 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_age))),
   log_prec_omega1 = 0,
@@ -122,7 +122,6 @@ tmb_int$random <- c("beta_0",
                     "u_spatial_str",
                     "u_age",
                     "u_period",
-                    "u_country",
                     "beta_tips_dummy",
                     "u_tips",
                     "beta_spike_2000",
@@ -153,14 +152,14 @@ if(mf$mics_toggle) {
 }
 
 
-# f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
-#                                parameters = tmb_int$par,
-#                                DLL = "dfertility",
-#                                silent=0,
-#                                checkParameterOrder=FALSE)
-# })
-#
-# parallel::mccollect(f)
+f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
+                               parameters = tmb_int$par,
+                               DLL = "dfertility",
+                               silent=0,
+                               checkParameterOrder=FALSE)
+})
+
+parallel::mccollect(f)
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                   parameters = tmb_int$par,
@@ -188,7 +187,7 @@ fr_plot <- fr_plot %>%
   left_join(areas %>% st_drop_geometry() %>% select(area_id, area_name))
 
 tfr_plot <- tmb_results %>%
-  filter(area_level == 2, variable == "tfr") %>%
+  filter(area_level == 1, variable == "tfr") %>%
   ggplot(aes(x=period, y=median)) +
     geom_line() +
     geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
