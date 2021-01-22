@@ -1,10 +1,7 @@
-iso3 <- "AGO"
+iso3 <- "NER"
 
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
 clusters <- read.csv(paste0("depends/", tolower(iso3), "_dhs_clusters.csv"))
-
-# areas <- read_sf("archive/ago_data_areas/20210105-150243-778fa342/ago_areas.geojson")
-# clusters <- read.csv("archive/ago_survey/20210121-173659-217468e6/ago_dhs_clusters.csv")
 
 areas_wide <- spread_areas(areas)
 areas_long <- areas %>% st_drop_geometry
@@ -79,25 +76,25 @@ asfr_admin1 <- Map(calc_asfr, dat_admin1$ir,
          variable = "asfr") %>%
   left_join(get_age_groups() %>% select(age_group, age_group_label), by=c("agegr" = "age_group_label")) %>%
   select(-agegr)
-# 
-# tfr_admin1 <- Map(calc_tfr, dat_admin1$ir,
-#                   by = list(~survey_id + survtype + survyear + area_id),
-#                   tips = dat_admin1$tips_surv,
-#                   agegr= list(3:10*5),
-#                   period = list(1995:2020)) %>%
-#   bind_rows %>%
-#   type.convert %>%
-#   filter(period<=survyear) %>%
-#   mutate(iso3 = iso3,
-#          variable = "tfr")
 
-tfr_admin1 <- asfr_admin1 %>%
-  group_by(survey_id, area_id, period, tips) %>%
-  summarise(tfr = 5*sum(asfr)) %>%
+tfr_admin1 <- Map(calc_tfr, dat_admin1$ir,
+                  by = list(~survey_id + survtype + survyear + area_id),
+                  tips = dat_admin1$tips_surv,
+                  agegr= list(3:10*5),
+                  period = list(1995:2020)) %>%
+  bind_rows %>%
+  type.convert %>%
+  filter(period<=survyear) %>%
   mutate(iso3 = iso3,
-         variable = "tfr",
-         se_tfr = "foo") %>%
-  ungroup
+         variable = "tfr")
+
+# tfr_admin1 <- asfr_admin1 %>%
+#   group_by(area_id, period) %>%
+#   summarise(tfr = 5*sum(asfr)) %>%
+#   mutate(iso3 = iso3,
+#          variable = "tfr",
+#          se_tfr = "foo") %>%
+#   ungroup
 
 
 plot <- asfr_admin1 %>%

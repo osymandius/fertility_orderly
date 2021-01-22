@@ -4,6 +4,9 @@ population <- read.csv("depends/population_worldpop_naomi.csv")
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
 asfr <- read.csv(paste0("depends/", tolower(iso3), "_dhs_asfr.csv"))
 
+# population <- read.csv("archive/aaa_data_population_worldpop/20210106-203832-d9202b45/population_worldpop_naomi.csv")
+# areas <- read_sf("archive/ago_data_areas/20210105-150243-778fa342/ago_areas.geojson")
+# asfr <- read.csv("archive/ago_asfr/20210122-093323-ccda8444/ago_dhs_asfr.csv")
 
 mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level =2, project=2020)
 
@@ -180,6 +183,7 @@ tmb_results <- dfertility::tmb_outputs(fit, mf, areas)
 write_csv(tmb_results, paste0(tolower(iso3), "_fr.csv"))
 
 fr_plot <- read.csv(paste0("depends/", tolower(iso3), "_fr_plot.csv"))
+# fr_plot <- read.csv("archive/ago_asfr/20210122-093323-ccda8444/ago_fr_plot.csv")
 
 fr_plot <- fr_plot %>%
   left_join(areas %>% st_drop_geometry() %>% select(area_id, area_name))

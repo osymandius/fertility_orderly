@@ -1,0 +1,30 @@
+script: ner_survey.R
+
+artefacts:
+  - data:
+      description: survey indicator dataset
+      filenames:
+        - ner_dhs_clusters.csv
+  - staticgraph:
+      description: Check DHS region cluster assignment
+      filenames:
+        - check/ner_dhs-cluster-check.pdf
+
+
+packages:
+  - dplyr
+  - dfertility
+  - haven
+  - ggplot2
+  - naomi
+  - naomi.utils
+  - readr
+  - sf
+  - spud
+  - stringr
+
+depends:
+  ner_data_areas:
+    id: latest
+    use:
+      depends/ner_areas.geojson: ner_areas.geojson

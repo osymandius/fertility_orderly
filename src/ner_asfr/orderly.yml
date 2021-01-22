@@ -1,0 +1,31 @@
+script: ner_asfr.R
+
+artefacts:
+  - data:
+      description: ner ASFR dataset
+      filenames:
+        - ner_dhs_asfr.csv
+        - ner_fr_plot.csv
+
+packages:
+  - demogsurv
+  - tidyr
+  - haven
+  - readr
+  - stringr
+  - naomi
+  - sf
+  - dplyr
+  - rdhs
+  - countrycode
+  - dfertility
+
+depends:
+  ner_survey:
+    id: latest
+    use:
+      depends/ner_dhs_clusters.csv: ner_dhs_clusters.csv
+  ner_data_areas:
+    id: latest
+    use:
+      depends/ner_areas.geojson: ner_areas.geojson
