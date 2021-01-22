@@ -1,7 +1,8 @@
-iso3 <- "BEN"
+iso3 <- "COG"
 
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
 clusters <- read.csv(paste0("depends/", tolower(iso3), "_dhs_clusters.csv"))
+# clusters <- read.csv("archive/gab_survey/20210122-100252-ed494d96/gab_dhs_clusters.csv")
 
 areas_wide <- spread_areas(areas)
 areas_long <- areas %>% st_drop_geometry

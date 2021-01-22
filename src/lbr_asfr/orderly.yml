@@ -1,0 +1,31 @@
+script: lbr_asfr.R
+
+artefacts:
+  - data:
+      description: lbr ASFR dataset
+      filenames:
+        - lbr_dhs_asfr.csv
+        - lbr_fr_plot.csv
+
+packages:
+  - demogsurv
+  - tidyr
+  - haven
+  - readr
+  - stringr
+  - naomi
+  - sf
+  - dplyr
+  - rdhs
+  - countrycode
+  - dfertility
+
+depends:
+  lbr_survey:
+    id: latest
+    use:
+      depends/lbr_dhs_clusters.csv: lbr_dhs_clusters.csv
+  lbr_data_areas:
+    id: latest
+    use:
+      depends/lbr_areas.geojson: lbr_areas.geojson

@@ -1,4 +1,4 @@
-iso3 <- "BEN"
+iso3 <- "LBR"
 
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
 clusters <- read.csv(paste0("depends/", tolower(iso3), "_dhs_clusters.csv"))
@@ -76,7 +76,7 @@ asfr_admin1 <- Map(calc_asfr, dat_admin1$ir,
          variable = "asfr") %>%
   left_join(get_age_groups() %>% select(age_group, age_group_label), by=c("agegr" = "age_group_label")) %>%
   select(-agegr)
-# 
+
 tfr_admin1 <- Map(calc_tfr, dat_admin1$ir,
                   by = list(~survey_id + survtype + survyear + area_id),
                   tips = dat_admin1$tips_surv,
@@ -87,7 +87,7 @@ tfr_admin1 <- Map(calc_tfr, dat_admin1$ir,
   filter(period<=survyear) %>%
   mutate(iso3 = iso3,
          variable = "tfr")
-# 
+
 # tfr_admin1 <- asfr_admin1 %>%
 #   group_by(area_id, period) %>%
 #   summarise(tfr = 5*sum(asfr)) %>%

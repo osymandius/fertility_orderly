@@ -1,0 +1,30 @@
+script: ago_survey.R
+
+artefacts:
+  - data:
+      description: survey indicator dataset
+      filenames:
+        - ago_dhs_clusters.csv
+  - staticgraph:
+      description: Check DHS region cluster assignment
+      filenames:
+        - check/ago_dhs-cluster-check.pdf
+
+
+packages:
+  - dplyr
+  - dfertility
+  - haven
+  - ggplot2
+  - naomi
+  - naomi.utils
+  - readr
+  - sf
+  - spud
+  - stringr
+
+depends:
+  ago_data_areas:
+    id: latest
+    use:
+      depends/ago_areas.geojson: ago_areas.geojson

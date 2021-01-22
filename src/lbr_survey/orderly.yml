@@ -1,0 +1,30 @@
+script: lbr_survey.R
+
+artefacts:
+  - data:
+      description: survey indicator dataset
+      filenames:
+        - lbr_dhs_clusters.csv
+  - staticgraph:
+      description: Check DHS region cluster assignment
+      filenames:
+        - check/lbr_dhs-cluster-check.pdf
+
+
+packages:
+  - dplyr
+  - dfertility
+  - haven
+  - ggplot2
+  - naomi
+  - naomi.utils
+  - readr
+  - sf
+  - spud
+  - stringr
+
+depends:
+  lbr_data_areas:
+    id: latest
+    use:
+      depends/lbr_areas.geojson: lbr_areas.geojson

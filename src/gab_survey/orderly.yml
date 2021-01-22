@@ -1,0 +1,30 @@
+script: gab_survey.R
+
+artefacts:
+  - data:
+      description: survey indicator dataset
+      filenames:
+        - gab_dhs_clusters.csv
+  - staticgraph:
+      description: Check DHS region cluster assignment
+      filenames:
+        - check/gab_dhs-cluster-check.pdf
+
+
+packages:
+  - dplyr
+  - dfertility
+  - haven
+  - ggplot2
+  - naomi
+  - naomi.utils
+  - readr
+  - sf
+  - spud
+  - stringr
+
+depends:
+  gab_data_areas:
+    id: latest
+    use:
+      depends/gab_areas.geojson: gab_areas.geojson

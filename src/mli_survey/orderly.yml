@@ -1,0 +1,30 @@
+script: mli_survey.R
+
+artefacts:
+  - data:
+      description: survey indicator dataset
+      filenames:
+        - mli_dhs_clusters.csv
+  - staticgraph:
+      description: Check DHS region cluster assignment
+      filenames:
+        - check/mli_dhs-cluster-check.pdf
+
+
+packages:
+  - dplyr
+  - dfertility
+  - haven
+  - ggplot2
+  - naomi
+  - naomi.utils
+  - readr
+  - sf
+  - spud
+  - stringr
+
+depends:
+  mli_data_areas:
+    id: latest
+    use:
+      depends/mli_areas.geojson: mli_areas.geojson

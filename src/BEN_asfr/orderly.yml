@@ -1,10 +1,11 @@
-script: BEN_asfr.R
+script: ben_asfr.R
 
 artefacts:
   - data:
-      description: BEN ASFR dataset
+      description: ben ASFR dataset
       filenames:
-        - BEN_dhs_asfr.csv
+        - ben_dhs_asfr.csv
+        - ben_fr_plot.csv
 
 packages:
   - demogsurv
@@ -16,12 +17,15 @@ packages:
   - sf
   - dplyr
   - rdhs
-  - pointr
   - countrycode
   - dfertility
 
 depends:
-  data-survey:
+  ben_survey:
     id: latest
-      use:
-        depends/BEN_dhs_survey.csv: BEN_dhs_survey.csv
+    use:
+      depends/ben_dhs_clusters.csv: ben_dhs_clusters.csv
+  ben_data_areas:
+    id: latest
+    use:
+      depends/ben_areas.geojson: ben_areas.geojson

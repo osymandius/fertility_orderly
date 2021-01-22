@@ -1,0 +1,31 @@
+script: gab_asfr.R
+
+artefacts:
+  - data:
+      description: gab ASFR dataset
+      filenames:
+        - gab_dhs_asfr.csv
+        - gab_fr_plot.csv
+
+packages:
+  - demogsurv
+  - tidyr
+  - haven
+  - readr
+  - stringr
+  - naomi
+  - sf
+  - dplyr
+  - rdhs
+  - countrycode
+  - dfertility
+
+depends:
+  gab_survey:
+    id: latest
+    use:
+      depends/gab_dhs_clusters.csv: gab_dhs_clusters.csv
+  gab_data_areas:
+    id: latest
+    use:
+      depends/gab_areas.geojson: gab_areas.geojson

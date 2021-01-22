@@ -1,0 +1,31 @@
+script: gmb_asfr.R
+
+artefacts:
+  - data:
+      description: gmb ASFR dataset
+      filenames:
+        - gmb_dhs_asfr.csv
+        - gmb_fr_plot.csv
+
+packages:
+  - demogsurv
+  - tidyr
+  - haven
+  - readr
+  - stringr
+  - naomi
+  - sf
+  - dplyr
+  - rdhs
+  - countrycode
+  - dfertility
+
+depends:
+  gmb_survey:
+    id: latest
+    use:
+      depends/gmb_dhs_clusters.csv: gmb_dhs_clusters.csv
+  gmb_data_areas:
+    id: latest
+    use:
+      depends/gmb_areas.geojson: gmb_areas.geojson

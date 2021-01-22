@@ -20,7 +20,7 @@ backup
 orderly_envir.yml
 # Other good things to exclude
 .Rdata
-*.o
-*.so
+**.o
+**.so
 .DS_Store
 src/.DS_Store

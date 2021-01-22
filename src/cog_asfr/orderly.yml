@@ -1,0 +1,31 @@
+script: cog_asfr.R
+
+artefacts:
+  - data:
+      description: cog ASFR dataset
+      filenames:
+        - cog_dhs_asfr.csv
+        - cog_fr_plot.csv
+
+packages:
+  - demogsurv
+  - tidyr
+  - haven
+  - readr
+  - stringr
+  - naomi
+  - sf
+  - dplyr
+  - rdhs
+  - countrycode
+  - dfertility
+
+depends:
+  cog_survey:
+    id: latest
+    use:
+      depends/cog_dhs_clusters.csv: cog_dhs_clusters.csv
+  cog_data_areas:
+    id: latest
+    use:
+      depends/cog_areas.geojson: cog_areas.geojson

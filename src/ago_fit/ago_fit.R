@@ -1,17 +1,11 @@
-iso3 <- "COD"
+iso3 <- "AGO"
 
-population <- read.csv(paste0("depends/", tolower(iso3), "_population_gpw.csv"))
+population <- read.csv("depends/population_worldpop_naomi.csv")
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
-asfr <- read.csv(paste0("depends/", tolower(iso3), "_asfr.csv"))
+asfr <- read.csv(paste0("depends/", tolower(iso3), "_dhs_asfr.csv"))
 
-population <- population %>%
-  left_join(get_age_groups() %>% select(age_group, age_group_label), by=c("age_group" = "age_group_label")) %>%
-  select(-age_group) %>%
-  rename(age_group = age_group.y) %>%
-  mutate(population)
 
-# debugonce(make_model_frames_dev)
-mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level =3, project=2020)
+mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level =2, project=2020)
 
 # TMB::compile("resources/tmb_regular.cpp")               # Compile the C++ file
 # dyn.load(dynlib("resources/tmb_regular"))
@@ -156,14 +150,14 @@ if(mf$mics_toggle) {
 }
 
 
-f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
-                               parameters = tmb_int$par,
-                               DLL = "dfertility",
-                               silent=0,
-                               checkParameterOrder=FALSE)
-})
-
-parallel::mccollect(f)
+# f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
+#                                parameters = tmb_int$par,
+#                                DLL = "dfertility",
+#                                silent=0,
+#                                checkParameterOrder=FALSE)
+# })
+#
+# parallel::mccollect(f)
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                   parameters = tmb_int$par,
@@ -205,7 +199,7 @@ tfr_plot <- tmb_results %>%
     )
 
 district_tfr <- tmb_results %>%
-  filter(area_level == 3, variable == "tfr") %>%
+  filter(area_level == 2, variable == "tfr") %>%
   ggplot(aes(x=period, y=median)) +
   geom_line() +
   geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +

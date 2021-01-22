@@ -7,8 +7,8 @@ asfr <- read.csv(paste0("depends/", tolower(iso3), "_asfr.csv"))
 
 mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level =2, project=2020)
 
-# TMB::compile("resources/tmb_regular.cpp")               # Compile the C++ file
-# dyn.load(dynlib("resources/tmb_regular"))
+TMB::compile("resources/tmb_nb_spike_moz.cpp")               # Compile the C++ file
+dyn.load(dynlib("resources/tmb_nb_spike_moz"))
 
 tmb_int <- list()
 
@@ -166,7 +166,7 @@ if(mf$mics_toggle) {
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                   parameters = tmb_int$par,
-                  DLL = "dfertility",
+                  DLL = "tmb_nb_spike_moz",
                   random = tmb_int$random,
                   hessian = FALSE)
 
