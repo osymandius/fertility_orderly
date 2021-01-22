@@ -31,6 +31,12 @@ survey_clusters <- create_survey_clusters_dhs(surveys)
 
 survey_clusters <- assign_dhs_cluster_areas(survey_clusters, survey_region_areas)
 
+#' No GPS coordinates in any surveys. Assign to areas by survey id
+survey_clusters <- survey_clusters %>%
+  left_join(survey_regions) %>%
+  mutate(geoloc_area_id = ifelse(is.na(geoloc_area_id) & !is.na(survey_region_area_id), survey_region_area_id, geoloc_area_id)) %>%
+  select(-c(survey_region_name, survey_region_area_id)) 
+
 p_coord_check <- plot_survey_coordinate_check(survey_clusters,
                                               survey_region_boundaries,
                                               survey_region_areas)

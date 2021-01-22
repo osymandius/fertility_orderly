@@ -1,0 +1,31 @@
+script: tcd_asfr.R
+
+artefacts:
+  - data:
+      description: tcd ASFR dataset
+      filenames:
+        - tcd_dhs_asfr.csv
+        - tcd_fr_plot.csv
+
+packages:
+  - demogsurv
+  - tidyr
+  - haven
+  - readr
+  - stringr
+  - naomi
+  - sf
+  - dplyr
+  - rdhs
+  - countrycode
+  - dfertility
+
+depends:
+  tcd_survey:
+    id: latest
+    use:
+      depends/tcd_dhs_clusters.csv: tcd_dhs_clusters.csv
+  tcd_data_areas:
+    id: latest
+    use:
+      depends/tcd_areas.geojson: tcd_areas.geojson

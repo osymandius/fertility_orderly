@@ -1,8 +1,7 @@
-iso3 <- "COG"
+iso3 <- "TCD"
 
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
 clusters <- read.csv(paste0("depends/", tolower(iso3), "_dhs_clusters.csv"))
-# clusters <- read.csv("archive/cog_survey/20210122-133310-6ee5b188/cog_dhs_clusters.csv")
 
 areas_wide <- spread_areas(areas)
 areas_long <- areas %>% st_drop_geometry
@@ -10,17 +9,14 @@ areas_long <- areas %>% st_drop_geometry
 clusters <- clusters %>%
   mutate(DHS_survey_id = str_replace(survey_id, iso3, dhs_countries()$DHS_CountryCode[dhs_countries()$ISO3_CountryCode == iso3]))
 
-# No birth history in 2009 AIS
 surveys <- dhs_surveys(surveyIds = unique(clusters$DHS_survey_id)) %>%
-  left_join(clusters %>% select(survey_id, DHS_survey_id) %>% distinct, by=c("SurveyId" = "DHS_survey_id")) %>%
-  filter(survey_id != "COG2009AIS")
+  left_join(clusters %>% select(survey_id, DHS_survey_id) %>% distinct, by=c("SurveyId" = "DHS_survey_id"))
 
 # cluster_areas <- assign_cluster_area(clusters, areas_wide, 3)
 # 
 # dat <- clusters_to_surveys(iso3, surveys, cluster_areas, level = 3, single_tips = TRUE)
 
 cluster_list <- clusters %>%
-  filter(survey_id != "COG2009AIS") %>%
   rename(area_id = geoloc_area_id) %>%
   group_by(survey_id) %>%
   group_split
@@ -31,18 +27,6 @@ ir <- get_fertility_surveys(surveys)
 names(ir) <- names(cluster_list)
 
 dat <- map_ir_to_areas(ir, cluster_list)
-
-# debugonce(calc_asfr)
-# calc_asfr(
-#   dat$ir[[3]],
-#   by = ~survey_id + survtype + survyear + area_id,
-#   tips = dat$tips_surv[[3]],
-#   agegr= 3:10*5,
-#   period = 1995:2020,
-#   strata = NULL,
-#   varmethod = "none",
-#   counts = TRUE
-# )
 
 asfr <- Map(calc_asfr, dat$ir,
             by = list(~survey_id + survtype + survyear + area_id),
@@ -65,7 +49,6 @@ write_csv(asfr, paste0(tolower(iso3), "_dhs_asfr.csv"))
 ### ADMIN-1 ASFR FOR PLOTTING
 
 cluster_list_admin1 <- clusters %>%
-  filter(survey_id != "COG2009AIS") %>%
   left_join(areas_wide %>% st_drop_geometry, by=c("geoloc_area_id" = "area_id")) %>%
   rename(area_id = area_id1) %>%
   select(survey_id, cluster_id, area_id) %>%
@@ -93,7 +76,7 @@ asfr_admin1 <- Map(calc_asfr, dat_admin1$ir,
          variable = "asfr") %>%
   left_join(get_age_groups() %>% select(age_group, age_group_label), by=c("agegr" = "age_group_label")) %>%
   select(-agegr)
-# 
+
 tfr_admin1 <- Map(calc_tfr, dat_admin1$ir,
                   by = list(~survey_id + survtype + survyear + area_id),
                   tips = dat_admin1$tips_surv,
@@ -104,7 +87,7 @@ tfr_admin1 <- Map(calc_tfr, dat_admin1$ir,
   filter(period<=survyear) %>%
   mutate(iso3 = iso3,
          variable = "tfr")
-# 
+
 # tfr_admin1 <- asfr_admin1 %>%
 #   group_by(area_id, period) %>%
 #   summarise(tfr = 5*sum(asfr)) %>%

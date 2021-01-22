@@ -12,6 +12,16 @@ survey_meta <- create_survey_meta_dhs(surveys)
 
 survey_region_boundaries <- create_survey_boundaries_dhs(surveys)
 
+areas %>%
+  filter(area_level == 1) %>%
+  ggplot()+
+    geom_sf(aes(fill=area_name))
+
+survey_region_boundaries %>%
+  filter(survey_id == "MLI1996DHS") %>%
+  ggplot()+
+  geom_sf(aes(fill=factor(survey_region_id)))
+
 surveys <- surveys_add_dhs_regvar(surveys, survey_region_boundaries)
 
 #' Allocate each area to survey region
