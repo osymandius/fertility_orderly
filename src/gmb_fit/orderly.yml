@@ -1,0 +1,43 @@
+script: gmb_fit.R
+
+artefacts:
+  - data:
+      description: fertility indicator dataset
+      filenames:
+        - gmb_fr.csv
+  - staticgraph:
+      description: Validate admin-1 TFRs
+      filenames:
+        - check/gmb_tfr_admin1.pdf
+        - check/gmb_tfr_district.pdf
+
+
+packages:
+  - dplyr
+  - tidyr
+  - dfertility
+  - ggplot2
+  - naomi
+  - readr
+  - sf
+  - stringr
+  - TMB
+  - Matrix
+
+global_resources:
+  resources/tmb_regular.cpp: tmb_regular.cpp
+
+depends:
+  gmb_data_areas:
+    id: latest
+    use:
+      depends/gmb_areas.geojson: gmb_areas.geojson
+  aaa_data_population_worldpop:
+    id: latest(parameter:iso3 == "GMB")
+    use:
+      depends/population_worldpop_naomi.csv: population_worldpop_naomi.csv
+  gmb_asfr:
+    id: latest
+    use:
+      depends/gmb_dhs_asfr.csv: gmb_dhs_asfr.csv
+      depends/gmb_fr_plot.csv: gmb_fr_plot.csv

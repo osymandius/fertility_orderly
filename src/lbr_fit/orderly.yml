@@ -1,0 +1,43 @@
+script: lbr_fit.R
+
+artefacts:
+  - data:
+      description: fertility indicator dataset
+      filenames:
+        - lbr_fr.csv
+  - staticgraph:
+      description: Validate admin-1 TFRs
+      filenames:
+        - check/lbr_tfr_admin1.pdf
+        - check/lbr_tfr_district.pdf
+
+
+packages:
+  - dplyr
+  - tidyr
+  - dfertility
+  - ggplot2
+  - naomi
+  - readr
+  - sf
+  - stringr
+  - TMB
+  - Matrix
+
+global_resources:
+  resources/tmb_regular.cpp: tmb_regular.cpp
+
+depends:
+  lbr_data_areas:
+    id: latest
+    use:
+      depends/lbr_areas.geojson: lbr_areas.geojson
+  aaa_data_population_worldpop:
+    id: latest(parameter:iso3 == "LBR")
+    use:
+      depends/population_worldpop_naomi.csv: population_worldpop_naomi.csv
+  lbr_asfr:
+    id: latest
+    use:
+      depends/lbr_dhs_asfr.csv: lbr_dhs_asfr.csv
+      depends/lbr_fr_plot.csv: lbr_fr_plot.csv

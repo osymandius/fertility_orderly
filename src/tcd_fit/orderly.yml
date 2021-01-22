@@ -1,0 +1,43 @@
+script: tcd_fit.R
+
+artefacts:
+  - data:
+      description: fertility indicator dataset
+      filenames:
+        - tcd_fr.csv
+  - staticgraph:
+      description: Validate admin-1 TFRs
+      filenames:
+        - check/tcd_tfr_admin1.pdf
+        - check/tcd_tfr_district.pdf
+
+
+packages:
+  - dplyr
+  - tidyr
+  - dfertility
+  - ggplot2
+  - naomi
+  - readr
+  - sf
+  - stringr
+  - TMB
+  - Matrix
+
+global_resources:
+  resources/tmb_regular.cpp: tmb_regular.cpp
+
+depends:
+  tcd_data_areas:
+    id: latest
+    use:
+      depends/tcd_areas.geojson: tcd_areas.geojson
+  aaa_data_population_worldpop:
+    id: latest(parameter:iso3 == "TCD")
+    use:
+      depends/population_worldpop_naomi.csv: population_worldpop_naomi.csv
+  tcd_asfr:
+    id: latest
+    use:
+      depends/tcd_dhs_asfr.csv: tcd_dhs_asfr.csv
+      depends/tcd_fr_plot.csv: tcd_fr_plot.csv

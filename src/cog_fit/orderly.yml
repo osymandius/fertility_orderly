@@ -1,0 +1,43 @@
+script: cog_fit.R
+
+artefacts:
+  - data:
+      description: fertility indicator dataset
+      filenames:
+        - cog_fr.csv
+  - staticgraph:
+      description: Validate admin-1 TFRs
+      filenames:
+        - check/cog_tfr_admin1.pdf
+        - check/cog_tfr_district.pdf
+
+
+packages:
+  - dplyr
+  - tidyr
+  - dfertility
+  - ggplot2
+  - naomi
+  - readr
+  - sf
+  - stringr
+  - TMB
+  - Matrix
+
+global_resources:
+  resources/tmb_regular.cpp: tmb_regular.cpp
+
+depends:
+  cog_data_areas:
+    id: latest
+    use:
+      depends/cog_areas.geojson: cog_areas.geojson
+  aaa_data_population_worldpop:
+    id: latest(parameter:iso3 == "COG")
+    use:
+      depends/population_worldpop_naomi.csv: population_worldpop_naomi.csv
+  cog_asfr:
+    id: latest
+    use:
+      depends/cog_dhs_asfr.csv: cog_dhs_asfr.csv
+      depends/cog_fr_plot.csv: cog_fr_plot.csv
