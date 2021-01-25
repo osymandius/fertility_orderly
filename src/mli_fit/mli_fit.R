@@ -1,4 +1,4 @@
-iso3 <- "COG"
+iso3 <- "MLI"
 
 population <- read.csv("depends/population_worldpop_naomi.csv")
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))

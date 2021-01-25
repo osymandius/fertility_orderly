@@ -39,5 +39,5 @@ depends:
   gmb_asfr:
     id: latest
     use:
-      depends/gmb_dhs_asfr.csv: gmb_dhs_asfr.csv
+      depends/gmb_asfr.csv: gmb_asfr.csv
       depends/gmb_fr_plot.csv: gmb_fr_plot.csv

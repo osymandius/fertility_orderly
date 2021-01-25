@@ -47,3 +47,64 @@ p_coord_check
 dev.off()
 
 write_csv(survey_clusters, paste0(tolower(iso3), "_dhs_clusters.csv"))
+
+mics_indicators <- read_csv("resources/MICS_indicators.csv") %>%
+# mics_indicators <- read_csv("global/MICS_indicators.csv") %>%
+  pivot_longer(-c(label, id, filetype), names_to = "survey_id") %>%
+  filter(survey_id != "CIV2000MICS")
+
+mics_survey_data <- create_surveys_mics(iso3, mics_indicators)
+
+fertility_mics_data <- transform_mics(mics_survey_data, mics_indicators)
+
+fertility_mics_data$hh <- fertility_mics_data$hh %>%
+  mutate(
+    mics_area_name_label = case_when(
+      survey_id == "GMB2005MICS" & mics_area_name_label == "Banjul South" ~ "Banjul City",
+      survey_id == "GMB2005MICS" & mics_area_name_label == "Banjul North" ~ "Banjul City",
+      survey_id == "GMB2005MICS" & mics_area_name_label == "Banjul Central" ~ "Banjul City",
+      survey_id == "GMB2005MICS" & mics_area_name_label == "Niamina Dankuku" ~ "Niamina Dankunku",
+      survey_id == "GMB2005MICS" & mics_area_name_label == "Upper Baddibu" ~ "Upper Badibu",
+      survey_id == "GMB2005MICS" & mics_area_name_label == "Lower Baddibu" ~ "Lower Badibu",
+      survey_id == "GMB2005MICS" & mics_area_name_label == "Central Baddibu" ~ "Central Badibu",
+      survey_id == "GMB2005MICS" & mics_area_name_label == "Kanifing" ~ "Kanifing Municipal",
+      survey_id == "GMB2005MICS" & mics_area_name_label == "Foni Bintang Karania" ~ "Foni Bintang Karanai",
+      survey_id == "GMB2005MICS" & mics_area_name_label == "Lower Nuimi" ~ "Lower Niumi",
+      survey_id == "GMB2005MICS" & mics_area_name_label == "Upper Nuimi" ~ "Upper Niumi",
+      survey_id == "GMB2005MICS" & mics_area_name_label == "Janjanburay" ~ "Janjan Bureh",
+      survey_id == "GMB2005MICS" & mics_area_name_label == "Fulladu West" ~ "Central River",
+      survey_id == "GMB2005MICS" & mics_area_name_label == "Fulladu East" ~ "Central River",
+      survey_id == "GMB2005MICS" & mics_area_name_label == "Wuli" ~ "Upper River",
+      
+      survey_id == "GMB2010MICS" & mics_area_name_label == "Banjul" ~ "Banjul/Kanifing/Brikama",
+      survey_id == "GMB2010MICS" & mics_area_name_label == "Kanifing" ~ "Banjul/Kanifing/Brikama",
+      survey_id == "GMB2010MICS" & mics_area_name_label == "Brikama" ~ "Banjul/Kanifing/Brikama",
+      survey_id == "GMB2010MICS" & mics_area_name_label == "Kuntaur" ~ "Kuntaur/Janjanbureh",
+      survey_id == "GMB2010MICS" & mics_area_name_label == "Janjanburay" ~ "Kuntaur/Janjanbureh",
+      
+      survey_id == "GMB2018MICS" & mics_area_name_label == "Banjul" ~ "Banjul/Kanifing/Brikama",
+      survey_id == "GMB2018MICS" & mics_area_name_label == "Kanifing" ~ "Banjul/Kanifing/Brikama",
+      survey_id == "GMB2018MICS" & mics_area_name_label == "Brikama" ~ "Banjul/Kanifing/Brikama",
+      survey_id == "GMB2018MICS" & mics_area_name_label == "Kuntaur" ~ "Kuntaur/Janjanbureh",
+      survey_id == "GMB2018MICS" & mics_area_name_label == "Janjanbureh" ~ "Kuntaur/Janjanbureh",
+      
+      TRUE ~ mics_area_name_label
+    )
+  ) 
+
+mics_survey_areas <- join_survey_areas(fertility_mics_data, areas, warn=TRUE)
+
+# Required because the MICS indicator sheet only takes a single area level to use rather than multiple levels - this needs improving.
+mics_survey_areas$hh <- mics_survey_areas$hh %>%
+  mutate(
+    area_id = case_when(
+      survey_id == "GMB2005MICS" & mics_area_name_label == "Central River" ~ "GMB_1_1ng",
+      survey_id == "GMB2005MICS" & mics_area_name_label == "Upper River" ~ "GMB_1_4ui",
+      TRUE ~ area_id
+    )
+  )
+
+asfr_input_data <- make_asfr_inputs(mics_survey_areas, mics_survey_data)
+
+write_csv(asfr_input_data$wm, paste0(tolower(iso3), "_mics_women.csv"))
+write_csv(asfr_input_data$births_to_women, paste0(tolower(iso3), "_mics_births_to_women.csv"))

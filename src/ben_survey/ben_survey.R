@@ -2,6 +2,7 @@
 iso3 <- "BEN"
 
 areas <- read_sf("depends/ben_areas.geojson")
+# areas <- read_sf("archive/ben_data_areas/20210113-135836-137e3d8d/ben_areas.geojson")
 areas_wide <- spread_areas(areas)
 
 surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%
@@ -56,3 +57,27 @@ p_coord_check
 dev.off()
 
 write_csv(survey_clusters, paste0(tolower(iso3), "_dhs_clusters.csv"))
+
+# mics_indicators <- read_csv("global/MICS_indicators.csv") %>%
+mics_indicators <- read_csv("resources/MICS_indicators.csv") %>%
+  pivot_longer(-c(label, id, filetype), names_to = "survey_id") %>%
+  filter(survey_id != "CIV2000MICS")
+
+mics_survey_data <- create_surveys_mics(iso3, mics_indicators)
+
+fertility_mics_data <- transform_mics(mics_survey_data, mics_indicators)
+
+fertility_mics_data$hh <- fertility_mics_data$hh %>%
+  mutate(
+    mics_area_name_label = case_when(
+      mics_area_name_label == "Ouã©Mã©" ~ "Oueme",
+      TRUE ~ mics_area_name_label
+    )
+  ) 
+
+mics_survey_areas <- join_survey_areas(fertility_mics_data, areas)
+
+asfr_input_data <- make_asfr_inputs(mics_survey_areas, mics_survey_data)
+
+write_csv(asfr_input_data$wm, paste0(tolower(iso3), "_mics_women.csv"))
+write_csv(asfr_input_data$births_to_women, paste0(tolower(iso3), "_mics_births_to_women.csv"))

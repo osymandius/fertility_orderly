@@ -2,7 +2,7 @@
 iso3 <- "TCD"
 
 areas <- read_sf("depends/tcd_areas.geojson")
-areas <- read_sf("archive/tcd_data_areas/20210119-115700-2244620f/tcd_areas.geojson")
+# areas <- read_sf("archive/tcd_data_areas/20210119-115700-2244620f/tcd_areas.geojson")
 areas_wide <- spread_areas(areas)
 
 surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%
@@ -25,7 +25,7 @@ validate_survey_region_areas(survey_region_areas, survey_region_boundaries)
 survey_regions <- create_survey_regions_dhs(survey_region_areas)
 
 #' # Survey clusters dataset
-debugonce(create_survey_clusters_dhs)
+
 survey_clusters <- create_survey_clusters_dhs(surveys)
 
 #' Snap survey clusters to areas
@@ -49,3 +49,40 @@ p_coord_check
 dev.off()
 
 write_csv(survey_clusters, paste0(tolower(iso3), "_dhs_clusters.csv"))
+
+
+# mics_indicators <- read_csv("global/MICS_indicators.csv") %>%
+mics_indicators <- read_csv("resources/MICS_indicators.csv") %>%
+  pivot_longer(-c(label, id, filetype), names_to = "survey_id") %>%
+  filter(survey_id != "CIV2000MICS")
+
+mics_survey_data <- create_surveys_mics(iso3, mics_indicators)
+
+fertility_mics_data <- transform_mics(mics_survey_data, mics_indicators)
+
+fertility_mics_data$hh <- fertility_mics_data$hh %>%
+  mutate(
+    mics_area_name_label = case_when(
+      mics_area_name_label == "Bhata" ~ "Batha",
+      mics_area_name_label == "Chari Baguirmi" ~ "Chari-Baguirmi",
+      mics_area_name_label == "Guéra" ~ "GuÃ©ra",
+      mics_area_name_label == "Hadjer Lamis" ~ "Hadjer-Lamis",
+      mics_area_name_label == "Mayo Kebbi Est" ~ "Mayo-Kebbi Est",
+      mics_area_name_label == "Mayo Kebbi Ouest" ~ "Mayo-Kebbi Ouest",
+      mics_area_name_label == "Ouaddai" ~ "OuaddaÃ¯",
+      mics_area_name_label == "Tandjilé" ~ "TandjilÃ©",
+      mics_area_name_label == "Wad Fira" ~ "Wadi Fira",
+      mics_area_name_label == "Tandjilé" ~ "TandjilÃ©",
+      mics_area_name_label == "Ndjaména" ~ "N'Djamena",
+      mics_area_name_label == "Barh El Gazal" ~ "Barh-El-Gazel",
+      mics_area_name_label == "Moyen Chari" ~ "Moyen-Chari",
+      TRUE ~ mics_area_name_label
+    )
+  ) 
+
+mics_survey_areas <- join_survey_areas(fertility_mics_data, areas, warn = TRUE)
+
+asfr_input_data <- make_asfr_inputs(mics_survey_areas, mics_survey_data)
+
+write_csv(asfr_input_data$wm, paste0(tolower(iso3), "_mics_women.csv"))
+write_csv(asfr_input_data$births_to_women, paste0(tolower(iso3), "_mics_births_to_women.csv"))

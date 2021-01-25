@@ -5,6 +5,8 @@ artefacts:
       description: ben ASFR dataset
       filenames:
         - ben_dhs_asfr.csv
+        - ben_mics_asfr.csv
+        - ben_asfr.csv
         - ben_fr_plot.csv
 
 packages:
@@ -25,6 +27,8 @@ depends:
     id: latest
     use:
       depends/ben_dhs_clusters.csv: ben_dhs_clusters.csv
+      depends/ben_mics_women.csv: ben_mics_women.csv
+      depends/ben_mics_births_to_women.csv: ben_mics_births_to_women.csv
   ben_data_areas:
     id: latest
     use:

@@ -5,6 +5,8 @@ artefacts:
       description: gmb ASFR dataset
       filenames:
         - gmb_dhs_asfr.csv
+        - gmb_mics_asfr.csv
+        - gmb_asfr.csv
         - gmb_fr_plot.csv
 
 packages:
@@ -25,6 +27,8 @@ depends:
     id: latest
     use:
       depends/gmb_dhs_clusters.csv: gmb_dhs_clusters.csv
+      depends/gmb_mics_women.csv: gmb_mics_women.csv
+      depends/gmb_mics_births_to_women.csv: gmb_mics_births_to_women.csv
   gmb_data_areas:
     id: latest
     use:

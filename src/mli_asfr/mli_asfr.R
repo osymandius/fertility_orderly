@@ -1,8 +1,7 @@
-iso3 <- "TCD"
+iso3 <- "MLI"
 
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
 clusters <- read.csv(paste0("depends/", tolower(iso3), "_dhs_clusters.csv"))
-# clusters <- read.csv("archive/cog_survey/20210125-155214-b7c809e2/cog_dhs_clusters.csv")
 
 areas_wide <- spread_areas(areas)
 areas_long <- areas %>% st_drop_geometry

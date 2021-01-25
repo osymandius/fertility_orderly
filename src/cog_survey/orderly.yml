@@ -5,6 +5,8 @@ artefacts:
       description: survey indicator dataset
       filenames:
         - cog_dhs_clusters.csv
+        - cog_mics_women.csv
+        - cog_mics_births_to_women.csv
   - staticgraph:
       description: Check DHS region cluster assignment
       filenames:
@@ -22,6 +24,9 @@ packages:
   - sf
   - spud
   - stringr
+
+global_resources:
+  resources/MICS_indicators.csv: MICS_indicators.csv
 
 depends:
   cog_data_areas:

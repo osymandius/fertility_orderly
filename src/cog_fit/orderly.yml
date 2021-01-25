@@ -39,5 +39,5 @@ depends:
   cog_asfr:
     id: latest
     use:
-      depends/cog_dhs_asfr.csv: cog_dhs_asfr.csv
+      depends/cog_asfr.csv: cog_asfr.csv
       depends/cog_fr_plot.csv: cog_fr_plot.csv

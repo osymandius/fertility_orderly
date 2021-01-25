@@ -5,6 +5,8 @@ artefacts:
       description: tcd ASFR dataset
       filenames:
         - tcd_dhs_asfr.csv
+        - tcd_mics_asfr.csv
+        - tcd_asfr.csv
         - tcd_fr_plot.csv
 
 packages:
@@ -25,6 +27,8 @@ depends:
     id: latest
     use:
       depends/tcd_dhs_clusters.csv: tcd_dhs_clusters.csv
+      depends/tcd_mics_women.csv: tcd_mics_women.csv
+      depends/tcd_mics_births_to_women.csv: tcd_mics_births_to_women.csv
   tcd_data_areas:
     id: latest
     use:

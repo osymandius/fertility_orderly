@@ -12,15 +12,31 @@ survey_meta <- create_survey_meta_dhs(surveys)
 
 survey_region_boundaries <- create_survey_boundaries_dhs(surveys)
 
-areas %>%
-  filter(area_level == 1) %>%
-  ggplot()+
-    geom_sf(aes(fill=area_name))
-
-survey_region_boundaries %>%
-  filter(survey_id == "MLI1996DHS") %>%
-  ggplot()+
-  geom_sf(aes(fill=factor(survey_region_id)))
+survey_region_boundaries <- survey_region_boundaries %>%
+  bind_rows(
+    data.frame(
+      survey_id = rep("MLI1996DHS", 2),
+      survey_region_id = c(6,7),
+      survey_region_name = c("Tombouctou", "Gao"),
+      REGVAR = rep("hv024", 2),
+      geometry = filter(areas, area_level == 1, area_name %in% c("Tombouctou", "Gao"))$geometry
+    ),
+    data.frame(
+      survey_id = rep("MLI2001DHS", 3),
+      survey_region_id = c(6,7,8),
+      survey_region_name = c("Tombouctou", "Gao", "Kidal"),
+      REGVAR = rep("hv024", 3),
+      geometry = filter(areas, area_level == 1, area_name %in% c("Tombouctou", "Gao", "Kidal"))$geometry
+    )
+    # data.frame(
+    #   survey_id = c("MLI2012DHS", "MLI2015MIS"),
+    #   survey_region_id = c(9, 9),
+    #   survey_region_name = rep("Bamako", 2),
+    #   REGVAR = rep("hv024", 2),
+    #   geometry = rep(filter(areas, area_level == 1, area_name %in% c("Bamako"))$geometry, 2)
+    # )
+  ) %>%
+  filter(!is.na(survey_region_name))
 
 surveys <- surveys_add_dhs_regvar(surveys, survey_region_boundaries)
 
@@ -28,7 +44,7 @@ surveys <- surveys_add_dhs_regvar(surveys, survey_region_boundaries)
 
 survey_region_areas <- allocate_areas_survey_regions(areas_wide, survey_region_boundaries %>% st_make_valid())
 
-validate_survey_region_areas(survey_region_areas, survey_region_boundaries)
+validate_survey_region_areas(survey_region_areas, survey_region_boundaries, warn=TRUE)
 
 survey_regions <- create_survey_regions_dhs(survey_region_areas)
 
@@ -50,3 +66,27 @@ p_coord_check
 dev.off()
 
 write_csv(survey_clusters, paste0(tolower(iso3), "_dhs_clusters.csv"))
+
+# mics_indicators <- read_csv("global/MICS_indicators.csv") %>%
+mics_indicators <- read_csv("resources/MICS_indicators.csv") %>%
+  pivot_longer(-c(label, id, filetype), names_to = "survey_id") %>%
+  filter(survey_id != "CIV2000MICS")
+
+mics_survey_data <- create_surveys_mics(iso3, mics_indicators)
+
+fertility_mics_data <- transform_mics(mics_survey_data, mics_indicators)
+
+fertility_mics_data$hh <- fertility_mics_data$hh %>%
+  mutate(
+    mics_area_name_label = case_when(
+      mics_area_name_label == "Sã©Gou" ~ "Segou",
+      TRUE ~ mics_area_name_label
+    )
+  ) 
+
+mics_survey_areas <- join_survey_areas(fertility_mics_data, areas)
+
+asfr_input_data <- make_asfr_inputs(mics_survey_areas, mics_survey_data)
+
+write_csv(asfr_input_data$wm, paste0(tolower(iso3), "_mics_women.csv"))
+write_csv(asfr_input_data$births_to_women, paste0(tolower(iso3), "_mics_births_to_women.csv"))

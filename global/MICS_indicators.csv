@@ -1,18 +1,18 @@
-﻿label,id,filetype,ZWE2009MICS,ZWE2014MICS,ZWE2019MICS,SWZ2000MICS,SWZ2010MICS,SWZ2014MICS,LSO2018MICS,MOZ2008MICS,MWI2006MICS,MWI2013MICS,NGA2016MICS,BDI2005MICS,BFA2006MICS,CIV2000MICS,CIV2006MICS,CMR2000MICS,CMR2006MICS,CMR2014MICS,COD2017MICS,KEN2009MICS,KEN2011MICS,NGA2007MICS,NGA2011MICS,TGO2010MICS,TGO2006MICS
-dataset name,wm,wm,wm,wm,wm,wmsw,wm,wm,wm,wm,wm,wm,wm,wm,wm,CIwm,wm,wmca,wm,wm,wm,wm,wm,wm,wm,wm,wm
-dataset name,hh,hh,hh,hh,hh,hhsw,hh,hh,hh,hh,hh,hh,hh,hh,hh,CIhh,hh,hhca,hh,hh,hh,hh,hh,hh,hh,hh,hh
-dataset name,bh,bh,bh,bh,bh,Chsw,bh,bh,bh,bh,bh,bh,bh,ch,ch,CIch,ch,chca,ch,bh,bh,bh,bh,ch,ch,ch,ch
-cluster number,cluster,wm,wm1,wm1,wm1,wiclno,wm1,wm1,wm1,hh1,wm1,wm1,hh1,hh1,hh1,wiclno,hh1,wiclno,hh1,wm1,hh1,hh1,hh1,hh1,hh1,hh1,hh1
-household number,hh_number,wm,wm2,wm2,wm2,wihhno,wm2,wm2,wm2,hh2,wm2,wm2,hh2,hh2,hh2,wihhno,hh2,wihhno,hh2,wm2,hh2,hh2,hh2,hh2,hh2,hh2,hh2
-woman's line number,line_number,wm,wm4,wm4,wm3,wilnno,wm4,wm4,wm3,ln,wm4,wm4,ln,wm4,wm4,wilnno,wm4,wilnno,ln,wm4,wm3,ln,ln,wm4,ln,ln,wm4
-date of interview women (cmc),doi,wm,cmcdoiw,wdoi,wdoi,cmcdoi,wdoi,wdoi,wdoi,cmcdoiw,cmcdoiw,wdoi,wdoi,cmcdoiw,cmcdoiw,cmcdoi,cmcdoiw,cmcdoi,cmcdoiw,wdoi,wdoi,cmcdoiw,wdoi,cmcdoiw,wdoi,wdoi,cmcdoiw
-date of birth (cmc),wdob,wm,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob
-woman weight,weight,wm,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight
-cluster number,cluster,bh,wm1,hh1,wm1,chclno,hh1,hh1,wm1,memid,wm1,hh1,hh1,hh1,hh1,chclno,hh1,chclno,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1
-household number,hh_number,bh,wm2,hh2,wm2,chhhno,hh2,hh2,wm2,memid,wm2,hh2,hh2,hh2,hh2,hid,hh2,hid,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2
-woman's line number,line_number,bh,wm4,ln,wm3,chctno,ln,ln,wm3,memid,wm4,ln,ln,uf6,uf6,chctno,uf6,chctno,uf6,ln,wm3,ln,ln,uf6,uf6,uf6,uf6
-date of child's birth (cmc),cdob,bh,cm11ec,bh4c,bh4c,cdob,ccdob,bh4c,bh4c,ccdob,bh4c,bh4c,bh4c,cdob,cdob,cdob,cdob,cdob,cdob,bh4c,bh4c,ccdob,bh4c,cdob,cdob,cdob,cdob
-cluster number,cluster,hh,hh1,hh1,hh1,hi1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hi1,hh1,hi1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1
-household number,hh_number,hh,hh2,hh2,hh2,hi2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hi2,hh2,hi2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2
-MICS area name,mics_area_name,hh,hh7,hh7,hh7,hi7,hh7,hh7,hh7a,hh7,hhdis2,hh7,hh7,hh1a,hh7,hi7,hh7,hi7,hh7,hh7,hh7,hh7,hh7,hh7,hh7,hh7,hh7
-MICS area level,mics_area_level,,1,1,1,1,1,1,1,1,3,5,2,1,1,0,0,0,1,1,1,1,2,2,2,1,1
+﻿label,id,filetype,ZWE2009MICS,ZWE2014MICS,ZWE2019MICS,SWZ2000MICS,SWZ2010MICS,SWZ2014MICS,LSO2018MICS,MOZ2008MICS,MWI2006MICS,MWI2013MICS,NGA2016MICS,BDI2005MICS,BFA2006MICS,CIV2000MICS,CIV2006MICS,CMR2000MICS,CMR2006MICS,CMR2014MICS,COD2017MICS,KEN2009MICS,KEN2011MICS,NGA2007MICS,NGA2011MICS,TGO2010MICS,TGO2006MICS,GMB2005MICS,GMB2010MICS,GMB2018MICS,MLI2009MICS,MLI2015MICS,COG2014MICS,TCD2010MICS,BEN2014MICS
+dataset name,wm,wm,wm,wm,wm,wmsw,wm,wm,wm,wm,wm,wm,wm,wm,wm,CIwm,wm,wmca,wm,wm,wm,wm,wm,wm,wm,wm,wm,wm,wm,wm,wm,wm,wm,wm,wm
+dataset name,hh,hh,hh,hh,hh,hhsw,hh,hh,hh,hh,hh,hh,hh,hh,hh,CIhh,hh,hhca,hh,hh,hh,hh,hh,hh,hh,hh,hh,hh,hh,hh,hh,hh,hh,hh,hh
+dataset name,bh,bh,bh,bh,bh,Chsw,bh,bh,bh,bh,bh,bh,bh,ch,ch,CIch,ch,chca,ch,bh,bh,bh,bh,ch,ch,ch,ch,ch,ch,ch,ch,ch,ch,ch,ch
+cluster number,cluster,wm,wm1,wm1,wm1,wiclno,wm1,wm1,wm1,hh1,wm1,wm1,hh1,hh1,hh1,wiclno,hh1,wiclno,hh1,wm1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1
+household number,hh_number,wm,wm2,wm2,wm2,wihhno,wm2,wm2,wm2,hh2,wm2,wm2,hh2,hh2,hh2,wihhno,hh2,wihhno,hh2,wm2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2
+woman's line number,line_number,wm,wm4,wm4,wm3,wilnno,wm4,wm4,wm3,ln,wm4,wm4,ln,wm4,wm4,wilnno,wm4,wilnno,ln,wm4,wm3,ln,ln,wm4,ln,ln,wm4,wm4,ln,ln,ln,ln,ln,ln,ln
+date of interview women (cmc),doi,wm,cmcdoiw,wdoi,wdoi,cmcdoi,wdoi,wdoi,wdoi,cmcdoiw,cmcdoiw,wdoi,wdoi,cmcdoiw,cmcdoiw,cmcdoi,cmcdoiw,cmcdoi,cmcdoiw,wdoi,wdoi,cmcdoiw,wdoi,cmcdoiw,wdoi,wdoi,cmcdoiw,cmcdoiw,wdoi,wdoi,wdoi,wdoi,wdoi,wdoi,wdoi
+date of birth (cmc),wdob,wm,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob,wdob
+woman weight,weight,wm,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight,wmweight
+cluster number,cluster,bh,wm1,hh1,wm1,chclno,hh1,hh1,wm1,memid,wm1,hh1,hh1,hh1,hh1,chclno,hh1,chclno,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1
+household number,hh_number,bh,wm2,hh2,wm2,chhhno,hh2,hh2,wm2,memid,wm2,hh2,hh2,hh2,hh2,hid,hh2,hid,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2
+woman's line number,line_number,bh,wm4,ln,wm3,chctno,ln,ln,wm3,memid,wm4,ln,ln,uf6,uf6,chctno,uf6,chctno,uf6,ln,wm3,ln,ln,uf6,uf6,uf6,uf6,uf6,uf6,uf6,uf6,uf6,uf6,uf6,uf6
+date of child's birth (cmc),cdob,bh,cm11ec,bh4c,bh4c,cdob,ccdob,bh4c,bh4c,ccdob,bh4c,bh4c,bh4c,cdob,cdob,cdob,cdob,cdob,cdob,bh4c,bh4c,ccdob,bh4c,cdob,cdob,cdob,cdob,cdob,cdob,cdob,cdob,cdob,cdob,cdob,cdob
+cluster number,cluster,hh,hh1,hh1,hh1,hi1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hi1,hh1,hi1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1
+household number,hh_number,hh,hh2,hh2,hh2,hi2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hi2,hh2,hi2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2
+MICS area name,mics_area_name,hh,hh7,hh7,hh7,hi7,hh7,hh7,hh7a,hh7,hhdis2,hh7,hh7,hh1a,hh7,hi7,hh7,hi7,hh7,hh7,hh7,hh7,hh7,hh7,hh7,hh7,hh7,hh7a,hh7a,hh7,hh7,hh7,hh7,hh7,hh7
+MICS area level,mics_area_level,,1,1,1,1,1,1,1,1,3,5,2,1,1,0,0,0,1,1,1,1,2,2,2,1,1,3,1,1,1,1,1,1,1
