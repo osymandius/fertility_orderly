@@ -4,9 +4,9 @@ population <- read.csv("depends/population_worldpop_naomi.csv")
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
 asfr <- read.csv(paste0("depends/", tolower(iso3), "_asfr.csv"))
 
-# population <- read.csv("archive/aaa_data_population_worldpop/20210106-203832-d9202b45/population_worldpop_naomi.csv")
-# areas <- read_sf("archive/ago_data_areas/20210105-150243-778fa342/ago_areas.geojson")
-# asfr <- read.csv("archive/ago_asfr/20210122-093323-ccda8444/ago_asfr.csv")
+population <- read.csv("archive/aaa_data_population_worldpop/20210118-083935-a95d50bf/population_worldpop_naomi.csv")
+areas <- read_sf("archive/mli_data_areas/20210107-163124-750caa70/mli_areas.geojson")
+asfr <- read.csv("archive/mli_asfr/20210125-211756-ade3f120/mli_asfr.csv")
 
 mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level =2, project=2020)
 

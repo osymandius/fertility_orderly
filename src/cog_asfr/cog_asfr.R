@@ -144,8 +144,8 @@ mics_asfr <- Map(calc_asfr, mics_wm_asfr,
   select(-agegr)
 
 # #' MICS surveys in West Africa around 2005 only recorded up to 5 years preceding survey
-# mics_asfr <- mics_asfr %>%
-#   filter(!(survey_id == "CIV2006MICS" & period <= 2001))
+mics_asfr <- mics_asfr %>%
+  filter(!(survey_id == "COG2014MICS" & period <= 2009))
 
 # For plotting:
 mics_asfr_plot <- Map(calc_asfr, mics_wm_asfr,
@@ -175,8 +175,8 @@ mics_asfr_plot <- Map(calc_asfr, mics_wm_asfr,
   left_join(get_age_groups() %>% select(age_group, age_group_label), by=c("agegr" = "age_group_label")) %>%
   select(-agegr)
 
-# mics_asfr_plot <- mics_asfr_plot %>%
-#   filter(!(survey_id == "CIV2006MICS" & period <= 2001))
+mics_asfr_plot <- mics_asfr_plot %>%
+  filter(!(survey_id == "COG2014MICS" & period <= 2009))
 
 mics_wm_tfr <- mics_wm_asfr %>%
   bind_rows %>%
@@ -206,8 +206,8 @@ mics_tfr <- Map(calc_tfr, mics_wm_tfr,
          survtype = "MICS",
          variable = "tfr")
 
-# mics_tfr <- mics_tfr %>%
-#   filter(!(survey_id == "CIV2006MICS" & period <= 2001))
+mics_tfr <- mics_tfr %>%
+  filter(!(survey_id == "COG2014MICS" & period <= 2009))
 
 write_csv(mics_asfr, paste0(tolower(iso3), "_mics_asfr.csv"))
 

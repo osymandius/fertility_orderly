@@ -2,7 +2,7 @@ iso3 <- "TCD"
 
 population <- read.csv("depends/population_worldpop_naomi.csv")
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
-asfr <- read.csv(paste0("depends/", tolower(iso3), "_dhs_asfr.csv"))
+asfr <- read.csv(paste0("depends/", tolower(iso3), "_asfr.csv"))
 
 # population <- read.csv("archive/aaa_data_population_worldpop/20210106-203832-d9202b45/population_worldpop_naomi.csv")
 # areas <- read_sf("archive/ago_data_areas/20210105-150243-778fa342/ago_areas.geojson")

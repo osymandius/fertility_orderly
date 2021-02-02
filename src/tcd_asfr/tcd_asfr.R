@@ -142,8 +142,8 @@ mics_asfr <- Map(calc_asfr, mics_wm_asfr,
   select(-agegr)
 
 # #' MICS surveys in West Africa around 2005 only recorded up to 5 years preceding survey
-# mics_asfr <- mics_asfr %>%
-#   filter(!(survey_id == "CIV2006MICS" & period <= 2001))
+mics_asfr <- mics_asfr %>%
+  filter(!(survey_id == "TCD2010MICS" & period <= 2005))
 
 # For plotting:
 mics_asfr_plot <- Map(calc_asfr, mics_wm_asfr,
@@ -173,8 +173,8 @@ mics_asfr_plot <- Map(calc_asfr, mics_wm_asfr,
   left_join(get_age_groups() %>% select(age_group, age_group_label), by=c("agegr" = "age_group_label")) %>%
   select(-agegr)
 
-# mics_asfr_plot <- mics_asfr_plot %>%
-#   filter(!(survey_id == "CIV2006MICS" & period <= 2001))
+mics_asfr_plot <- mics_asfr_plot %>%
+  filter(!(survey_id == "TCD2010MICS" & period <= 2005))
 
 mics_wm_tfr <- mics_wm_asfr %>%
   bind_rows %>%
@@ -186,26 +186,32 @@ mics_births_tfr <- mics_births_asfr %>%
   arrange(survey_id, area_id) %>%
   group_split(survey_id, area_id)
 
-mics_tfr <- Map(calc_tfr, mics_wm_tfr,
-                by = list(~area_id + survey_id),
-                tips = list(c(0,15)),
-                period = list(1995:2019),
-                clusters = list(~cluster),
-                strata = list(NULL),
-                id = list("unique_id"),
-                dob = list("wdob"),
-                intv = list("doi"),
-                weight = list("weight"),
-                bhdata = mics_births_tfr,
-                bvars = list("cdob")) %>%
-  bind_rows %>%
-  type.convert %>%
-  mutate(iso3 = iso3,
-         survtype = "MICS",
-         variable = "tfr")
+# mics_tfr <- Map(calc_tfr, mics_wm_tfr,
+#                 by = list(~area_id + survey_id),
+#                 tips = list(c(0,15)),
+#                 period = list(1995:2019),
+#                 clusters = list(~cluster),
+#                 strata = list(NULL),
+#                 id = list("unique_id"),
+#                 dob = list("wdob"),
+#                 intv = list("doi"),
+#                 weight = list("weight"),
+#                 bhdata = mics_births_tfr,
+#                 bvars = list("cdob")) %>%
+#   bind_rows %>%
+#   type.convert %>%
+#   mutate(iso3 = iso3,
+#          survtype = "MICS",
+#          variable = "tfr")
 
-# mics_tfr <- mics_tfr %>%
-#   filter(!(survey_id == "CIV2006MICS" & period <= 2001))
+mics_tfr <- mics_asfr_plot %>%
+  group_by(survey_id, area_id, period) %>%
+  summarise(tfr = 5*sum(asfr)) %>%
+  ungroup %>%
+  mutate(survtype = "MICS")
+
+mics_tfr <- mics_tfr %>%
+  filter(!(survey_id == "TCD2010MICS" & period <= 2005))
 
 write_csv(mics_asfr, paste0(tolower(iso3), "_mics_asfr.csv"))
 

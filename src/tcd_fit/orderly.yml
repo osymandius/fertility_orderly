@@ -39,5 +39,5 @@ depends:
   tcd_asfr:
     id: latest
     use:
-      depends/tcd_dhs_asfr.csv: tcd_dhs_asfr.csv
+      depends/tcd_asfr.csv: tcd_asfr.csv
       depends/tcd_fr_plot.csv: tcd_fr_plot.csv
