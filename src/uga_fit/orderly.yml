@@ -25,7 +25,7 @@ packages:
 
 global_resources:
   resources/tmb_all_level_iid.cpp: tmb_all_level_iid.cpp
-  resources/tmb_all_level_iid_poisson.cpp: tmb_all_level_iid_poisson.cpp
+  resources/tmb_all_level_poisson.cpp: tmb_all_level_poisson.cpp
 
 depends:
   uga_data_areas:
