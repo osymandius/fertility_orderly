@@ -10,8 +10,7 @@ asfr <- read.csv("archive/swz_asfr/20201203-174002-8fef11ee/swz_asfr.csv")
 
 my <- max(asfr$period)
 asfr <- asfr %>%
-  filter(period < my-4,
-         period > 1999)
+  filter(period < my-4)
 
 mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level =2, project=2020)
 
