@@ -174,24 +174,25 @@ Type objective_function<Type>::operator() ()
   // nll += AR1(Type(phi_period))(u_period);
 
   // // ARIMA(1,1,0) with trend
-  DATA_SPARSE_MATRIX(X_period);
-  PARAMETER(lag_logit_phi_arima_period);
+  // DATA_SPARSE_MATRIX(X_period);
+  // PARAMETER(lag_logit_phi_arima_period);
+  
 
-  PARAMETER_VECTOR(beta_period);
-  nll -= dnorm(beta_period, Type(0), Type(sqrt(1/0.001)), true).sum();
+  // PARAMETER_VECTOR(beta_period);
+  // nll -= dnorm(beta_period, Type(0), Type(sqrt(1/0.001)), true).sum();
 
-  nll -= dnorm(lag_logit_phi_arima_period, Type(0), Type(sqrt(1/0.15)), true);
-  Type phi_arima_period = 2*exp(lag_logit_phi_arima_period)/(1+exp(lag_logit_phi_arima_period))-1;
+  // nll -= dnorm(lag_logit_phi_arima_period, Type(0), Type(sqrt(1/0.15)), true);
+  // Type phi_arima_period = 2*exp(lag_logit_phi_arima_period)/(1+exp(lag_logit_phi_arima_period))-1;
 
-  int n = u_period.size();
+  // int n = u_period.size();
 
-  vector<Type> u_period_diff(n - 1);
+  // vector<Type> u_period_diff(n - 1);
 
-  for (int i = 1; i < n; i++) {
-    u_period_diff[i - 1] = u_period[i] - u_period[i - 1];
-  }
+  // for (int i = 1; i < n; i++) {
+  //   u_period_diff[i - 1] = u_period[i] - u_period[i - 1];
+  // }
 
-  nll += AR1(Type(phi_arima_period))(u_period_diff);
+  // nll += AR1(Type(phi_arima_period))(u_period_diff);
 
   ///
 
@@ -301,7 +302,7 @@ Type objective_function<Type>::operator() ()
                      beta_0
                      + Z_age * u_age * sqrt(1/prec_rw_age)
                      + Z_period * u_period * sqrt(1/prec_rw_period)
-                     + X_period * beta_period
+                     // + X_period * beta_period
                      // + Z_spatial * spatial                     
                      + Z_spatial * u_spatial_str * sqrt(1/prec_spatial)
                      // + Z_country * u_country * sqrt(1/prec_country)
@@ -452,8 +453,8 @@ Type objective_function<Type>::operator() ()
   REPORT(log_prec_rw_period);
   REPORT(log_prec_rw_tips);
 
-  REPORT(beta_period);
-  REPORT(phi_arima_period);
+  // REPORT(beta_period);
+  // REPORT(phi_arima_period);
 
   REPORT(beta_tips_dummy);
   // // REPORT(beta_urban_dummy);

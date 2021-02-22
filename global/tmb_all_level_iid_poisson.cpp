@@ -398,9 +398,9 @@ Type objective_function<Type>::operator() ()
   // REPORT(lambda);
 
   REPORT(log_prec_smooth_iid);
-  REPORT(u_smooth_iid);
+  // REPORT(u_smooth_iid);
 
-  // REPORT(log_prec_spatial);
+  REPORT(log_prec_spatial);
   // // REPORT(logit_spatial_rho);
 
   REPORT(log_prec_eta1);
@@ -421,16 +421,16 @@ Type objective_function<Type>::operator() ()
   REPORT(log_prec_omega2);
   REPORT(omega2_phi_period);
 
-  // REPORT(log_prec_rw_age);
-  // REPORT(log_prec_rw_period);
-  // REPORT(log_prec_rw_tips);
+  REPORT(log_prec_rw_age);
+  REPORT(log_prec_rw_period);
+  REPORT(log_prec_rw_tips);
 
-  // REPORT(beta_tips_dummy);
+  REPORT(beta_tips_dummy);
   // // REPORT(beta_urban_dummy);
 
-  REPORT(eta1);
-  REPORT(eta2);
-  REPORT(eta3);
+  // REPORT(eta1);
+  // REPORT(eta2);
+  // REPORT(eta3);
 
   // REPORT(u_tips);
   // REPORT(u_tips_constr);

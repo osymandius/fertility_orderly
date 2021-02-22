@@ -176,9 +176,10 @@ Type objective_function<Type>::operator() ()
   // // ARIMA(1,1,0) with trend
   DATA_SPARSE_MATRIX(X_period);
   PARAMETER(lag_logit_phi_arima_period);
+  
 
-  PARAMETER_VECTOR(beta_period);
-  nll -= dnorm(beta_period, Type(0), Type(sqrt(1/0.001)), true).sum();
+  // PARAMETER_VECTOR(beta_period);
+  // nll -= dnorm(beta_period, Type(0), Type(sqrt(1/0.001)), true).sum();
 
   nll -= dnorm(lag_logit_phi_arima_period, Type(0), Type(sqrt(1/0.15)), true);
   Type phi_arima_period = 2*exp(lag_logit_phi_arima_period)/(1+exp(lag_logit_phi_arima_period))-1;
@@ -301,7 +302,7 @@ Type objective_function<Type>::operator() ()
                      beta_0
                      + Z_age * u_age * sqrt(1/prec_rw_age)
                      + Z_period * u_period * sqrt(1/prec_rw_period)
-                     + X_period * beta_period
+                     // + X_period * beta_period
                      // + Z_spatial * spatial                     
                      + Z_spatial * u_spatial_str * sqrt(1/prec_spatial)
                      // + Z_country * u_country * sqrt(1/prec_country)
@@ -452,7 +453,7 @@ Type objective_function<Type>::operator() ()
   REPORT(log_prec_rw_period);
   REPORT(log_prec_rw_tips);
 
-  REPORT(beta_period);
+  // REPORT(beta_period);
   REPORT(phi_arima_period);
 
   REPORT(beta_tips_dummy);

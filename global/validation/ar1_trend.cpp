@@ -162,36 +162,36 @@ Type objective_function<Type>::operator() ()
 
 
   // // RW
-  nll -= Type(-0.5) * (u_period * (R_period * u_period)).sum();
-  nll -= dnorm(u_period.sum(), Type(0), Type(0.01) * u_period.size(), true);
+  // nll -= Type(-0.5) * (u_period * (R_period * u_period)).sum();
+  // nll -= dnorm(u_period.sum(), Type(0), Type(0.01) * u_period.size(), true);
 
   // // AR1
-  // PARAMETER(lag_logit_phi_period);
+  PARAMETER(lag_logit_phi_period);
   
-  // nll -= dnorm(lag_logit_phi_period, Type(0), Type(sqrt(1/0.15)), true);
-  // Type phi_period = 2*exp(lag_logit_phi_period)/(1+exp(lag_logit_phi_period))-1;
+  nll -= dnorm(lag_logit_phi_period, Type(0), Type(sqrt(1/0.15)), true);
+  Type phi_period = 2*exp(lag_logit_phi_period)/(1+exp(lag_logit_phi_period))-1;
   
-  // nll += AR1(Type(phi_period))(u_period);
+  nll += AR1(Type(phi_period))(u_period);
 
   // // ARIMA(1,1,0) with trend
-  DATA_SPARSE_MATRIX(X_period);
-  PARAMETER(lag_logit_phi_arima_period);
+  // PARAMETER(lag_logit_phi_arima_period);
 
+  DATA_SPARSE_MATRIX(X_period);
   PARAMETER_VECTOR(beta_period);
   nll -= dnorm(beta_period, Type(0), Type(sqrt(1/0.001)), true).sum();
 
-  nll -= dnorm(lag_logit_phi_arima_period, Type(0), Type(sqrt(1/0.15)), true);
-  Type phi_arima_period = 2*exp(lag_logit_phi_arima_period)/(1+exp(lag_logit_phi_arima_period))-1;
+  // nll -= dnorm(lag_logit_phi_arima_period, Type(0), Type(sqrt(1/0.15)), true);
+  // Type phi_arima_period = 2*exp(lag_logit_phi_arima_period)/(1+exp(lag_logit_phi_arima_period))-1;
 
-  int n = u_period.size();
+  // int n = u_period.size();
 
-  vector<Type> u_period_diff(n - 1);
+  // vector<Type> u_period_diff(n - 1);
 
-  for (int i = 1; i < n; i++) {
-    u_period_diff[i - 1] = u_period[i] - u_period[i - 1];
-  }
+  // for (int i = 1; i < n; i++) {
+  //   u_period_diff[i - 1] = u_period[i] - u_period[i - 1];
+  // }
 
-  nll += AR1(Type(phi_arima_period))(u_period_diff);
+  // nll += AR1(Type(phi_arima_period))(u_period_diff);
 
   ///
 
@@ -452,8 +452,8 @@ Type objective_function<Type>::operator() ()
   REPORT(log_prec_rw_period);
   REPORT(log_prec_rw_tips);
 
-  REPORT(beta_period);
-  REPORT(phi_arima_period);
+  // REPORT(beta_period);
+  // REPORT(phi_arima_period);
 
   REPORT(beta_tips_dummy);
   // // REPORT(beta_urban_dummy);
