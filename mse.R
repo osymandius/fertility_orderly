@@ -1,4 +1,4 @@
-tmb_results <- read_csv("tmb_results_validation.csv")
+tmb_results <- read_csv("~/Dropbox/oli backup/2019-08 Fertility/tmb_results_validation.csv")
 
 tmb_results <- tmb_results %>%
   separate(area_id, into=c("iso3", NA), sep=3, remove=FALSE)
@@ -28,14 +28,13 @@ res_unc <- tmb_results %>%
   filter(period %in% (max(period) - 5))
 
 mse <- res_unc %>%
-  mutate(sq_err = (value-median)^2) %>%
-  group_by(iso3, area_id, source) %>%
-  summarise(mse = mean(sq_err))
+  mutate(sq_err = (value-median)^2)
 
 p1 <- mse %>%
-  ggplot(aes(x=mse, y=iso3)) +
+  ggplot(aes(x=sq_err, y=source)) +
     geom_boxplot() +
-    facet_wrap(~source, ncol = 1)
+    xlim(0, 3) +
+    labs(x = "Square error", y=element_blank())
   
 
 fr_l <- group_split(fr, iso3)          
@@ -53,11 +52,11 @@ pl <- Map(function(tmb_results, fr_plot) {
   tmb_results %>%
     filter(area_level == 1, variable == "tfr") %>%
     ggplot(aes(x=period, y=median)) +
-    geom_line(aes(color=source)) +
-    geom_ribbon(aes(ymin=lower, ymax=upper, fill=source), alpha=0.3) +
+    geom_line() +
+    geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.3) +
     geom_point(data = fr_plot %>% filter(variable == "tfr", str_detect(area_id, "_1_"), value<12), aes(y=value)) +
     geom_vline(aes(xintercept = intercept), linetype = 3) +
-    facet_wrap(~area_name, ncol=5) +
+    facet_grid(source~area_name) +
     labs(y="TFR", x=element_blank(), color="Survey ID", title=paste(iso3, "| Provincial TFR")) +
     theme_minimal() +
     theme(
@@ -67,6 +66,8 @@ pl <- Map(function(tmb_results, fr_plot) {
   
   
 }, tmb_l, fr_l)
+
+lapply(pl, print)
 
 pl[[1]]
 
@@ -81,13 +82,14 @@ res_intv_score <- res_unc %>%
     score = log_diff_intv + coeff_lower + coeff_upper
   ) %>%
   group_by(iso3, area_id, source) %>%
-  summarise(mean_score = mean(score))
+  summarise(median_score = median(score))
     
-p2 <- res_intv_score %>%
-  ggplot(aes(x=mean_score, y=iso3)) +
+res_intv_score %>%
+  ggplot(aes(x=median_score, y=iso3)) +
       geom_boxplot() +
-      labs(y=element_blank(), x="Mean interval score", title = "Interval Score") +
-      facet_wrap(~source, ncol=1)
+      labs(y=element_blank(), x="Median interval score", title = "Interval Score") +
+      facet_wrap(~source, ncol=1) +
+      xlim(0,25)
 
 res_intv_score_nat <- res_unc %>%
   mutate(
@@ -99,9 +101,9 @@ res_intv_score_nat <- res_unc %>%
     score = log_diff_intv + coeff_lower + coeff_upper
   ) %>%
   group_by(iso3, source) %>%
-  summarise(mean_score = mean(score))
+  summarise(median_score = median(score))
 
 res_intv_score_nat %>%
-  ggplot(aes(x=mean_score, y=source)) +
+  ggplot(aes(x=median_score, y=source)) +
     geom_boxplot()+
-    labs(y=element_blank(), x="Mean interval score", title = "Interval Score")
+    labs(y=element_blank(), x="Median interval score", title = "Interval Score")
