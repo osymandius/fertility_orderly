@@ -9,79 +9,13 @@ fits <- lapply(fits, list.files, full.names= TRUE)
 fits <- lapply(fits, grep, pattern="_fr.csv", value=TRUE)
 fr <- lapply(fits, read.csv)
 
+region <- read.csv("global/region.csv") %>%
+  mutate(iso3 = toupper(iso3))
+
 fr <- fr %>% 
   bind_rows() %>%
-  separate(area_id, into=c("iso3", NA), remove=FALSE, sep=3)
-
-fr %>%
-  filter(area_level == 0,
-        variable == "asfr",
-        period %in% c(2000, 2010, 2020)) %>%
-  group_by(area_id, area_name, age_group) %>%
-  summarise(ratio_10 = median[period == 2010]/median[period == 2000],
-            ratio_20 = median[period == 2020]/median[period == 2010]) %>%
-  pivot_longer(-c(area_id, area_name, age_group)) %>%
-  mutate(name = factor(name, labels=c("2000-2010", "2010-2020"))) %>%
-  ggplot(aes(x=age_group, y=value-1)) +
-    geom_boxplot() +
-    scale_y_continuous(labels = scales::label_percent(), name = "Fertility reduction") +
-    geom_hline(aes(yintercept = 0), linetype=3) +
-    facet_wrap(~name)
-
-fr %>%
-  filter(area_level == 0,
-         variable == "asfr",
-         period %in% c(2000, 2010, 2020)) %>%
-  group_by(area_id, area_name, age_group) %>%
-  summarise(`2000` = 1,
-            `2010` = median[period == 2010]/median[period == 2000],
-            `2020` = median[period == 2020]/median[period == 2000]) %>%
-  pivot_longer(-c(area_id, area_name, age_group)) %>%
-  type.convert() %>%
-  # mutate(name = factor(name, labels=c("2000-2010", "2010-2020")) %>%
-  ggplot(aes(x=name, y=value-1, group=age_group, color=age_group))+
-  geom_line() +
-  geom_point() +
-  scale_y_continuous(labels = scales::label_percent(), name = "Fertility reduction") +
-  scale_color_manual(values=c("red", rep("grey", 6))) +
-  geom_hline(aes(yintercept = 0), linetype=3) +
-  facet_wrap(~area_name)
-
-
-## 15-19 flatlining between 2010-2020
-fr %>%
-  filter(area_level == 0,
-         variable == "asfr",
-         period %in% c(2000, 2010, 2020)) %>%
-  group_by(area_id, area_name, age_group) %>%
-  summarise(`2010` = 1,
-            `2020` = median[period == 2020]/median[period == 2010]) %>%
-  pivot_longer(-c(area_id, area_name, age_group)) %>%
-  type.convert() %>%
-  # mutate(name = factor(name, labels=c("2000-2010", "2010-2020")) %>%
-  ggplot(aes(x=name, y=value-1, group=fct_rev(age_group), color=age_group))+
-  geom_point() +
-  geom_line() +
-  scale_y_continuous(labels = scales::label_percent(), name = "Fertility reduction") +
-  scale_color_manual(values=c("red", rep("grey", 6))) +
-  geom_hline(aes(yintercept = 0), linetype=3) +
-  facet_wrap(~area_name)
-
-
-# fr %>%
-#   filter(area_level == 0,
-#          variable == "tfr",
-#          period %in% c(2000, 2010, 2020)) %>%
-#   group_by(area_id, area_name) %>%
-#   summarise(ratio_10 = median[period == 2010]/median[period == 2000],
-#             ratio_20 = median[period == 2020]/median[period == 2010]) %>%
-#   pivot_longer(-c(area_id, area_name)) %>%
-#   mutate(name = factor(name, labels=c("2000-2010", "2010-2020"))) %>%
-#   ggplot(aes(x=name, y=value-1)) +
-#   geom_boxplot() +
-#   geom_point(position = position_jitter(width=0.05)) +
-#   scale_y_continuous(labels = scales::label_percent(), name = "Fertility reduction") +
-#   geom_hline(aes(yintercept = 0), linetype=3)
+  separate(area_id, into=c("iso3", NA), remove=FALSE, sep=3) %>%
+  left_join(region)
 
 fr_list <- fr %>%
   group_split(iso3)
@@ -102,6 +36,119 @@ areas_l <- lapply(areas_l, grep, pattern="_areas.geojson", value=TRUE)
 areas_list <- lapply(areas_l, read_sf)
 
 names(areas_list) <- unique(fr$iso3)
+
+grey_area <- c("archive/bwa_data_areas/20210127-145208-5212d475/bwa_areas.geojson",
+               "~/Imperial College London/HIV Inference Group - WP - Documents/Analytical datasets/naomi-data/ZAF/data/zaf_areas.geojson") %>%
+  lapply(read_sf) %>%
+  bind_rows() %>%
+  filter(area_level == 0)
+
+nat_geom <- lapply(areas_list, function(x) {
+  x %>%
+    filter(area_level == 0) %>%
+    select(area_id, geometry)
+}) %>%
+  bind_rows
+
+fr %>%
+  filter(area_level == 0,
+        variable == "asfr",
+        period %in% c(2000, 2010, 2020)) %>%
+  group_by(region, area_id, area_name, age_group) %>%
+  summarise(ratio_10 = median[period == 2010]/median[period == 2000],
+            ratio_20 = median[period == 2020]/median[period == 2010]) %>%
+  pivot_longer(-c(region, area_id, area_name, age_group)) %>%
+  mutate(name = factor(name, labels=c("2000-2010", "2010-2020"))) %>%
+  ggplot(aes(x=age_group, y=value-1)) +
+    geom_boxplot() +
+    scale_y_continuous(labels = scales::label_percent(), name = "Fertility reduction") +
+    geom_hline(aes(yintercept = 0), linetype=3) +
+    facet_wrap(region~name)
+
+fr %>%
+  filter(area_level == 0,
+         variable == "asfr",
+         period %in% c(2000, 2010, 2020)) %>%
+  group_by(region, area_id, area_name, age_group) %>%
+  summarise(`2000` = 1,
+            `2010` = median[period == 2010]/median[period == 2000],
+            `2020` = median[period == 2020]/median[period == 2000]) %>%
+  pivot_longer(-c(region, area_id, area_name, age_group)) %>%
+  type.convert() %>%
+  # mutate(name = factor(name, labels=c("2000-2010", "2010-2020")) %>%
+  ggplot(aes(x=name, y=value-1, group=age_group, color=age_group))+
+  geom_line() +
+  geom_point() +
+  scale_y_continuous(labels = scales::label_percent(), name = "Fertility reduction") +
+  scale_color_manual(values=c("red", rep("grey", 6))) +
+  geom_hline(aes(yintercept = 0), linetype=3) +
+  facet_wrap(region~area_name)
+
+
+## 15-19 flatlining between 2010-2020
+fr %>%
+  filter(area_level == 0,
+         variable == "asfr",
+         period %in% c(2000, 2005, 2010, 2015, 2020)) %>%
+  group_by(region, area_id, area_name, age_group) %>%
+  summarise(`2005` = 1,
+            `2020` = median[period == 2015]/median[period == 2005]) %>%
+  pivot_longer(-c(region, area_id, area_name, age_group)) %>%
+  type.convert() %>%
+  # mutate(name = factor(name, labels=c("2000-2010", "2010-2020")) %>%
+  ggplot(aes(x=name, y=value-1, group=fct_rev(age_group), color=age_group))+
+  geom_point() +
+  geom_line() +
+  scale_y_continuous(labels = scales::label_percent(), name = "Fertility reduction") +
+  scale_color_manual(values=c("red", rep("grey", 6))) +
+  geom_hline(aes(yintercept = 0), linetype=3) +
+  facet_wrap(region~area_name)
+
+fr %>%
+  filter(area_level == 0,
+         variable == "asfr",
+         period %in% c(2000, 2005, 2010, 2015, 2020)) %>%
+  group_by(region, area_id, area_name, age_group) %>%
+  summarise(`2005` = 1,
+            `2020` = median[period == 2015]/median[period == 2005]) %>%
+  pivot_longer(-c(region, area_id, area_name, age_group)) %>%
+  type.convert() %>%
+  filter(name == 2020) %>%
+  group_by(area_id) %>%
+  arrange(value, .by_group = TRUE) %>%
+  mutate(n = row_number()) %>%
+  filter(age_group == "Y015_019") %>%
+  left_join(nat_geom) %>%
+  ggplot() +
+    geom_sf(aes(geometry = geometry, fill=n))
+
+fr %>%
+  filter(area_level == 0,
+         variable == "tfr") %>%
+  group_by(region, area_id, area_name) %>%
+  mutate(rel_tfr = median/median[period==2000]) %>%
+  filter(period >1999) %>%
+  select(area_id, area_name, period, rel_tfr) %>%
+  ggplot(aes(x=period, y=rel_tfr, color=area_name)) +
+    geom_line()
+
+
+# fr %>%
+#   filter(area_level == 0,
+#          variable == "tfr",
+#          period %in% c(2000, 2010, 2020)) %>%
+#   group_by(area_id, area_name) %>%
+#   summarise(ratio_10 = median[period == 2010]/median[period == 2000],
+#             ratio_20 = median[period == 2020]/median[period == 2010]) %>%
+#   pivot_longer(-c(area_id, area_name)) %>%
+#   mutate(name = factor(name, labels=c("2000-2010", "2010-2020"))) %>%
+#   ggplot(aes(x=name, y=value-1)) +
+#   geom_boxplot() +
+#   geom_point(position = position_jitter(width=0.05)) +
+#   scale_y_continuous(labels = scales::label_percent(), name = "Fertility reduction") +
+#   geom_hline(aes(yintercept = 0), linetype=3)
+
+
 
 # age_distribution_plots <- lapply(fr_list, function(fr) {
 #   fr %>%
@@ -130,12 +177,17 @@ plots <- Map(function(fr, areas, level) {
       viridis::scale_fill_viridis()
 }, fr_list, areas_list, lvls)
 
-fr_list_admin1 <- fr %>%
+asfr_list_admin1 <- fr %>%
   filter(variable == "asfr",
          period > 1999) %>%
   group_split(iso3)
 
-plots_admin1 <- lapply(fr_list_admin1, function(x) {
+tfr_list_admin1 <- fr %>%
+  filter(variable == "tfr",
+         period > 1999) %>%
+  group_split(iso3)
+
+asfr_plots_admin1 <- lapply(asfr_list_admin1, function(x) {
   
   country <- unique(filter(x, area_level == 0)$area_name)
   
@@ -148,8 +200,25 @@ plots_admin1 <- lapply(fr_list_admin1, function(x) {
       labs(title = country)
 })
 
+names(asfr_plots_admin1) <- unique(fr$iso3)
+
+tfr_plots_admin1 <- lapply(tfr_list_admin1, function(x) {
+  
+  country <- unique(filter(x, area_level == 0)$area_name)
+  
+  x %>%
+    filter(area_level == 1) %>%
+    ggplot(aes(x=period, y=median)) +
+    geom_line() +
+    geom_ribbon(aes(ymin=lower, ymax=upper), alpha = 0.3) +
+    facet_wrap(~area_name) +
+    labs(title = country)
+})
+
+names(tfr_plots_admin1) <- unique(fr$iso3)
+
 pdf(paste0("~/Downloads/test.pdf"), h = 12, w = 20)
-plots_admin1
+asfr_plots_admin1
 dev.off()
 
 
@@ -185,6 +254,8 @@ dist_fr %>%
   filter(period == 2020) %>%
   ggplot() +
     geom_sf(aes(geometry = geometry, fill=median), size=0) +
+    geom_sf(data = grey_area, aes(geometry = geometry), fill="grey", size=0.3) +
+    geom_sf(data = nat_geom, aes(geometry = geometry), fill=NA, size=0.3) +
     viridis::scale_fill_viridis()
 
 ## Box plot of TFR distributions
@@ -197,7 +268,7 @@ dist_fr %>%
 
 dist_fr %>%
   bind_rows() %>%
-  filter(period %in% c(2020)) %>%
+  filter(period %in% c(2015)) %>%
   mutate(period = factor(period)) %>%
   ggplot(aes(x=iso3, y=median)) +
   geom_boxplot() +
@@ -249,9 +320,40 @@ dist_fr_change <- Map(function(fr, areas, level) {
   
 }, fr_list, areas_list, lvls)
 
+admin1_fr_change <- Map(function(fr, areas, level) {
+  
+  country <- unique(filter(fr, area_level == 0)$area_name)
+  
+  fr %>%
+    filter(area_level == 1,
+           variable == "tfr") %>%
+    group_by(iso3, area_id, area_name) %>%
+    summarise(ratio_10 = median[period == 2020]/median[period == 2000],
+              ratio_20 = median[period == 2020]/median[period == 2010]
+    ) %>%
+    pivot_longer(-c(iso3, area_id, area_name)) %>%
+    left_join(areas) %>%
+    mutate(name = factor(name, labels=c("2000-2010", "2010-2020"))) %>%
+    ggplot() +
+    geom_sf(aes(geometry = geometry, fill=value)) +
+    scale_fill_gradient2(midpoint=1) +
+    facet_wrap(~name, ncol=1) +
+    labs(title = country)
+  
+  
+  
+}, fr_list, areas_list, lvls)
+
+names(dist_fr_change) <- unique(fr$iso3)
+names(admin1_fr_change) <- unique(fr$iso3)
+names(tfr_2020_map) <- unique(fr$iso3)
+
 pdf(paste0("~/Downloads/dist_fr_change_00_20.pdf"), h = 12, w = 20)
 dist_fr_change
 dev.off()
 
-ggpubr::ggarrange(tfr_2020_map[[5]], dist_fr_change[[5]])
+ggpubr::ggarrange(tfr_2020_map[["ZWE"]], dist_fr_change[["ZWE"]])
+
+ggpubr::ggarrange(dist_fr_change[["ETH"]], dist_fr_change[["MOZ"]])
+ggpubr::ggarrange(admin1_fr_change[["ETH"]], admin1_fr_change[["MOZ"]])
 

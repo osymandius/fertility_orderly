@@ -19,6 +19,7 @@ tmb_int$data <- list(
   M_naomi_obs = mf$M_naomi_obs,
   M_full_obs = mf$M_full_obs,
   X_tips_dummy = mf$Z$X_tips_dummy,
+  X_period = mf$Z$X_period,
   # X_urban_dummy = mf$Z$X_urban_dummy,
   X_extract_dhs = mf$X_extract$X_extract_dhs,
   X_extract_ais = mf$X_extract$X_extract_ais,
@@ -95,7 +96,9 @@ tmb_int$par <- list(
   
   u_period = rep(0, ncol(mf$Z$Z_period)),
   log_prec_rw_period = 0,
-lag_logit_phi_period = 0,
+# lag_logit_phi_period = 0,
+  lag_logit_phi_arima_period = 0,
+  beta_period = 0,
   
   u_spatial_str = rep(0, ncol(mf$Z$Z_spatial)),
   log_prec_spatial = 0,
@@ -103,7 +106,7 @@ lag_logit_phi_period = 0,
   beta_spike_2000 = 0,
   beta_spike_1999 = 0,
   beta_spike_2001 = 0,
-  log_overdispersion = 0,
+  # log_overdispersion = 0,
   
   eta1 = array(0, c(ncol(mf$Z$Z_country), ncol(mf$Z$Z_period), ncol(mf$Z$Z_age))),
   log_prec_eta1 = 0,
@@ -123,6 +126,7 @@ tmb_int$random <- c("beta_0",
                     "u_spatial_str",
                     "u_age",
                     "u_period",
+                    "beta_period",
                     "beta_tips_dummy",
                     "u_tips",
                     "beta_spike_2000",
@@ -130,9 +134,9 @@ tmb_int$random <- c("beta_0",
                     "beta_spike_2001",
                     "eta1",
                     "eta2",
-                    "eta3",
-                    "omega1",
-                    "omega2"
+                    "eta3"
+                    # "omega1",
+                    # "omega2"
                     )
 
 if(mf$mics_toggle) {

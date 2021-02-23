@@ -1,0 +1,28 @@
+script: bwa_survey.R
+
+artefacts:
+  - data:
+      description: survey indicator dataset
+      filebwaes:
+        - bwa_dhs_clusters.csv
+  - staticgraph:
+      description: Check DHS region cluster assignment
+      filebwaes:
+        - check/bwa_dhs-cluster-check.pdf
+
+
+packages:
+  - dplyr
+  - ggplot2
+  - haven
+  - naomi
+  - naomi.utils
+  - rdhs
+  - sf
+  - readr
+
+depends:
+  bwa_data_areas:
+    id: latest
+    use:
+      depends/bwa_areas.geojson: bwa_areas.geojson
