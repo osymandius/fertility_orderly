@@ -1,0 +1,36 @@
+script: sen_survey.R
+
+artefacts:
+  - data:
+      description: survey indicator dataset
+      filenames:
+        - sen_dhs_clusters.csv
+        # - sen_mics_women.csv
+        # - sen_mics_births_to_women.csv
+  - staticgraph:
+      description: Check DHS region cluster assignment
+      filenames:
+        - check/sen_dhs-cluster-check.pdf
+
+
+packages:
+  - dplyr
+  - tidyr
+  - dfertility
+  - haven
+  - ggplot2
+  - naomi
+  - naomi.utils
+  - readr
+  - sf
+  - spud
+  - stringr
+
+global_resources:
+  resources/MICS_indicators.csv: MICS_indicators.csv
+
+depends:
+  sen_data_areas:
+    id: latest
+    use:
+      depends/sen_areas.geojson: sen_areas.geojson

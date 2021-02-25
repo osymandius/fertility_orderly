@@ -38,7 +38,7 @@ tmb_int$data <- list(
   Z_omega2 = sparse.model.matrix(~0 + id.omega2, mf$mf_model),
   R_tips = mf$R$R_tips,
   R_age = mf$R$R_age,
-  R_period = mf$R$R_period,
+  R_period = make_rw_structure_matrix(ncol(mf$Z$Z_period), 1, adjust_diagonal = TRUE),
   R_spatial = mf$R$R_spatial,
   R_country = mf$R$R_country,
   rankdef_R_spatial = 1,
@@ -86,13 +86,13 @@ tmb_int$par <- list(
   # u_country = rep(0, ncol(mf$Z$Z_country)),
   # log_prec_country = 0,
 
-  omega1 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_age))),
-  log_prec_omega1 = 0,
-  lag_logit_omega1_phi_age = 0,
-
-  omega2 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_period))),
-  log_prec_omega2 = 0,
-  lag_logit_omega2_phi_period = 0,
+  # omega1 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_age))),
+  # log_prec_omega1 = 0,
+  # lag_logit_omega1_phi_age = 0,
+  # 
+  # omega2 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_period))),
+  # log_prec_omega2 = 0,
+  # lag_logit_omega2_phi_period = 0,
   
   u_period = rep(0, ncol(mf$Z$Z_period)),
   log_prec_rw_period = 0,
@@ -157,14 +157,14 @@ if(mf$mics_toggle) {
 }
 
 
-# f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
-#                                parameters = tmb_int$par,
-#                                DLL = "dfertility",
-#                                silent=0,
-#                                checkParameterOrder=FALSE)
-# })
-#
-# parallel::mccollect(f)
+f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
+                               parameters = tmb_int$par,
+                               DLL = "dfertility",
+                               silent=0,
+                               checkParameterOrder=FALSE)
+})
+
+parallel::mccollect(f)
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                   parameters = tmb_int$par,
@@ -187,7 +187,7 @@ tmb_results <- dfertility::tmb_outputs(fit, mf, areas)
 write_csv(tmb_results, paste0(tolower(iso3), "_fr.csv"))
 
 fr_plot <- read.csv(paste0("depends/", tolower(iso3), "_fr_plot.csv"))
-# fr_plot <- read.csv("archive/ago_asfr/20210122-093323-ccda8444/ago_fr_plot.csv")
+# fr_plot <- read.csv("archive/mli_asfr/20210125-211756-ade3f120/mli_fr_plot.csv")
 
 fr_plot <- fr_plot %>%
   left_join(areas %>% st_drop_geometry() %>% select(area_id, area_name))

@@ -1,0 +1,35 @@
+script: sle_asfr.R
+
+artefacts:
+  - data:
+      description: sle ASFR dataset
+      filenames:
+        - sle_dhs_asfr.csv
+        # - sle_mics_asfr.csv
+        - sle_asfr.csv
+        - sle_fr_plot.csv
+
+packages:
+  - demogsurv
+  - tidyr
+  - haven
+  - readr
+  - stringr
+  - naomi
+  - sf
+  - dplyr
+  - rdhs
+  - countrycode
+  - dfertility
+
+depends:
+  sle_survey:
+    id: latest
+    use:
+      depends/sle_dhs_clusters.csv: sle_dhs_clusters.csv
+      # depends/sle_mics_women.csv: sle_mics_women.csv
+      # depends/sle_mics_births_to_women.csv: sle_mics_births_to_women.csv
+  sle_data_areas:
+    id: latest
+    use:
+      depends/sle_areas.geojson: sle_areas.geojson

@@ -1,0 +1,35 @@
+script: sen_asfr.R
+
+artefacts:
+  - data:
+      description: sen ASFR dataset
+      filenames:
+        - sen_dhs_asfr.csv
+        # - sen_mics_asfr.csv
+        - sen_asfr.csv
+        - sen_fr_plot.csv
+
+packages:
+  - demogsurv
+  - tidyr
+  - haven
+  - readr
+  - stringr
+  - naomi
+  - sf
+  - dplyr
+  - rdhs
+  - countrycode
+  - dfertility
+
+depends:
+  sen_survey:
+    id: latest
+    use:
+      depends/sen_dhs_clusters.csv: sen_dhs_clusters.csv
+      # depends/sen_mics_women.csv: sen_mics_women.csv
+      # depends/sen_mics_births_to_women.csv: sen_mics_births_to_women.csv
+  sen_data_areas:
+    id: latest
+    use:
+      depends/sen_areas.geojson: sen_areas.geojson

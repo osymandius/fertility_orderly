@@ -33,7 +33,7 @@ depends:
     use:
       depends/mli_areas.geojson: mli_areas.geojson
   aaa_data_population_worldpop:
-    id: latest(parameter:iso3 == "GMB")
+    id: latest(parameter:iso3 == "MLI")
     use:
       depends/population_worldpop_naomi.csv: population_worldpop_naomi.csv
   mli_asfr:

@@ -24,3 +24,4 @@ orderly_envir.yml
 **.so
 .DS_Store
 src/.DS_Store
+.orderly

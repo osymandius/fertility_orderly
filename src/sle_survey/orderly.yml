@@ -1,0 +1,36 @@
+script: sle_survey.R
+
+artefacts:
+  - data:
+      description: survey indicator dataset
+      filenames:
+        - sle_dhs_clusters.csv
+        # - sle_mics_women.csv
+        # - sle_mics_births_to_women.csv
+  - staticgraph:
+      description: Check DHS region cluster assignment
+      filenames:
+        - check/sle_dhs-cluster-check.pdf
+
+
+packages:
+  - dplyr
+  - tidyr
+  - dfertility
+  - haven
+  - ggplot2
+  - naomi
+  - naomi.utils
+  - readr
+  - sf
+  - spud
+  - stringr
+
+global_resources:
+  resources/MICS_indicators.csv: MICS_indicators.csv
+
+depends:
+  sle_data_areas:
+    id: latest
+    use:
+      depends/sle_areas.geojson: sle_areas.geojson

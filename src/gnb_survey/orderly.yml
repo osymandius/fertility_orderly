@@ -1,0 +1,36 @@
+script: gnb_survey.R
+
+artefacts:
+  - data:
+      description: survey indicator dataset
+      filenames:
+        - gnb_dhs_clusters.csv
+        # - gnb_mics_women.csv
+        # - gnb_mics_births_to_women.csv
+  - staticgraph:
+      description: Check DHS region cluster assignment
+      filenames:
+        - check/gnb_dhs-cluster-check.pdf
+
+
+packages:
+  - dplyr
+  - tidyr
+  - dfertility
+  - haven
+  - ggplot2
+  - naomi
+  - naomi.utils
+  - readr
+  - sf
+  - spud
+  - stringr
+
+global_resources:
+  resources/MICS_indicators.csv: MICS_indicators.csv
+
+depends:
+  gnb_data_areas:
+    id: latest
+    use:
+      depends/gnb_areas.geojson: gnb_areas.geojson

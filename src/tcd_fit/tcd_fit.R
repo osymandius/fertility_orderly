@@ -38,7 +38,7 @@ tmb_int$data <- list(
   Z_omega2 = sparse.model.matrix(~0 + id.omega2, mf$mf_model),
   R_tips = mf$R$R_tips,
   R_age = mf$R$R_age,
-  R_period = mf$R$R_period,
+  R_period = make_rw_structure_matrix(ncol(mf$Z$Z_period), 1, adjust_diagonal = TRUE),
   R_spatial = mf$R$R_spatial,
   R_country = mf$R$R_country,
   rankdef_R_spatial = 1,

@@ -24,7 +24,7 @@ packages:
   - Matrix
 
 global_resources:
-  resources/tmb_regular.cpp: tmb_regular.cpp
+  resources/tmb_all_level_poisson.cpp: tmb_all_level_poisson.cpp
 
 depends:
   cod_data_areas:

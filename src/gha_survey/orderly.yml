@@ -1,0 +1,36 @@
+script: gha_survey.R
+
+artefacts:
+  - data:
+      description: survey indicator dataset
+      filenames:
+        - gha_dhs_clusters.csv
+        # - gha_mics_women.csv
+        # - gha_mics_births_to_women.csv
+  - staticgraph:
+      description: Check DHS region cluster assignment
+      filenames:
+        - check/gha_dhs-cluster-check.pdf
+
+
+packages:
+  - dplyr
+  - tidyr
+  - dfertility
+  - haven
+  - ggplot2
+  - naomi
+  - naomi.utils
+  - readr
+  - sf
+  - spud
+  - stringr
+
+global_resources:
+  resources/MICS_indicators.csv: MICS_indicators.csv
+
+depends:
+  gha_data_areas:
+    id: latest
+    use:
+      depends/gha_areas.geojson: gha_areas.geojson

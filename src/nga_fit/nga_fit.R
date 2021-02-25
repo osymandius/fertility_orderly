@@ -4,16 +4,36 @@ population <- read.csv(paste0("depends/", tolower(iso3), "_population_grid3.csv"
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
 asfr <- read.csv(paste0("depends/", tolower(iso3), "_asfr.csv"))
 
+# population <- read.csv("archive/nga_data_population/20201130-141351-a7827dc7/nga_population_grid3.csv")
+# areas <- read_sf("archive/nga_data_areas/20201124-092355-37f0830a/nga_areas.geojson")
+# asfr <- read.csv("archive/nga_merge_asfr/20210224-112436-7d214ae8/nga_asfr.csv")
 
-# population <- population %>%
-#   rename(age_group_label = age_group) %>%
-#   left_join(get_age_groups() %>% select(age_group, age_group_label)) %>%
-#   select(-age_group_label)
+asfr <- asfr %>% filter(!(survey_id == "NGA2016MICS" & period == 2015 & asfr == 0))
 
+areas_wide <- spread_areas(areas)
+
+# fr_plot <- read.csv("archive/nga_merge_asfr/20210224-112436-7d214ae8/nga_fr_plot.csv")
+# 
+# fr_plot %>%
+#   filter(variable == "tfr", value <10) %>%
+#   ggplot(aes(x=period, y=value,color=survey_id)) +
+#     geom_point() +
+#     facet_wrap(~area_id)
+
+# debugonce(make_model_frames_dev)
 mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level =3, project=2020)
 
-# TMB::compile("resources/tmb_regular.cpp")               # Compile the C++ file
-# dyn.load(dynlib("resources/tmb_regular"))
+mf$mf_model <- mf$mf_model %>%
+  left_join(areas_wide %>% select(area_id, area_id1, area_id2) %>% st_drop_geometry()) %>%
+  mutate(id.interaction2_admin1 = factor(group_indices(., period, area_id1)),
+         id.interaction3_admin1 = factor(group_indices(., age_group, area_id1)),
+         id.interaction2_admin2 = factor(group_indices(., period, area_id2)),
+         id.interaction3_admin2 = factor(group_indices(., age_group, area_id2))
+  )
+
+TMB::compile("resources/tmb_all_level_poisson.cpp")               # Compile the C++ file
+dyn.load(dynlib("resources/tmb_all_level_poisson"))
+
 
 tmb_int <- list()
 
@@ -33,15 +53,18 @@ tmb_int$data <- list(
   Z_period = mf$Z$Z_period,
   Z_spatial = mf$Z$Z_spatial,
   Z_interaction1 = sparse.model.matrix(~0 + id.interaction1, mf$mf_model),
-  Z_interaction2 = sparse.model.matrix(~0 + id.interaction2, mf$mf_model),
-  Z_interaction3 = sparse.model.matrix(~0 + id.interaction3, mf$mf_model),
+  # Z_interaction2 = sparse.model.matrix(~0 + id.interaction2, mf$mf_model),
+  Z_interaction2 = sparse.model.matrix(~0 + id.interaction2_admin2, mf$mf_model),
+  # Z_interaction3 = sparse.model.matrix(~0 + id.interaction3, mf$mf_model),
+  Z_interaction3 = sparse.model.matrix(~0 + id.interaction3_admin2, mf$mf_model),
   Z_country = mf$Z$Z_country,
   Z_omega1 = sparse.model.matrix(~0 + id.omega1, mf$mf_model),
   Z_omega2 = sparse.model.matrix(~0 + id.omega2, mf$mf_model),
   R_tips = mf$R$R_tips,
   R_age = mf$R$R_age,
-  R_period = mf$R$R_period,
+  R_period = make_rw_structure_matrix(ncol(mf$Z$Z_period), 1, adjust_diagonal = TRUE),
   R_spatial = mf$R$R_spatial,
+  R_spatial_admin1 = make_adjacency_matrix(areas, model_level = 2),
   R_country = mf$R$R_country,
   rankdef_R_spatial = 1,
   
@@ -85,16 +108,16 @@ tmb_int$par <- list(
   u_age = rep(0, ncol(mf$Z$Z_age)),
   log_prec_rw_age = 0,
   
-  u_country = rep(0, ncol(mf$Z$Z_country)),
-  log_prec_country = 0,
+  # u_country = rep(0, ncol(mf$Z$Z_country)),
+  # log_prec_country = 0,
 
-  omega1 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_age))),
-  log_prec_omega1 = 0,
-  lag_logit_omega1_phi_age = 0,
-
-  omega2 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_period))),
-  log_prec_omega2 = 0,
-  lag_logit_omega2_phi_period = 0,
+  # omega1 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_age))),
+  # log_prec_omega1 = 0,
+  # lag_logit_omega1_phi_age = 0,
+  # 
+  # omega2 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_period))),
+  # log_prec_omega2 = 0,
+  # lag_logit_omega2_phi_period = 0,
   
   u_period = rep(0, ncol(mf$Z$Z_period)),
   log_prec_rw_period = 0,
@@ -115,11 +138,11 @@ tmb_int$par <- list(
   lag_logit_eta1_phi_age = 0,
   lag_logit_eta1_phi_period = 0,
   #
-  eta2 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_period))),
+  eta2 = array(0, c(length(filter(areas, area_level == 2)$area_id), ncol(mf$Z$Z_period))),
   log_prec_eta2 = 0,
   lag_logit_eta2_phi_period = 0,
   #
-  eta3 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_age))),
+  eta3 = array(0, c(length(filter(areas, area_level == 2)$area_id), ncol(mf$Z$Z_age))),
   log_prec_eta3 = 0,
   lag_logit_eta3_phi_age = 0
 )
@@ -128,7 +151,7 @@ tmb_int$random <- c("beta_0",
                     "u_spatial_str",
                     "u_age",
                     "u_period",
-                    "u_country",
+                    "beta_period",
                     "beta_tips_dummy",
                     "u_tips",
                     "beta_spike_2000",
@@ -159,18 +182,17 @@ if(mf$mics_toggle) {
 }
 
 
-# f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
-#                                parameters = tmb_int$par,
-#                                DLL = "dfertility",
-#                                silent=0,
-#                                checkParameterOrder=FALSE)
-# })
-#
-# parallel::mccollect(f)
+f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
+                               parameters = tmb_int$par,
+                               random = tmb_int$random,
+                               DLL = "tmb_all_level_poisson")
+})
+
+parallel::mccollect(f)
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                   parameters = tmb_int$par,
-                  DLL = "dfertility",
+                  DLL = "tmb_all_level_poisson",
                   random = tmb_int$random,
                   hessian = FALSE)
 
@@ -189,12 +211,13 @@ tmb_results <- dfertility::tmb_outputs(fit, mf, areas)
 write_csv(tmb_results, paste0(tolower(iso3), "_fr.csv"))
 
 fr_plot <- read.csv(paste0("depends/", tolower(iso3), "_fr_plot.csv"))
+# fr_plot <- read.csv("archive/nga_merge_asfr/20210224-112436-7d214ae8/nga_fr_plot.csv")
 
 fr_plot <- fr_plot %>%
   left_join(areas %>% st_drop_geometry() %>% select(area_id, area_name))
 
 tfr_plot <- tmb_results %>%
-  filter(area_level == 1, variable == "tfr") %>%
+  filter(area_level %in% 1:2, variable == "tfr") %>%
   ggplot(aes(x=period, y=median)) +
     geom_line() +
     geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
@@ -208,7 +231,7 @@ tfr_plot <- tmb_results %>%
     )
 
 district_tfr <- tmb_results %>%
-  filter(area_level == 5, variable == "tfr") %>%
+  filter(area_level == 3, variable == "tfr") %>%
   ggplot(aes(x=period, y=median)) +
   geom_line() +
   geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +

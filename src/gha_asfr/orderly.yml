@@ -1,0 +1,35 @@
+script: gha_asfr.R
+
+artefacts:
+  - data:
+      description: gha ASFR dataset
+      filenames:
+        - gha_dhs_asfr.csv
+        # - gha_mics_asfr.csv
+        - gha_asfr.csv
+        - gha_fr_plot.csv
+
+packages:
+  - demogsurv
+  - tidyr
+  - haven
+  - readr
+  - stringr
+  - naomi
+  - sf
+  - dplyr
+  - rdhs
+  - countrycode
+  - dfertility
+
+depends:
+  gha_survey:
+    id: latest
+    use:
+      depends/gha_dhs_clusters.csv: gha_dhs_clusters.csv
+      # depends/gha_mics_women.csv: gha_mics_women.csv
+      # depends/gha_mics_births_to_women.csv: gha_mics_births_to_women.csv
+  gha_data_areas:
+    id: latest
+    use:
+      depends/gha_areas.geojson: gha_areas.geojson

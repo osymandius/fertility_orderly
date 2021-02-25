@@ -1,11 +1,13 @@
-script: GIN_asfr.R
+script: gin_asfr.R
 
 artefacts:
   - data:
-      description: GIN ASFR dataset
+      description: gin ASFR dataset
       filenames:
-        - GIN_dhs_asfr.csv
-        - GIN_mics_asfr.csv
+        - gin_dhs_asfr.csv
+        # - gin_mics_asfr.csv
+        - gin_asfr.csv
+        - gin_fr_plot.csv
 
 packages:
   - demogsurv
@@ -17,13 +19,17 @@ packages:
   - sf
   - dplyr
   - rdhs
-  - pointr
   - countrycode
   - dfertility
 
 depends:
-  data-survey:
+  gin_survey:
     id: latest
-      use:
-        depends/GIN_dhs_survey.csv: GIN_dhs_survey.csv
-        depends/GIN_mics_survey.csv: GIN_mics_survey.csv
+    use:
+      depends/gin_dhs_clusters.csv: gin_dhs_clusters.csv
+      # depends/gin_mics_women.csv: gin_mics_women.csv
+      # depends/gin_mics_births_to_women.csv: gin_mics_births_to_women.csv
+  gin_data_areas:
+    id: latest
+    use:
+      depends/gin_areas.geojson: gin_areas.geojson
