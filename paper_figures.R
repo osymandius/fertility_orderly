@@ -43,12 +43,42 @@ grey_area <- c("archive/bwa_data_areas/20210127-145208-5212d475/bwa_areas.geojso
   bind_rows() %>%
   filter(area_level == 0)
 
+foo <- read_sf("~/Downloads/Longitude_Graticules_and_World_Countries_Boundaries-shp/99bfd9e7-bb42-4728-87b5-07f8c8ac631c2020328-1-1vef4ev.lu5nk.shp") %>%
+  filter(CNTRY_NAME %in% c("South Africa", "Botswana", "Western Sahara", "Mauritania", "Morocco", "Algeria", "Libya", "Tunisia", "Egypt")) %>%
+  bind_rows(read_sf("~/Downloads/sdn_adm_cbs_nic_ssa_20200831_shp/sdn_admbnda_adm0_cbs_nic_ssa_20200831.shp")) %>%
+  st_crop(xmin=-180, xmax=180, ymin=-35, ymax=90)
+
+
+
 nat_geom <- lapply(areas_list, function(x) {
   x %>%
     filter(area_level == 0) %>%
     select(area_id, geometry)
 }) %>%
   bind_rows
+
+dist_fr <- Map(function(fr, areas, level) {
+  
+  fr %>%
+    filter(area_level == level,
+           variable == "tfr"
+    ) %>%
+    select(iso3, area_id, area_name, period, median) %>%
+    left_join(areas) %>%
+    select(iso3, area_id, area_name, period, median, geometry)
+  
+  
+}, fr_list, areas_list, lvls)
+
+dist_fr %>%
+  bind_rows() %>%
+  filter(period == 2020) %>%
+  ggplot() +
+  geom_sf(aes(geometry = geometry, fill=median), size=0) +
+  geom_sf(data = foo, aes(geometry = geometry), fill="grey", size=0.3) +
+  geom_sf(data = nat_geom, aes(geometry = geometry), fill=NA, size=0.3) +
+  labs(fill = "TFR")+
+  viridis::scale_fill_viridis()
 
 fr %>%
   filter(area_level == 0,
@@ -68,7 +98,8 @@ fr %>%
 fr %>%
   filter(area_level == 0,
          variable == "asfr",
-         period %in% c(2000, 2010, 2020)) %>%
+         period %in% c(2000, 2010, 2020),
+         iso3 != "GMB") %>%
   group_by(region, area_id, area_name, age_group) %>%
   summarise(`2000` = 1,
             `2010` = median[period == 2010]/median[period == 2000],
@@ -82,17 +113,18 @@ fr %>%
   scale_y_continuous(labels = scales::label_percent(), name = "Fertility reduction") +
   scale_color_manual(values=c("red", rep("grey", 6))) +
   geom_hline(aes(yintercept = 0), linetype=3) +
-  facet_wrap(region~area_name)
+  facet_wrap(~area_name)
 
 
 ## 15-19 flatlining between 2010-2020
 fr %>%
   filter(area_level == 0,
          variable == "asfr",
-         period %in% c(2000, 2005, 2010, 2015, 2020)) %>%
+         period %in% c(2000, 2005, 2010, 2015, 2020),
+         region == "ESA") %>%
   group_by(region, area_id, area_name, age_group) %>%
   summarise(`2005` = 1,
-            `2020` = median[period == 2015]/median[period == 2005]) %>%
+            `2015` = median[period == 2015]/median[period == 2005]) %>%
   pivot_longer(-c(region, area_id, area_name, age_group)) %>%
   type.convert() %>%
   # mutate(name = factor(name, labels=c("2000-2010", "2010-2020")) %>%
@@ -102,7 +134,7 @@ fr %>%
   scale_y_continuous(labels = scales::label_percent(), name = "Fertility reduction") +
   scale_color_manual(values=c("red", rep("grey", 6))) +
   geom_hline(aes(yintercept = 0), linetype=3) +
-  facet_wrap(region~area_name)
+  facet_wrap(~area_name, ncol=5)
 
 fr %>%
   filter(area_level == 0,
@@ -124,13 +156,18 @@ fr %>%
 
 fr %>%
   filter(area_level == 0,
-         variable == "tfr") %>%
+         variable == "tfr",
+         iso3 != "GMB") %>%
   group_by(region, area_id, area_name) %>%
   mutate(rel_tfr = median/median[period==2000]) %>%
   filter(period >1999) %>%
   select(area_id, area_name, period, rel_tfr) %>%
-  ggplot(aes(x=period, y=rel_tfr, color=area_name)) +
-    geom_line()
+  ggplot(aes(x=period, y=rel_tfr, group=area_name)) +
+    geom_line(show.legend = FALSE, alpha=0.6) +
+    geom_hline(aes(yintercept=1), linetype=2, color="red")+
+    scale_y_continuous(labels = scales::label_percent()) +
+    labs(y="Relative change in TFR", x=element_blank())+
+    moz.utils::standard_theme()
 
 
 # fr %>%
@@ -221,20 +258,6 @@ pdf(paste0("~/Downloads/test.pdf"), h = 12, w = 20)
 asfr_plots_admin1
 dev.off()
 
-
-dist_fr <- Map(function(fr, areas, level) {
-  
-  fr %>%
-    filter(area_level == level,
-           variable == "tfr"
-    ) %>%
-    select(iso3, area_id, area_name, period, median) %>%
-    left_join(areas) %>%
-    select(iso3, area_id, area_name, period, median, geometry)
-
-  
-}, fr_list, areas_list, lvls)
-
 tfr_2020_map <- lapply(dist_fr, function(fr) {
   
   fr %>%
@@ -249,14 +272,7 @@ tfr_2020_map
 dev.off()
 
 
-dist_fr %>%
-  bind_rows() %>%
-  filter(period == 2020) %>%
-  ggplot() +
-    geom_sf(aes(geometry = geometry, fill=median), size=0) +
-    geom_sf(data = grey_area, aes(geometry = geometry), fill="grey", size=0.3) +
-    geom_sf(data = nat_geom, aes(geometry = geometry), fill=NA, size=0.3) +
-    viridis::scale_fill_viridis()
+
 
 ## Box plot of TFR distributions
 dist_fr %>%

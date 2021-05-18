@@ -17,7 +17,7 @@ areas_wide <- spread_areas(areas)
 #' 
 #' survey_region_areas <- allocate_areas_survey_regions(areas_wide, survey_region_boundaries)
 #' 
-#' validate_survey_region_areas(survey_region_areas, survey_region_boundaries)
+# validate_survey_region_areas(survey_region_areas, survey_region_boundaries)
 #' 
 #' survey_regions <- create_survey_regions_dhs(survey_region_areas)
 #' 

@@ -22,6 +22,9 @@ packages:
   - countrycode
   - dfertility
 
+global_resources:
+  resources/moz_areas_maputo.geojson: moz_areas_maputo.geojson
+
 depends:
   moz_survey:
     id: latest

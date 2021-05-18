@@ -4,10 +4,16 @@ population <- read.csv(paste0("depends/", tolower(iso3), "_population_knbs-censu
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
 asfr <- read.csv(paste0("depends/", tolower(iso3), "_asfr.csv"))
 
+population <- read.csv("archive/ken_data_population/20201130-134607-5df2f0e6/ken_population_knbs-census19.csv")
+areas <- read_sf("archive/ken_data_areas/20201111-135452-f9ac48a9/ken_areas.geojson") %>%
+  mutate(iso3 = iso3)
+asfr <- read.csv("archive/ken_asfr/20201203-170212-d40cd696/ken_asfr.csv")
+
+debugonce(make_adjacency_matrix)
 mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level =2, project=2020)
 
-# TMB::compile("resources/tmb_regular.cpp")               # Compile the C++ file
-# dyn.load(dynlib("resources/tmb_regular"))
+TMB::compile("global/tmb_all_level_poisson.cpp")               # Compile the C++ file
+dyn.load(dynlib("global/tmb_all_level_poisson"))
 
 tmb_int <- list()
 
@@ -82,13 +88,13 @@ tmb_int$par <- list(
   # u_country = rep(0, ncol(mf$Z$Z_country)),
   # log_prec_country = 0,
 
-  omega1 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_age))),
-  log_prec_omega1 = 0,
-  lag_logit_omega1_phi_age = 0,
-
-  omega2 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_period))),
-  log_prec_omega2 = 0,
-  lag_logit_omega2_phi_period = 0,
+  # omega1 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_age))),
+  # log_prec_omega1 = 0,
+  # lag_logit_omega1_phi_age = 0,
+  # 
+  # omega2 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_period))),
+  # log_prec_omega2 = 0,
+  # lag_logit_omega2_phi_period = 0,
   
   u_period = rep(0, ncol(mf$Z$Z_period)),
   log_prec_rw_period = 0,
@@ -158,18 +164,18 @@ if(mf$mics_toggle) {
 #   )
 # }
 
-# f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
-#                                parameters = tmb_int$par,
-#                                DLL = "dfertility",
-#                                silent=0,
-#                                checkParameterOrder=FALSE)
-# })
-#
-# parallel::mccollect(f)
+f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
+                               parameters = tmb_int$par,
+                               DLL = "tmb_all_level_poisson",
+                               silent=0,
+                               checkParameterOrder=FALSE)
+})
+
+parallel::mccollect(f)
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                   parameters = tmb_int$par,
-                  DLL = "dfertility",
+                  DLL = "tmb_all_level_poisson",
                   random = tmb_int$random,
                   hessian = FALSE)
 
@@ -181,7 +187,7 @@ fit <- c(f, obj = list(obj))
 # fit$sdreport <- sdreport(fit$obj, fit$par)
 
 class(fit) <- "naomi_fit"  # this is hacky...
-fit <- naomi::sample_tmb(fit, random_only=TRUE)
+fit <- naomi::sample_tmb(fit, random_only=FALSE)
 
 tmb_results <- dfertility::tmb_outputs(fit, mf, areas) 
 

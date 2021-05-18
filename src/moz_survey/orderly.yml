@@ -27,6 +27,7 @@ packages:
 
 global_resources:
   resources/MICS_indicators.csv: MICS_indicators.csv
+  resources/moz_areas_maputo.geojson: moz_areas_maputo.geojson
 
 depends:
   moz_data_areas:

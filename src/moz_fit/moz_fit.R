@@ -1,14 +1,20 @@
 iso3 <- "MOZ"
 
 population <- read.csv(paste0("depends/", tolower(iso3), "_population_nso.csv"))
-areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
+# areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
+areas <- read_sf("resources/moz_areas_maputo.geojson") %>%
+  mutate(iso3 = iso3)
 asfr <- read.csv(paste0("depends/", tolower(iso3), "_asfr.csv"))
 
+# population <- read.csv("archive/moz_data_population/20201130-094019-f924623c/moz_population_nso.csv")
+# areas <- read_sf("global/moz_areas_maputo.geojson") %>%
+#   mutate(iso3 = iso3)
+# asfr <- read.csv("archive/moz_asfr/20210330-155500-3a230200/moz_asfr.csv")
 
 mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level =2, project=2020)
 
-TMB::compile("resources/tmb_nb_spike_moz.cpp")               # Compile the C++ file
-dyn.load(dynlib("resources/tmb_nb_spike_moz"))
+# TMB::compile("resources/tmb_nb_spike_moz.cpp")               # Compile the C++ file
+# dyn.load(dynlib("resources/tmb_nb_spike_moz"))
 
 tmb_int <- list()
 
@@ -83,13 +89,13 @@ tmb_int$par <- list(
   # u_country = rep(0, ncol(mf$Z$Z_country)),
   # log_prec_country = 0,
 
-  omega1 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_age))),
-  log_prec_omega1 = 0,
-  lag_logit_omega1_phi_age = 0,
-
-  omega2 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_period))),
-  log_prec_omega2 = 0,
-  lag_logit_omega2_phi_period = 0,
+  # omega1 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_age))),
+  # log_prec_omega1 = 0,
+  # lag_logit_omega1_phi_age = 0,
+  # 
+  # omega2 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_period))),
+  # log_prec_omega2 = 0,
+  # lag_logit_omega2_phi_period = 0,
   
   u_period = rep(0, ncol(mf$Z$Z_period)),
   log_prec_rw_period = 0,
@@ -170,7 +176,7 @@ if(mf$mics_toggle) {
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                   parameters = tmb_int$par,
-                  DLL = "tmb_nb_spike_moz",
+                  DLL = "dfertility",
                   random = tmb_int$random,
                   hessian = FALSE)
 

@@ -25,6 +25,7 @@ packages:
 
 global_resources:
   resources/tmb_nb_spike_moz.cpp: tmb_nb_spike_moz.cpp
+  resources/moz_areas_maputo.geojson: moz_areas_maputo.geojson
 
 depends:
   moz_data_areas:

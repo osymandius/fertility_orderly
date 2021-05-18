@@ -1,6 +1,7 @@
 iso3 <- "MOZ"
 
-areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
+# areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
+areas <- read_sf("resources/moz_areas_maputo.geojson")
 clusters <- read.csv(paste0("depends/", tolower(iso3), "_dhs_clusters.csv"))
 
 areas_wide <- spread_areas(areas)

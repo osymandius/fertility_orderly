@@ -4,10 +4,21 @@ population <- read.csv(paste0("depends/", tolower(iso3), "_population_gpw.csv"))
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
 asfr <- read.csv(paste0("depends/", tolower(iso3), "_dhs_asfr.csv"))
 
-mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level =2, project=2020)
+population <- read.csv("archive/nam_data_population/20201126-122848-78e12eb6/nam_population_gpw.csv")
+areas <- read_sf("archive/nam_asfr/20201203-173514-66f3cc83/depends/nam_areas.geojson") %>%
+  mutate(iso3 = iso3)
+asfr <- read.csv("archive/nam_asfr/20201203-173514-66f3cc83/nam_dhs_asfr.csv")
 
-# TMB::compile("resources/tmb_regular.cpp")               # Compile the C++ file
-# dyn.load(dynlib("resources/tmb_regular"))
+lvl <- read_csv("~/Documents/GitHub/subnat_fertility/input_data/lvl_df.csv") %>%
+  filter(iso3 %in% c("NAM")) %>%
+  arrange(iso3)
+
+mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level =2, project=2020)
+debugonce(make_model_frames_batch)
+mf <- make_model_frames_batch(list(population), list(asfr),  list(areas), lvl, project=2020)
+
+TMB::compile("global/tmb_admin1_interaction_single.cpp")               # Compile the C++ file
+dyn.load(dynlib("global/tmb_admin1_interaction_single"))
 
 tmb_int <- list()
 
@@ -82,13 +93,13 @@ tmb_int$par <- list(
   # u_country = rep(0, ncol(mf$Z$Z_country)),
   # log_prec_country = 0,
   
-  omega1 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_age))),
-  log_prec_omega1 = 0,
-  lag_logit_omega1_phi_age = 0,
-  
-  omega2 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_period))),
-  log_prec_omega2 = 0,
-  lag_logit_omega2_phi_period = 0,
+  # omega1 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_age))),
+  # log_prec_omega1 = 0,
+  # lag_logit_omega1_phi_age = 0,
+  # 
+  # omega2 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_period))),
+  # log_prec_omega2 = 0,
+  # lag_logit_omega2_phi_period = 0,
   
   u_period = rep(0, ncol(mf$Z$Z_period)),
   log_prec_rw_period = 0,
@@ -158,18 +169,18 @@ if(mf$mics_toggle) {
 #   )
 # }
 
-# f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
-#                                parameters = tmb_int$par,
-#                                DLL = "dfertility",
-#                                silent=0,
-#                                checkParameterOrder=FALSE)
-# })
-#
-# parallel::mccollect(f)
+f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
+                               parameters = tmb_int$par,
+                               DLL = "tmb_admin1_interaction_single",
+                               silent=0,
+                               checkParameterOrder=FALSE)
+})
+
+parallel::mccollect(f)
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                        parameters = tmb_int$par,
-                       DLL = "dfertility",
+                       DLL = "tmb_admin1_interaction_single",
                        random = tmb_int$random,
                        hessian = FALSE)
 

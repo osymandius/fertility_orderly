@@ -17,7 +17,7 @@ areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
 asfr <- read.csv(paste0("depends/", tolower(iso3), "_asfr.csv"))
 
 # population <- read.csv("archive/cod_data_population/20201113-112238-0cdb556d/cod_population_gpw.csv")
-# areas <- read_sf("archive/cod_data_areas/20201112-171234-2710c17f/cod_areas.geojson")
+areas <- read_sf("archive/cod_data_areas/20201112-171234-2710c17f/cod_areas.geojson")
 # asfr <- read.csv("archive/cod_asfr/20201203-165704-0ceacdae/cod_asfr.csv")
 
 population <- convert_age_groups(population)

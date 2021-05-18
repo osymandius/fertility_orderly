@@ -3,9 +3,8 @@
 #' ISO3 country code
 iso3 <- "MOZ"
 
-areas <- read_sf("depends/moz_areas.geojson")
+areas <- read_sf("resources/moz_areas_maputo.geojson")
 areas_wide <- spread_areas(areas)
-
 
 surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%
   filter(as.numeric(SurveyYear) > 1994)
@@ -120,7 +119,8 @@ fertility_mics_data$hh <- fertility_mics_data$hh %>%
 fertility_mics_data$hh <- fertility_mics_data$hh %>%
   mutate(
     mics_area_name_label = case_when(
-      survey_id == "MOZ2008MICS" & mics_area_name_label == "Maputo Cidade" ~ "Cidade de Maputo",
+      survey_id == "MOZ2008MICS" & mics_area_name_label == "Maputo Cidade" ~ "Maputo",
+      survey_id == "MOZ2008MICS" & mics_area_name_label == "Maputo Província" ~ "Maputo",
       TRUE ~ mics_area_name_label
     )
   )
