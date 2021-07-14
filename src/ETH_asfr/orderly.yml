@@ -4,6 +4,7 @@ artefacts:
   - data:
       description: eth ASFR dataset
       filenames:
+        - eth_asfr.csv
         - eth_dhs_asfr.csv
         - eth_fr_plot.csv
 

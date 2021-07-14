@@ -1,0 +1,731 @@
+script: script.R
+
+artefacts:
+  - data:
+      description: boundaries file formatted for naomi
+      filenames:
+        - naomi_areas.geojson
+  - data:
+      description: population file formatted for naomi
+      filenames:
+        - naomi_population.csv
+  - data:
+      description: asfr file formatted for fertility analysis
+      filenames:
+        - fertility_asfr.csv
+  - data:
+      description: TFR for plotting at admin1
+      filenames:
+        - fertility_fr_plot.csv
+
+
+displayname: Consolidate area, ASFR, population data for fertility model fit
+
+packages:
+  - readr
+  - naomi
+  - sf
+
+parameters:
+  iso3:
+    default: ~
+
+global_resources:
+  resources/iso_mapping_fit.csv: iso_mapping_fit.csv
+
+## To add a new country to this task, add it to the dependency below and
+## ensure the imported file is named 'depends/<iso3>_areas.geojson'
+## Ideally, keep this list alphabetised for convenience
+
+depends:
+  ago_data_areas:
+    id: latest
+    use:
+      depends/ago_areas.geojson: ago_areas.geojson
+  ben_data_areas:
+    id: latest
+    use:
+      depends/ben_areas_spectrum_national.geojson: ben_areas_spectrum_national.geojson
+  bdi_data_areas:
+    id: latest
+    use:
+      depends/bdi_areas.geojson: bdi_areas.geojson
+  bfa_data_areas:
+    id: latest
+    use:
+      depends/bfa_areas.geojson: bfa_areas.geojson
+  # bwa_data_areas:
+  #   id: latest
+  #   use:
+  #     depends/bwa_areas.geojson: bwa_areas.geojson
+  caf_data_areas:
+    id: latest
+    use:
+      depends/caf_areas.geojson: caf_areas.geojson
+  civ_data_areas:
+    id: latest
+    use:
+      depends/civ_areas.geojson: civ_areas.geojson
+  cmr_data_areas:
+    id: latest
+    use:
+      depends/cmr_areas.geojson: cmr_areas.geojson
+  cog_data_areas:
+    id: latest
+    use:
+      depends/cog_areas.geojson: cog_areas.geojson
+  cod_data_areas:
+    id: latest
+    use:
+      depends/cod_areas.geojson: cod_areas.geojson
+  eth_data_areas:
+    id: latest
+    use:
+      depends/eth_areas.geojson: eth_areas.geojson
+  gab_data_areas:
+    id: latest
+    use:
+      depends/gab_areas.geojson: gab_areas.geojson
+  gha_data_areas:
+    id: latest
+    use:
+      depends/gha_areas.geojson: gha_areas.geojson
+  gin_data_areas:
+    id: latest
+    use:
+      depends/gin_areas.geojson: gin_areas.geojson
+  gmb_data_areas:
+    id: latest
+    use:
+      depends/gmb_areas.geojson: gmb_areas.geojson
+  gnb_data_areas:
+    id: latest
+    use:
+      depends/gnb_areas.geojson: gnb_areas.geojson
+  gnq_data_areas:
+    id: latest
+    use:
+      depends/gnq_areas.geojson: gnq_areas.geojson
+  hti_data_areas:
+    id: latest
+    use:
+      depends/hti_areas.geojson: hti_areas.geojson
+  ken_data_areas_subcounty:
+    id: latest
+    use:
+      depends/ken_areas_subcounty.geojson: ken_areas_subcounty.geojson
+  lbr_data_areas:
+    id: latest
+    use:
+      depends/lbr_areas.geojson: lbr_areas.geojson
+  lso_data_areas:
+    id: latest
+    use:
+      depends/lso_areas.geojson: lso_areas.geojson
+  mli_data_areas:
+    id: latest
+    use:
+      depends/mli_areas.geojson: mli_areas.geojson
+  moz_data_areas:
+    id: latest
+    use:
+      depends/moz_areas.geojson: moz_areas.geojson
+  mwi_data_areas:
+    id: latest
+    use:
+      depends/mwi_areas.geojson: mwi_areas.geojson
+  nam_data_areas:
+    id: latest
+    use:
+      depends/nam_areas.geojson: nam_areas.geojson
+  ner_data_areas:
+    id: latest
+    use:
+      depends/ner_areas.geojson: ner_areas.geojson
+  nga_data_areas:
+    id: latest
+    use:
+      depends/nga_areas.geojson: nga_areas.geojson
+  rwa_data_areas:
+    id: latest
+    use:
+      depends/rwa_areas.geojson: rwa_areas.geojson
+  sen_data_areas:
+    id: latest
+    use:
+      depends/sen_areas.geojson: sen_areas.geojson
+  sle_data_areas:
+    id: latest
+    use:
+      depends/sle_areas.geojson: sle_areas.geojson
+  swz_data_areas:
+    id: latest
+    use:
+      depends/swz_areas.geojson: swz_areas.geojson
+  tcd_data_areas:
+    id: latest
+    use:
+      depends/tcd_areas.geojson: tcd_areas.geojson
+  tgo_data_areas:
+    id: latest
+    use:
+      depends/tgo_areas_spectrum_national.geojson: tgo_areas_spectrum_national.geojson
+  tza_data_areas:
+    id: latest
+    use:
+      depends/tza_areas.geojson: tza_areas.geojson
+  uga_data_areas:
+    id: latest
+    use:
+      depends/uga_areas.geojson: uga_areas.geojson
+  zmb_data_areas:
+    id: latest
+    use:
+      depends/zmb_areas_spectrum_national.geojson: zmb_areas_spectrum_national.geojson
+  zwe_data_areas:
+    id: latest
+    use:
+      depends/zwe_areas.geojson: zwe_areas.geojson
+
+  aaa_data_population_gpw:
+    id: latest(parameter:iso3 == iso3)
+    use:
+      depends/population_gpw_naomi.csv: population_gpw_naomi.csv
+
+  aaa_data_population_worldpop:
+    id: latest(parameter:iso3 == iso3)
+    use:
+      depends/population_worldpop_naomi.csv: population_worldpop_naomi.csv
+
+  ago_data_population:
+    id: latest
+    use:
+      depends/ago_population_worldpop-2015.csv: ago_population_worldpop-2015.csv
+  bdi_data_population:
+    id: latest
+    use:
+      depends/bdi_population_gpw.csv: bdi_population_gpw_80pl_adjusted.csv
+  bfa_data_population:
+    id: latest
+    use:
+      depends/bfa_population_gpw.csv: bfa_population_gpw.csv
+  # bwa_data_population:
+  #   id: latest
+  #   use:
+  #     depends/bwa_population_stats-bw.csv: bwa_population_stats-bw.csv
+  civ_data_population:
+    id: latest
+    use:
+      depends/civ_population.csv: civ_population.csv
+  cod_data_population-local:
+    id: latest
+    use:
+      depends/cod_population_local.csv: cod_population_local.csv
+  cmr_data_population:
+    id: latest
+    use:
+      depends/cmr_population_ins.csv: cmr_population_ins.csv
+  eth_data_population:
+    id: latest
+    use:
+      depends/eth_population.csv: eth_population.csv
+  gmb_data_population:
+    id: latest
+    use:
+      depends/gmb_population_moh-projections_health-region.csv: gmb_population_moh-projections_health-region.csv
+  # hti_data_population:
+  #   id: latest
+  #   use:
+  #     depends/hti_population_ihsi.csv: hti_population_ihsi.csv
+  ken_data_population:
+    id: latest
+    use:
+      depends/ken_population_knbs-census19.csv: ken_population_knbs-census19.csv
+  lso_data_population:
+    id: latest
+    use:
+      depends/lso_population_census16.csv: lso_population_census16.csv
+  moz_data_population:
+    id: latest
+    use:
+      depends/moz_population_nso.csv: moz_population_nso.csv
+
+  mwi_data_population:
+    id: latest
+    use:
+      depends/mwi_population_projections18.csv: mwi_population_projections18.csv
+
+  nam_data_population:
+    id: latest
+    use:
+      depends/nam_population_gpw.csv: nam_population_gpw.csv
+  nga_data_population:
+    id: latest
+    use:
+      depends/nga_population_npopc.csv: nga_population_npopc.csv
+  rwa_data_population:
+    id: latest
+    use:
+      depends/rwa_population.csv: rwa_population.csv
+  swz_data_population:
+    id: latest
+    use:
+      depends/swz_population_worldpop.csv: swz_population_worldpop.csv
+  tgo_data_population:
+    id: latest
+    use:
+      depends/tgo_population_nso.csv: tgo_population_nso.csv
+  tza_data_population:
+    id: latest
+    use:
+      depends/tza_population_tnbs.csv: tza_population_tnbs.csv
+  uga_data_population:
+    id: latest
+    use:
+      depends/uga_population_ubos.csv: uga_population_ubos.csv
+  zmb_data_population:
+    id: latest
+    use:
+      depends/zmb_population_nso.csv: zmb_population_nso.csv
+  zwe_data_population:
+    id: latest
+    use:
+      depends/zwe_population_nso.csv: zwe_population_nso.csv
+
+### ASFR
+
+  bdi_asfr:
+    id: latest
+    use:
+      depends/bdi_asfr.csv: bdi_asfr.csv
+      depends/bdi_fr_plot.csv: bdi_fr_plot.csv
+  ben_asfr:
+    id: latest
+    use:
+      depends/ben_asfr.csv: ben_asfr.csv
+      depends/ben_fr_plot.csv: ben_fr_plot.csv
+  bfa_asfr:
+    id: latest
+    use:
+      depends/bfa_asfr.csv: bfa_asfr.csv
+      depends/bfa_fr_plot.csv: bfa_fr_plot.csv
+  caf_asfr:
+    id: latest
+    use:
+      depends/caf_asfr.csv: caf_asfr.csv
+      depends/caf_fr_plot.csv: caf_fr_plot.csv
+  civ_asfr:
+    id: latest
+    use:
+      depends/civ_asfr.csv: civ_asfr.csv
+      depends/civ_fr_plot.csv: civ_fr_plot.csv
+  cmr_asfr:
+    id: latest
+    use:
+      depends/cmr_asfr.csv: cmr_asfr.csv
+      depends/cmr_fr_plot.csv: cmr_fr_plot.csv
+  cod_asfr:
+    id: latest
+    use:
+      depends/cod_asfr.csv: cod_asfr.csv
+      depends/cod_fr_plot.csv: cod_fr_plot.csv
+  cog_asfr:
+    id: latest
+    use:
+      depends/cog_asfr.csv: cog_asfr.csv
+      depends/cog_fr_plot.csv: cog_fr_plot.csv
+  gmb_asfr:
+    id: latest
+    use:
+      depends/gmb_asfr.csv: gmb_asfr.csv
+      depends/gmb_fr_plot.csv: gmb_fr_plot.csv
+  ken_asfr:
+    id: latest
+    use:
+      depends/ken_asfr.csv: ken_asfr.csv
+      depends/ken_fr_plot.csv: ken_fr_plot.csv
+  lso_asfr:
+    id: latest
+    use:
+      depends/lso_asfr.csv: lso_asfr.csv
+      depends/lso_fr_plot.csv: lso_fr_plot.csv
+  mli_asfr:
+    id: latest
+    use:
+      depends/mli_asfr.csv: mli_asfr.csv
+      depends/mli_fr_plot.csv: mli_fr_plot.csv
+  moz_asfr:
+    id: latest
+    use:
+      depends/moz_asfr.csv: moz_asfr.csv
+      depends/moz_fr_plot.csv: moz_fr_plot.csv
+  mwi_asfr:
+    id: latest
+    use:
+      depends/mwi_asfr.csv: mwi_asfr.csv
+      depends/mwi_fr_plot.csv: mwi_fr_plot.csv
+  nga_merge_asfr:
+    id: latest
+    use:
+      depends/nga_asfr.csv: nga_asfr.csv
+      depends/nga_fr_plot.csv: nga_fr_plot.csv
+  sle_asfr:
+    id: latest
+    use:
+      depends/sle_asfr.csv: sle_asfr.csv
+      depends/sle_fr_plot.csv: sle_fr_plot.csv
+  swz_asfr:
+    id: latest
+    use:
+      depends/swz_asfr.csv: swz_asfr.csv
+      depends/swz_fr_plot.csv: swz_fr_plot.csv
+  tcd_asfr:
+    id: latest
+    use:
+      depends/tcd_asfr.csv: tcd_asfr.csv
+      depends/tcd_fr_plot.csv: tcd_fr_plot.csv
+  tgo_asfr:
+    id: latest
+    use:
+      depends/tgo_asfr.csv: tgo_asfr.csv
+      depends/tgo_fr_plot.csv: tgo_fr_plot.csv
+  zwe_asfr:
+    id: latest
+    use:
+      depends/zwe_asfr.csv: zwe_asfr.csv
+      depends/zwe_fr_plot.csv: zwe_fr_plot.csv
+  ago_asfr:
+    id: latest
+    use:
+      depends/ago_asfr.csv: ago_asfr.csv
+      depends/ago_fr_plot.csv: ago_fr_plot.csv
+  # bwa_asfr:
+  #   id: latest
+  #   use:
+  #     depends/bwa_asfr.csv: bwa_asfr.csv
+  #     depends/bwa_fr_plot.csv: bwa_fr_plot.csv
+  # cpv_asfr:
+  #   id: latest
+      # use:
+    #   depends/cpv_asfr.csv: cpv_asfr.csv
+    #   depends/cpv_fr_plot.csv: cpv_fr_plot.csv
+  eth_asfr:
+    id: latest
+    use:
+      depends/eth_asfr.csv: eth_asfr.csv
+      depends/eth_fr_plot.csv: eth_fr_plot.csv
+  gab_asfr:
+    id: latest
+    use:
+      depends/gab_asfr.csv: gab_asfr.csv
+      depends/gab_fr_plot.csv: gab_fr_plot.csv
+  gha_asfr:
+    id: latest
+    use:
+      depends/gha_asfr.csv: gha_asfr.csv
+      depends/gha_fr_plot.csv: gha_fr_plot.csv
+  gin_asfr:
+    id: latest
+    use:
+      depends/gin_asfr.csv: gin_asfr.csv
+      depends/gin_fr_plot.csv: gin_fr_plot.csv
+  # gnq_asfr:
+  #   id: latest
+  #   use:
+  #     depends/gnq_asfr.csv: gnq_asfr.csv
+  #     depends/gnq_fr_plot.csv: gnq_fr_plot.csv
+  # hti_asfr:
+  #   id: latest
+    # use:
+    #   depends/hti_asfr.csv: hti_asfr.csv
+    #   depends/hti_fr_plot.csv: hti_fr_plot.csv
+  lbr_asfr:
+    id: latest
+    use:
+      depends/lbr_asfr.csv: lbr_asfr.csv
+      depends/lbr_fr_plot.csv: lbr_fr_plot.csv
+  # mrt_asfr:
+  #   id: latest
+    # use:
+    #   depends/mrt_asfr.csv: mrt_asfr.csv
+    #   depends/mrt_fr_plot.csv: mrt_fr_plot.csv
+  nam_asfr:
+    id: latest
+    use:
+      depends/nam_asfr.csv: nam_asfr.csv
+      depends/nam_fr_plot.csv: nam_fr_plot.csv
+  ner_asfr:
+    id: latest
+    use:
+      depends/ner_asfr.csv: ner_asfr.csv
+      depends/ner_fr_plot.csv: ner_fr_plot.csv
+  rwa_asfr:
+    id: latest
+    use:
+      depends/rwa_asfr.csv: rwa_asfr.csv
+      depends/rwa_fr_plot.csv: rwa_fr_plot.csv
+  sen_asfr:
+    id: latest
+    use:
+      depends/sen_asfr.csv: sen_asfr.csv
+      depends/sen_fr_plot.csv: sen_fr_plot.csv
+  # stp_asfr:
+  #   id: latest
+    # use:
+    #   depends/stp_asfr.csv: stp_asfr.csv
+    #   depends/stp_fr_plot.csv: stp_fr_plot.csv
+  tza_asfr:
+    id: latest
+    use:
+      depends/tza_asfr.csv: tza_asfr.csv
+      depends/tza_fr_plot.csv: tza_fr_plot.csv
+  uga_asfr:
+    id: latest
+    use:
+      depends/uga_asfr.csv: uga_asfr.csv
+      depends/uga_fr_plot.csv: uga_fr_plot.csv
+  zmb_asfr:
+    id: latest
+    use:
+      depends/zmb_asfr.csv: zmb_asfr.csv
+      depends/zmb_fr_plot.csv: zmb_fr_plot.csv
+
+#   #### SURVEYS
+#   #### With MICS data
+
+#   bdi_survey:
+#     id: latest
+#     use:
+#       depends/bdi_mics_births_to_women.csv: bdi_mics_births_to_women.csv
+#       depends/bdi_mics_women.csv: bdi_mics_women.csv
+#       depends/bdi_dhs_clusters.csv: bdi_dhs_clusters.csv
+
+#   ben_survey:
+#     id: latest
+#     use:
+#       depends/ben_mics_births_to_women.csv: ben_mics_births_to_women.csv
+#       depends/ben_mics_women.csv: ben_mics_women.csv
+#       depends/ben_dhs_clusters.csv: ben_dhs_clusters.csv
+
+#   bfa_survey:
+#     id: latest
+#     use:
+#       depends/bfa_mics_births_to_women.csv: bfa_mics_births_to_women.csv
+#       depends/bfa_mics_women.csv: bfa_mics_women.csv
+#       depends/bfa_dhs_clusters.csv: bfa_dhs_clusters.csv
+
+#   caf_survey:
+#     id: latest
+#     use:
+#       depends/caf_mics_births_to_women.csv: caf_mics_births_to_women.csv
+#       depends/caf_mics_women.csv: caf_mics_women.csv
+
+#   civ_survey:
+#     id: latest
+#     use:
+#       depends/civ_mics_births_to_women.csv: civ_mics_births_to_women.csv
+#       depends/civ_mics_women.csv: civ_mics_women.csv
+#       depends/civ_dhs_clusters.csv: civ_dhs_clusters.csv
+
+#   cmr_survey:
+#     id: latest
+#     use:
+#       depends/cmr_mics_births_to_women.csv: cmr_mics_births_to_women.csv
+#       depends/cmr_mics_women.csv: cmr_mics_women.csv
+#       depends/cmr_dhs_clusters.csv: cmr_dhs_clusters.csv
+
+#   cod_survey:
+#     id: latest
+#     use:
+#       depends/cod_mics_births_to_women.csv: cod_mics_births_to_women.csv
+#       depends/cod_mics_women.csv: cod_mics_women.csv
+#       depends/cod_dhs_clusters.csv: cod_dhs_clusters.csv
+
+#   cog_survey:
+#     id: latest
+#     use:
+#       depends/cog_mics_births_to_women.csv: cog_mics_births_to_women.csv
+#       depends/cog_mics_women.csv: cog_mics_women.csv
+#       depends/cog_dhs_clusters.csv: cog_dhs_clusters.csv
+
+#   gmb_survey:
+#     id: latest
+#     use:
+#       depends/gmb_mics_births_to_women.csv: gmb_mics_births_to_women.csv
+#       depends/gmb_mics_women.csv: gmb_mics_women.csv
+#       depends/gmb_dhs_clusters.csv: gmb_dhs_clusters.csv
+
+#   ken_survey:
+#     id: latest
+#     use:
+#       depends/ken_mics_births_to_women.csv: ken_mics_births_to_women.csv
+#       depends/ken_mics_women.csv: ken_mics_women.csv
+#       depends/ken_dhs_clusters.csv: ken_dhs_clusters.csv
+
+#   lso_survey:
+#     id: latest
+#     use:
+#       depends/lso_mics_births_to_women.csv: lso_mics_births_to_women.csv
+#       depends/lso_mics_women.csv: lso_mics_women.csv
+#       depends/lso_dhs_clusters.csv: lso_dhs_clusters.csv
+
+#   mli_survey:
+#     id: latest
+#     use:
+#       depends/mli_mics_births_to_women.csv: mli_mics_births_to_women.csv
+#       depends/mli_mics_women.csv: mli_mics_women.csv
+#       depends/mli_dhs_clusters.csv: mli_dhs_clusters.csv
+
+#   moz_survey:
+#     id: latest
+#     use:
+#       depends/moz_mics_births_to_women.csv: moz_mics_births_to_women.csv
+#       depends/moz_mics_women.csv: moz_mics_women.csv
+#       depends/moz_dhs_clusters.csv: moz_dhs_clusters.csv
+
+#   mwi_survey:
+#     id: latest
+#     use:
+#       depends/mwi_mics_births_to_women.csv: mwi_mics_births_to_women.csv
+#       depends/mwi_mics_women.csv: mwi_mics_women.csv
+#       depends/mwi_dhs_clusters.csv: mwi_dhs_clusters.csv
+
+#   nga_survey:
+#     id: latest
+#     use:
+#       depends/nga_mics_births_to_women.csv: nga_mics_births_to_women.csv
+#       depends/nga_mics_women.csv: nga_mics_women.csv
+#       depends/nga_dhs_clusters.csv: nga_dhs_clusters.csv
+
+#   sle_survey:
+#     id: latest
+#     use:
+#       depends/sle_mics_births_to_women.csv: sle_mics_births_to_women.csv
+#       depends/sle_mics_women.csv: sle_mics_women.csv
+#       depends/sle_dhs_clusters.csv: sle_dhs_clusters.csv
+
+#   swz_survey:
+#     id: latest
+#     use:
+#       depends/swz_mics_births_to_women.csv: swz_mics_births_to_women.csv
+#       depends/swz_mics_women.csv: swz_mics_women.csv
+#       depends/swz_dhs_clusters.csv: swz_dhs_clusters.csv
+
+#   tcd_survey:
+#     id: latest
+#     use:
+#       depends/tcd_mics_births_to_women.csv: tcd_mics_births_to_women.csv
+#       depends/tcd_mics_women.csv: tcd_mics_women.csv
+#       depends/tcd_dhs_clusters.csv: tcd_dhs_clusters.csv
+
+#   tgo_survey:
+#     id: latest
+#     use:
+#       depends/tgo_mics_births_to_women.csv: tgo_mics_births_to_women.csv
+#       depends/tgo_mics_women.csv: tgo_mics_women.csv
+#       depends/tgo_dhs_clusters.csv: tgo_dhs_clusters.csv
+
+#   zwe_survey:
+#     id: latest
+#     use:
+#       depends/zwe_mics_births_to_women.csv: zwe_mics_births_to_women.csv
+#       depends/zwe_mics_women.csv: zwe_mics_women.csv
+#       depends/zwe_dhs_clusters.csv: zwe_dhs_clusters.csv
+
+# ### Without MICS data
+
+#   ago_survey:
+#     id: latest
+#     use:
+#       depends/ago_dhs_clusters.csv: ago_dhs_clusters.csv
+
+#   bwa_survey:
+#     id: latest
+#     use:
+#       depends/bwa_dhs_clusters.csv: bwa_dhs_clusters.csv
+
+#   # cpv_survey:
+#   #   id: latest
+#   #   use:
+#   #     depends/cpv_dhs_clusters.csv: cpv_dhs_clusters.csv
+
+#   eth_survey:
+#     id: latest
+#     use:
+#       depends/eth_dhs_clusters.csv: eth_dhs_clusters.csv
+
+#   gab_survey:
+#     id: latest
+#     use:
+#       depends/gab_dhs_clusters.csv: gab_dhs_clusters.csv
+
+#   gha_survey:
+#     id: latest
+#     use:
+#       depends/gha_dhs_clusters.csv: gha_dhs_clusters.csv
+
+#   gin_survey:
+#     id: latest
+#     use:
+#       depends/gin_dhs_clusters.csv: gin_dhs_clusters.csv
+
+#   gnq_survey:
+#     id: latest
+#     use:
+#       depends/gnq_dhs_clusters.csv: gnq_dhs_clusters.csv
+
+#   # hti_survey:
+#   #   id: latest
+#   #   use:
+#   #     depends/hti_dhs_clusters.csv: hti_dhs_clusters.csv
+
+#   lbr_survey:
+#     id: latest
+#     use:
+#       depends/lbr_dhs_clusters.csv: lbr_dhs_clusters.csv
+
+#   # mrt_survey:
+#   #   id: latest
+#   #   use:
+#   #     depends/mrt_dhs_clusters.csv: mrt_dhs_clusters.csv
+
+#   nam_survey:
+#     id: latest
+#     use:
+#       depends/nam_dhs_clusters.csv: nam_dhs_clusters.csv
+
+#   ner_survey:
+#     id: latest
+#     use:
+#       depends/ner_dhs_clusters.csv: ner_dhs_clusters.csv
+
+#   rwa_survey:
+#     id: latest
+#     use:
+#       depends/rwa_dhs_clusters.csv: rwa_dhs_clusters.csv
+
+#   sen_survey:
+#     id: latest
+#     use:
+#       depends/sen_dhs_clusters.csv: sen_dhs_clusters.csv
+
+#   # stp_survey:
+#   #   id: latest
+#   #   use:
+#   #     depends/stp_dhs_clusters.csv: stp_dhs_clusters.csv
+
+#   tza_survey:
+#     id: latest
+#     use:
+#       depends/tza_dhs_clusters.csv: tza_dhs_clusters.csv
+
+#   uga_survey:
+#     id: latest
+#     use:
+#       depends/uga_dhs_clusters.csv: uga_dhs_clusters.csv
+
+#   zmb_survey:
+#     id: latest
+#     use:
+#       depends/zmb_dhs_clusters.csv: zmb_dhs_clusters.csv
+

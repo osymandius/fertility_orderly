@@ -4,6 +4,7 @@ artefacts:
   - data:
       description: rwa ASFR dataset
       filenames:
+        - rwa_asfr.csv
         - rwa_dhs_asfr.csv
         - rwa_fr_plot.csv
 

@@ -4,6 +4,7 @@ artefacts:
   - data:
       description: zmb ASFR dataset
       filenames:
+        - zmb_asfr.csv
         - zmb_dhs_asfr.csv
         - zmb_fr_plot.csv
 

@@ -4,6 +4,7 @@ artefacts:
   - data:
       description: gab ASFR dataset
       filenames:
+        - gab_asfr.csv
         - gab_dhs_asfr.csv
         - gab_fr_plot.csv
 

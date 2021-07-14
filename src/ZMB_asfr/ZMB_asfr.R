@@ -104,3 +104,4 @@ plot <- asfr_admin1 %>%
   )
 
 write_csv(plot, paste0(tolower(iso3), "_fr_plot.csv"))
+write_csv(asfr, paste0(tolower(iso3), "_asfr.csv"))

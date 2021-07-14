@@ -4,6 +4,7 @@ artefacts:
   - data:
       description: ago ASFR dataset
       filenames:
+        - ago_asfr.csv
         - ago_dhs_asfr.csv
         - ago_fr_plot.csv
 

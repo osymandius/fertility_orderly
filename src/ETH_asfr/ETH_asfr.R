@@ -84,16 +84,24 @@ asfr_admin1 <- Map(calc_asfr, dat_admin1$ir,
   left_join(get_age_groups() %>% select(age_group, age_group_label), by=c("agegr" = "age_group_label")) %>%
   select(-agegr)
 
-tfr_admin1 <- Map(calc_tfr, dat_admin1$ir,
-                  by = list(~survey_id + survtype + survyear + area_id),
-                  tips = dat_admin1$tips_surv,
-                  agegr= list(3:10*5),
-                  period = list(1995:2020)) %>%
-  bind_rows %>%
-  type.convert %>%
-  filter(period<=survyear) %>%
+# tfr_admin1 <- Map(calc_tfr, dat_admin1$ir,
+#                   by = list(~survey_id + survtype + survyear + area_id),
+#                   tips = dat_admin1$tips_surv,
+#                   agegr= list(3:10*5),
+#                   period = list(1995:2020)) %>%
+#   bind_rows %>%
+#   type.convert %>%
+#   filter(period<=survyear) %>%
+#   mutate(iso3 = iso3,
+#          variable = "tfr")
+
+tfr_admin1 <- asfr_admin1 %>%
+  group_by(survey_id, area_id, period, tips) %>%
+  summarise(tfr = 5*sum(asfr)) %>%
   mutate(iso3 = iso3,
-         variable = "tfr")
+         variable = "tfr",
+         se_tfr = "foo") %>%
+  ungroup
 
 
 plot <- asfr_admin1 %>%
@@ -106,3 +114,4 @@ plot <- asfr_admin1 %>%
   )
 
 write_csv(plot, paste0(tolower(iso3), "_fr_plot.csv"))
+write_csv(asfr, paste0(tolower(iso3), "_asfr.csv"))

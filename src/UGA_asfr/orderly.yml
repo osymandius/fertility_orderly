@@ -4,6 +4,7 @@ artefacts:
   - data:
       description: uga ASFR dataset
       filenames:
+        - uga_asfr.csv
         - uga_dhs_asfr.csv
         - uga_fr_plot.csv
 

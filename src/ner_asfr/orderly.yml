@@ -4,6 +4,7 @@ artefacts:
   - data:
       description: ner ASFR dataset
       filenames:
+        - ner_asfr.csv
         - ner_dhs_asfr.csv
         - ner_fr_plot.csv
 

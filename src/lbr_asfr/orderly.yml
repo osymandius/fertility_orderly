@@ -4,6 +4,7 @@ artefacts:
   - data:
       description: lbr ASFR dataset
       filenames:
+        - lbr_asfr.csv
         - lbr_dhs_asfr.csv
         - lbr_fr_plot.csv
 

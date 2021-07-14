@@ -4,6 +4,7 @@ artefacts:
   - data:
       description: nam ASFR dataset
       filenames:
+        - nam_asfr.csv
         - nam_dhs_asfr.csv
         - nam_fr_plot.csv
 

@@ -4,6 +4,7 @@ artefacts:
   - data:
       description: tza ASFR dataset
       filenames:
+        - tza_asfr.csv
         - tza_dhs_asfr.csv
         - tza_fr_plot.csv
 

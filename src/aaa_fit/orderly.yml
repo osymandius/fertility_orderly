@@ -1,0 +1,45 @@
+script: aaa_fit.R
+
+artefacts:
+  - data:
+      description: fertility indicator dataset
+      filenames:
+        - fr.csv
+  - staticgraph:
+      description: Validate admin-1 TFRs
+      filenames:
+        - check/tfr_admin1.pdf
+        - check/tfr_district.pdf
+
+
+global_resources:
+  resources/iso_mapping_fit.csv: iso_mapping_fit.csv
+
+displayname: Fertility model fit
+
+parameters:
+  iso3:
+    default: ~
+
+packages:
+  - dplyr
+  - tidyr
+  - dfertility
+  - ggplot2
+  - naomi
+  - readr
+  - sf
+  - stringr
+  - TMB
+  - Matrix
+
+
+
+depends:
+  aaa_inputs_orderly_pull:
+    id: latest(parameter:iso3 == iso3)
+    use:
+      depends/naomi_areas.geojson: naomi_areas.geojson
+      depends/naomi_population.csv: naomi_population.csv
+      depends/fertility_survey.csv: fertility_survey.csv
+      depends/fertility_fr_plot.csv: fertility_fr_plot.csv
