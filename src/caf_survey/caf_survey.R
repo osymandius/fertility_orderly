@@ -1,31 +1,45 @@
-library(orderly)
-library(orderly.sharepoint)
-library(naomi)
-library(naomi.utils)
-library(rdhs)
-library(tidyverse)
-library(sf)
+#' ISO3 country code
+iso3 <- "CAF"
 
-orderly_pull_archive(tolower("AGO_data_areas"), remote="naomi_2021")
-orderly_pull_archive(tolower("BEN_data_areas"), remote="naomi_2021")
-orderly_pull_archive(tolower("CAF_data_areas"), remote="naomi_2021")
-orderly_pull_archive(tolower("COG_data_areas"), remote="naomi_2021")
-orderly_pull_archive(tolower("GAB_data_areas"), remote="naomi_2021")
-orderly_pull_archive(tolower("GMB_data_areas"), remote="naomi_2021")
-orderly_pull_archive(tolower("LBR_data_areas"), remote="naomi_2021")
-orderly_pull_archive(tolower("MLI_data_areas"), remote="naomi_2021")
-orderly_pull_archive(tolower("NER_data_areas"), remote="naomi_2021")
-orderly_pull_archive(tolower("TCD_data_areas"), remote="naomi_2021")
+areas <- read_sf("depends/caf_areas.geojson")
+# areas <- read_sf("archive/caf_data_areas/20210224-072623-9420edea/caf_areas.geojson")
 
-orderly::orderly_pull_archive("aaa_data_population_worldpop", remote = "naomi_2021", id = 'latest(parameter:iso3 == "AGO")')
-orderly::orderly_pull_archive("aaa_data_population_worldpop", remote = "naomi_2021", id = 'latest(parameter:iso3 == "BEN")')
-orderly::orderly_pull_archive("aaa_data_population_worldpop", remote = "naomi_2021", id = 'latest(parameter:iso3 == "CAF")')
-orderly::orderly_pull_archive("aaa_data_population_worldpop", remote = "naomi_2021", id = 'latest(parameter:iso3 == "COG")')
-orderly::orderly_pull_archive("aaa_data_population_worldpop", remote = "naomi_2021", id = 'latest(parameter:iso3 == "GAB")')
-orderly::orderly_pull_archive("aaa_data_population_worldpop", remote = "naomi_2021", id = 'latest(parameter:iso3 == "GMB")')
-orderly::orderly_pull_archive("aaa_data_population_worldpop", remote = "naomi_2021", id = 'latest(parameter:iso3 == "LBR")')
-orderly::orderly_pull_archive("aaa_data_population_worldpop", remote = "naomi_2021", id = 'latest(parameter:iso3 == "MLI")')
-orderly::orderly_pull_archive("aaa_data_population_worldpop", remote = "naomi_2021", id = 'latest(parameter:iso3 == "NER")')
-orderly::orderly_pull_archive("aaa_data_population_worldpop", remote = "naomi_2021", id = 'latest(parameter:iso3 == "TCD")')
 
-orderly_new("caf_survey")
+####### MICS
+
+mics_indicators <- read_csv("resources/MICS_indicators.csv") %>%
+  pivot_longer(-c(label, id, filetype), names_to = "survey_id")
+
+mics_survey_data <- create_surveys_mics(iso3, mics_indicators)
+
+fertility_mics_data <- transform_mics(mics_survey_data, mics_indicators)
+
+fertility_mics_data$hh <- fertility_mics_data$hh %>%
+  mutate(
+    mics_area_name_label = case_when(
+        mics_area_name_label == "Ombella Mpoko" ~ "Ombella M'Poko",
+        mics_area_name_label == "Nana Mambere" ~ "Nana-Mambere",
+        mics_area_name_label == "Nana Mambéré" ~ "Nana-Mambere",
+        mics_area_name_label == "Mambere Kadei" ~ "Mambere-Kadei",
+        mics_area_name_label == "Sangha Mbaere" ~ "Sangha-Mbarere",
+        mics_area_name_label == "Baminigui Bangoran" ~ "Bamingui Bangoran",
+        mics_area_name_label == "Kémo" ~ "Kemo",
+        mics_area_name_label == "Nana Grebizi" ~ "Nana-Gribizi",
+        mics_area_name_label == "Haute-Kotto" ~ "Haute Kotto",
+        mics_area_name_label == "Région 1" ~ "RS1",
+        mics_area_name_label == "Région 2" ~ "RS2",
+        mics_area_name_label == "Région 3" ~ "RS3",
+        mics_area_name_label == "Région 4" ~ "RS4",
+        mics_area_name_label == "Région 5" ~ "RS5",
+        mics_area_name_label == "Région 6" ~ "RS6",
+        mics_area_name_label == "Région 7" ~ "RS7",
+      TRUE ~ mics_area_name_label
+    )
+  ) 
+
+mics_survey_areas <- join_survey_areas(fertility_mics_data, areas)
+
+asfr_input_data <- make_asfr_inputs(mics_survey_areas, mics_survey_data)
+
+write_csv(asfr_input_data$wm, paste0(tolower(iso3), "_mics_women.csv"))
+write_csv(asfr_input_data$births_to_women, paste0(tolower(iso3), "_mics_births_to_women.csv"))

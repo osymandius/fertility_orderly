@@ -5,8 +5,8 @@ artefacts:
       description: survey indicator dataset
       filenames:
         - sle_dhs_clusters.csv
-        # - sle_mics_women.csv
-        # - sle_mics_births_to_women.csv
+        - sle_mics_women.csv
+        - sle_mics_births_to_women.csv
   - staticgraph:
       description: Check DHS region cluster assignment
       filenames:

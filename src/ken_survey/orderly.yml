@@ -17,6 +17,8 @@ packages:
   - dplyr
   - dfertility
   - haven
+  - tidyr
+  - rdhs
   - ggplot2
   - naomi
   - naomi.utils

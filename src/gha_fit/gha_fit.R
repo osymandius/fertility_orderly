@@ -1,7 +1,8 @@
 iso3 <- "GHA"
 
 population <- read.csv(paste0("depends/population_worldpop_naomi.csv"))
-areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
+areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson")) %>%
+  mutate(iso3 = iso3)
 asfr <- read.csv(paste0("depends/", tolower(iso3), "_asfr.csv"))
 
 areas_wide <- spread_areas(areas)

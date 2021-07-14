@@ -1,9 +1,7 @@
-orderly::orderly_pull_archive("tgo_data_areas")
-
 #' ISO3 country code
 iso3 <- "TGO"
 
-areas <- read_sf("~/Imperial College London/HIV Inference Group - WP - Documents/Analytical datasets/naomi-data/TGO/data/tgo_areas.geojson")
+# areas <- read_sf("~/Imperial College London/HIV Inference Group - WP - Documents/Analytical datasets/naomi-data/TGO/data/tgo_areas.geojson")
 areas <- read_sf("depends/tgo_areas.geojson")
 areas_wide <- spread_areas(areas)
 
@@ -26,6 +24,7 @@ validate_survey_region_areas(survey_region_areas, survey_region_boundaries)
 survey_regions <- create_survey_regions_dhs(survey_region_areas)
 
 #' # Survey clusters dataset
+
 survey_clusters <- create_survey_clusters_dhs(surveys)
 
 #' Snap survey clusters to areas
@@ -56,7 +55,12 @@ fertility_mics_data$hh <- fertility_mics_data$hh %>%
   mutate(mics_area_name_label = recode(mics_area_name_label,
                                  "Lomé\u0082" = "Lome",
                                  "Lomé" = "Lome",
-                                 "Maritime (Sans Lomé)" = "Maritime")
+                                 "Maritime (Sans Lomé)" = "Maritime"),
+         mics_area_name_label = case_when(
+           survey_id == "TGO2017MICS" & mics_area_name_label == "Lomé Commune" ~ "Lome",
+           survey_id == "TGO2017MICS" & mics_area_name_label == "Golfe Urbain" ~ "Lome",
+           TRUE ~ mics_area_name_label
+         )
   )
 
 mics_survey_areas <- join_survey_areas(fertility_mics_data, areas)

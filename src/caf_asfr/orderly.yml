@@ -1,0 +1,33 @@
+script: caf_asfr.R
+
+artefacts:
+  - data:
+      description: caf ASFR dataset
+      filenames:
+        - caf_mics_asfr.csv
+        - caf_asfr.csv
+        - caf_fr_plot.csv
+
+packages:
+  - demogsurv
+  - tidyr
+  - haven
+  - readr
+  - stringr
+  - naomi
+  - sf
+  - dplyr
+  - rdhs
+  - countrycode
+  - dfertility
+
+depends:
+  caf_survey:
+    id: latest
+    use:
+      depends/caf_mics_women.csv: caf_mics_women.csv
+      depends/caf_mics_births_to_women.csv: caf_mics_births_to_women.csv
+  caf_data_areas:
+    id: latest
+    use:
+      depends/caf_areas.geojson: caf_areas.geojson

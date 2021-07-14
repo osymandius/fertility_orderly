@@ -1,14 +1,19 @@
 iso3 <- "CMR"
+# 
+# population <- read.csv(paste0("depends/", tolower(iso3), "_population_ins.csv"))
+# areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
+# asfr <- read.csv(paste0("depends/", tolower(iso3), "_asfr.csv"))
 
-population <- read.csv(paste0("depends/", tolower(iso3), "_population_ins.csv"))
-areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
-asfr <- read.csv(paste0("depends/", tolower(iso3), "_asfr.csv"))
+population <- read.csv("archive/cmr_data_population/20201125-202009-b20905bc/cmr_population_ins.csv")
+areas <- read_sf("archive/cmr_data_areas/20201110-083355-e19453c7/cmr_areas.geojson") %>%
+  mutate(iso3 = iso3)
+asfr <- read.csv("archive/cmr_asfr/20201203-180241-9d58de73/cmr_asfr.csv")
 
 
 mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level =3, project=2020)
 
-# TMB::compile("resources/tmb_regular.cpp")               # Compile the C++ file
-# dyn.load(dynlib("resources/tmb_regular"))
+TMB::compile("global/parallel.cpp", flags = "-w")               # Compile the C++ file
+dyn.load(dynlib("global/parallel"))
 
 tmb_int <- list()
 
@@ -63,7 +68,9 @@ tmb_int$data <- list(
   
   X_spike_2000_ais = model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
   X_spike_1999_ais = model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
-  X_spike_2001_ais = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS")))
+  X_spike_2001_ais = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
+  
+  n_threads = 8
   
   # out_toggle = mf$out_toggle
   # A_obs = mf$observations$A_obs,
@@ -83,14 +90,14 @@ tmb_int$par <- list(
   # u_country = rep(0, ncol(mf$Z$Z_country)),
   # log_prec_country = 0,
 
-  omega1 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_age))),
-  log_prec_omega1 = 0,
-  lag_logit_omega1_phi_age = 0,
-
-  omega2 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_period))),
-  log_prec_omega2 = 0,
-  lag_logit_omega2_phi_period = 0,
-  
+  # omega1 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_age))),
+  # log_prec_omega1 = 0,
+  # lag_logit_omega1_phi_age = 0,
+  # 
+  # omega2 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_period))),
+  # log_prec_omega2 = 0,
+  # lag_logit_omega2_phi_period = 0,
+  # 
   u_period = rep(0, ncol(mf$Z$Z_period)),
   log_prec_rw_period = 0,
 # lag_logit_phi_period = 0,
@@ -159,22 +166,23 @@ if(mf$mics_toggle) {
 #   )
 # }
 
-# f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
-#                                parameters = tmb_int$par,
-#                                DLL = "dfertility",
-#                                silent=0,
-#                                checkParameterOrder=FALSE)
-# })
-#
-# parallel::mccollect(f)
+f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
+                               parameters = tmb_int$par,
+                               random = tmb_int$random,
+                               DLL = "parallel",
+                               silent=0,
+                               checkParameterOrder=FALSE)
+})
+
+parallel::mccollect(f)
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                   parameters = tmb_int$par,
-                  DLL = "dfertility",
+                  DLL = "parallel",
                   random = tmb_int$random,
                   hessian = FALSE)
 
-f <- stats::nlminb(obj$par, obj$fn, obj$gr)
+system.time(f <- stats::nlminb(obj$par, obj$fn, obj$gr))
 f$par.fixed <- f$par
 f$par.full <- obj$env$last.par
 

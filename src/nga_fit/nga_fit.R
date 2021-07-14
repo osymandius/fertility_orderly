@@ -1,12 +1,14 @@
 iso3 <- "NGA"
 
 population <- read.csv(paste0("depends/", tolower(iso3), "_population_grid3.csv"))
-areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
+areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson")) %>%
+  mutate(iso3 = iso3)
 asfr <- read.csv(paste0("depends/", tolower(iso3), "_asfr.csv"))
 
-# population <- read.csv("archive/nga_data_population/20201130-141351-a7827dc7/nga_population_grid3.csv")
-# areas <- read_sf("archive/nga_data_areas/20201124-092355-37f0830a/nga_areas.geojson")
-# asfr <- read.csv("archive/nga_merge_asfr/20210224-112436-7d214ae8/nga_asfr.csv")
+population <- read.csv("archive/nga_data_population/20201130-141351-a7827dc7/nga_population_grid3.csv")
+areas <- read_sf("archive/nga_data_areas/20201124-092355-37f0830a/nga_areas.geojson") %>%
+  mutate(iso3 = iso3)
+asfr <- read.csv("archive/nga_merge_asfr/20210224-112436-7d214ae8/nga_asfr.csv")
 
 asfr <- asfr %>% filter(!(survey_id == "NGA2016MICS" & period == 2015 & asfr == 0))
 
@@ -31,8 +33,8 @@ mf$mf_model <- mf$mf_model %>%
          id.interaction3_admin2 = factor(group_indices(., age_group, area_id2))
   )
 
-TMB::compile("resources/tmb_all_level_poisson.cpp")               # Compile the C++ file
-dyn.load(dynlib("resources/tmb_all_level_poisson"))
+TMB::compile("global/parallel.cpp", flags = "-w")               # Compile the C++ file
+dyn.load(dynlib("global/parallel"))
 
 
 tmb_int <- list()
@@ -53,10 +55,10 @@ tmb_int$data <- list(
   Z_period = mf$Z$Z_period,
   Z_spatial = mf$Z$Z_spatial,
   Z_interaction1 = sparse.model.matrix(~0 + id.interaction1, mf$mf_model),
-  # Z_interaction2 = sparse.model.matrix(~0 + id.interaction2, mf$mf_model),
-  Z_interaction2 = sparse.model.matrix(~0 + id.interaction2_admin2, mf$mf_model),
-  # Z_interaction3 = sparse.model.matrix(~0 + id.interaction3, mf$mf_model),
-  Z_interaction3 = sparse.model.matrix(~0 + id.interaction3_admin2, mf$mf_model),
+  Z_interaction2 = sparse.model.matrix(~0 + id.interaction2, mf$mf_model),
+  # Z_interaction2 = sparse.model.matrix(~0 + id.interaction2_admin2, mf$mf_model),
+  Z_interaction3 = sparse.model.matrix(~0 + id.interaction3, mf$mf_model),
+  # Z_interaction3 = sparse.model.matrix(~0 + id.interaction3_admin2, mf$mf_model),
   Z_country = mf$Z$Z_country,
   Z_omega1 = sparse.model.matrix(~0 + id.omega1, mf$mf_model),
   Z_omega2 = sparse.model.matrix(~0 + id.omega2, mf$mf_model),
@@ -64,7 +66,7 @@ tmb_int$data <- list(
   R_age = mf$R$R_age,
   R_period = make_rw_structure_matrix(ncol(mf$Z$Z_period), 1, adjust_diagonal = TRUE),
   R_spatial = mf$R$R_spatial,
-  R_spatial_admin1 = make_adjacency_matrix(areas, model_level = 2),
+  # R_spatial_admin1 = make_adjacency_matrix(areas, model_level = 2),
   R_country = mf$R$R_country,
   rankdef_R_spatial = 1,
   
@@ -91,7 +93,9 @@ tmb_int$data <- list(
   
   X_spike_2000_ais = model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
   X_spike_1999_ais = model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
-  X_spike_2001_ais = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS")))
+  X_spike_2001_ais = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
+  
+  n_threads = 8
   
   # out_toggle = mf$out_toggle
   # A_obs = mf$observations$A_obs,
@@ -138,11 +142,11 @@ tmb_int$par <- list(
   lag_logit_eta1_phi_age = 0,
   lag_logit_eta1_phi_period = 0,
   #
-  eta2 = array(0, c(length(filter(areas, area_level == 2)$area_id), ncol(mf$Z$Z_period))),
+  eta2 = array(0, c(length(filter(areas, area_level == 3)$area_id), ncol(mf$Z$Z_period))),
   log_prec_eta2 = 0,
   lag_logit_eta2_phi_period = 0,
   #
-  eta3 = array(0, c(length(filter(areas, area_level == 2)$area_id), ncol(mf$Z$Z_age))),
+  eta3 = array(0, c(length(filter(areas, area_level == 3)$area_id), ncol(mf$Z$Z_age))),
   log_prec_eta3 = 0,
   lag_logit_eta3_phi_age = 0
 )
@@ -185,14 +189,14 @@ if(mf$mics_toggle) {
 f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
                                parameters = tmb_int$par,
                                random = tmb_int$random,
-                               DLL = "tmb_all_level_poisson")
+                               DLL = "parallel")
 })
 
 parallel::mccollect(f)
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                   parameters = tmb_int$par,
-                  DLL = "tmb_all_level_poisson",
+                  DLL = "parallel",
                   random = tmb_int$random,
                   hessian = FALSE)
 

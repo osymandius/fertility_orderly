@@ -1,7 +1,8 @@
 iso3 <- "GMB"
 
 population <- read.csv("depends/population_worldpop_naomi.csv")
-areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
+areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson")) %>%
+  mutate(iso3 = iso3)
 asfr <- read.csv(paste0("depends/", tolower(iso3), "_asfr.csv"))
 
 # population <- read.csv("archive/aaa_data_population_worldpop/20210106-203832-d9202b45/population_worldpop_naomi.csv")

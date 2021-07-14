@@ -24,17 +24,20 @@ packages:
   - Matrix
 
 global_resources:
-  resources/tmb_all_level_poisson.cpp: tmb_all_level_poisson.cpp
+  resources/parallel.cpp: parallel.cpp
+
+resources:
+  - naomi_population.csv
 
 depends:
   cod_data_areas:
     id: latest
     use:
       depends/cod_areas.geojson: cod_areas.geojson
-  cod_data_population:
+  cod_data_population-local:
     id: latest
     use:
-      depends/cod_population_gpw.csv: cod_population_gpw.csv
+      depends/cod_population_local.csv: cod_population_local.csv
   cod_asfr:
     id: latest
     use:

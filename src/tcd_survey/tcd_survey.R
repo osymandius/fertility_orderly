@@ -53,8 +53,7 @@ write_csv(survey_clusters, paste0(tolower(iso3), "_dhs_clusters.csv"))
 
 # mics_indicators <- read_csv("global/MICS_indicators.csv") %>%
 mics_indicators <- read_csv("resources/MICS_indicators.csv") %>%
-  pivot_longer(-c(label, id, filetype), names_to = "survey_id") %>%
-  filter(survey_id != "CIV2000MICS")
+  pivot_longer(-c(label, id, filetype), names_to = "survey_id")
 
 mics_survey_data <- create_surveys_mics(iso3, mics_indicators)
 
@@ -64,16 +63,21 @@ fertility_mics_data$hh <- fertility_mics_data$hh %>%
   mutate(
     mics_area_name_label = case_when(
       mics_area_name_label == "Bhata" ~ "Batha",
+      mics_area_name_label == "Bet" ~ "Borkou", # 'Bet' is not a name, but should be BET: Borkou-Ennedi-Tibesti. It's mostly desert, and assigned to Bourkou, the most populous of the three regions.
       mics_area_name_label == "Chari Baguirmi" ~ "Chari-Baguirmi",
       mics_area_name_label == "Guéra" ~ "GuÃ©ra",
+      mics_area_name_label == "Guera" ~ "GuÃ©ra",
       mics_area_name_label == "Hadjer Lamis" ~ "Hadjer-Lamis",
       mics_area_name_label == "Mayo Kebbi Est" ~ "Mayo-Kebbi Est",
       mics_area_name_label == "Mayo Kebbi Ouest" ~ "Mayo-Kebbi Ouest",
       mics_area_name_label == "Ouaddai" ~ "OuaddaÃ¯",
+      mics_area_name_label == "Ouadda?" ~ "OuaddaÃ¯",
       mics_area_name_label == "Tandjilé" ~ "TandjilÃ©",
       mics_area_name_label == "Wad Fira" ~ "Wadi Fira",
       mics_area_name_label == "Tandjilé" ~ "TandjilÃ©",
+      mics_area_name_label == "Tandjile" ~ "TandjilÃ©",
       mics_area_name_label == "Ndjaména" ~ "N'Djamena",
+      mics_area_name_label == "Ndjamena" ~ "N'Djamena",
       mics_area_name_label == "Barh El Gazal" ~ "Barh-El-Gazel",
       mics_area_name_label == "Moyen Chari" ~ "Moyen-Chari",
       TRUE ~ mics_area_name_label

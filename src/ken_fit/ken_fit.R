@@ -1,7 +1,8 @@
 iso3 <- "KEN"
 
 population <- read.csv(paste0("depends/", tolower(iso3), "_population_knbs-census19.csv"))
-areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
+areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson")) %>%
+  mutate(iso3 = iso3)
 asfr <- read.csv(paste0("depends/", tolower(iso3), "_asfr.csv"))
 
 population <- read.csv("archive/ken_data_population/20201130-134607-5df2f0e6/ken_population_knbs-census19.csv")

@@ -1,0 +1,25 @@
+script: script.R
+
+artefacts:
+  - data:
+      description: COD population dataset
+      filenames: cod_population_local.csv
+
+displayname: COD population inputs dataset from local district populations
+
+packages:
+  - dplyr
+  - naomi.utils
+  - readr
+  - sf
+  - spud
+
+depends:
+  cod_data_areas:
+    id: latest
+    use:
+      depends/cod_areas.geojson: cod_areas.geojson
+  aaa_data_population_worldpop:
+    id: latest(parameter:iso3 == "COD")
+    use:
+      depends/population_worldpop_naomi.csv:  population_worldpop_naomi.csv
