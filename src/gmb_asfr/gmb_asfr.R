@@ -188,12 +188,14 @@ mics_asfr_plot <- mics_asfr_plot %>%
     !(survey_id == "GMB2018MICS" & period <= 2013))
 
 mics_wm_tfr <- mics_wm_asfr %>%
-  bind_rows %>%
+  lapply(aggregate_mics_admin1, areas, areas_wide, admin1_lvl) %>%
+  bind_rows() %>%
   arrange(survey_id, area_id) %>%
   group_split(survey_id, area_id)
 
 mics_births_tfr <- mics_births_asfr %>%
-  bind_rows %>%
+  lapply(aggregate_mics_admin1, areas, areas_wide, admin1_lvl) %>%
+  bind_rows() %>%
   arrange(survey_id, area_id) %>%
   group_split(survey_id, area_id)
 
@@ -235,7 +237,7 @@ asfr <- asfr %>%
 
 write_csv(asfr, paste0(tolower(iso3), "_asfr.csv"))
 
-plot <- asfr_admin1 %>%
+plot_dat <- asfr_admin1 %>%
   bind_rows(mics_asfr_plot) %>%
   select(-c(births, pys)) %>%
   rename(value = asfr) %>%
@@ -245,4 +247,21 @@ plot <- asfr_admin1 %>%
       rename(value = tfr)
   )
 
-write_csv(plot, paste0(tolower(iso3), "_fr_plot.csv"))
+plot <- plot_dat %>%
+  filter(variable == "tfr", value <10) %>%
+  ggplot(aes(x=period, y=value, color=survey_id)) +
+  geom_point() +
+  facet_wrap(~area_id, ncol=5) +
+  labs(y="TFR", x=element_blank(), color="Survey ID", title=paste(iso3, "| Provincial TFR")) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    text = element_text(size=14)
+  )
+
+dir.create("check")
+pdf("check/tfr_admin1.pdf", h = 12, w = 20)
+plot
+dev.off()
+
+write_csv(plot_dat, paste0(tolower(iso3), "_fr_plot.csv"))

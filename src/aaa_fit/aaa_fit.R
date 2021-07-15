@@ -4,8 +4,8 @@ areas <- read_sf("depends/naomi_areas.geojson") %>%
 asfr <- read.csv("depends/fertility_asfr.csv")
 
 lvl_map <- read.csv("resources/iso_mapping_fit.csv")
-lvl <- filter(lvl_map, iso3 == iso3)$fertility_fit_level
-admin1_lvl <- filter(lvl_map, iso3 == iso3)$admin1_level
+lvl <- lvl_map$fertility_fit_level[lvl_map$iso3 == iso3]
+admin1_lvl <- lvl_map$admin1_level[lvl_map$iso3 == iso3]
 
 # population <- read.csv("archive/aaa_data_population_worldpop/20210106-203832-d9202b45/population_worldpop_naomi.csv")
 # areas <- read_sf("archive/ago_data_areas/20210105-150243-778fa342/ago_areas.geojson")
@@ -189,7 +189,7 @@ tmb_results <- dfertility::tmb_outputs(fit, mf, areas)
 
 write_csv(tmb_results, "fr.csv")
 
-fr_plot <- read.csv("depends/fr_plot.csv")
+fr_plot <- read.csv("depends/fertility_fr_plot.csv")
 # fr_plot <- read.csv("archive/ago_asfr/20210122-093323-ccda8444/ago_fr_plot.csv")
 
 fr_plot <- fr_plot %>%

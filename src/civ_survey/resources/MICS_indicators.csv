@@ -15,4 +15,4 @@ date of child's birth (cmc),cdob,bh,cm11ec,bh4c,bh4c,cdob,ccdob,bh4c,bh4c,ccdob,
 cluster number,cluster,hh,hh1,hh1,hh1,hi1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hi1,hh1,hi1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1,hh1
 household number,hh_number,hh,hh2,hh2,hh2,hi2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hi2,hh2,hi2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2,hh2
 MICS area name,mics_area_name,hh,hh7,hh7,hh7,hi7,hh7,hh7,hh7a,hh7,hhdis2,hh7,hh7,hh1a,hh7,hi7,hh7,hi7,hh7,hh7,hh7,hh7,hh7,hh7,hh7,hh7,hh7,hh7,hh7a,hh7a,hh7,hh7,hh7,hh7,hh7,hh7,hh7,,hh7,hh7,hh7,hh7,hh7,hh7,hh7,hh7,hh7
-MICS area level,mics_area_level,,1,1,1,1,1,1,1,1,3,5,2,1,1,0,0,0,1,1,1,1,2,2,2,1,1,1,3,1,1,1,1,2,1,1,1,,1,1,1,1,1,1,2,2,1
+MICS area level,mics_area_level,,1,1,1,1,1,1,1,1,3,5,2,1,1,0,0,0,1,1,1,1,2,2,2,1,1,1,3,1,1,1,1,1,1,1,1,,1,1,1,1,1,1,2,2,1

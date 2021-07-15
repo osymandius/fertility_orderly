@@ -65,7 +65,7 @@ survey_clusters <- assign_dhs_cluster_areas(survey_clusters, survey_region_areas
 #' 2005 AIS has no GPS coordinates. Assign clusters to areas using survey region id
 survey_clusters <- survey_clusters %>%
   left_join(survey_regions %>% 
-              filter(survey_id == "CIV2005")) %>%
+              filter(survey_id == "CIV2005AIS")) %>%
   mutate(geoloc_area_id = ifelse(is.na(geoloc_area_id) & !is.na(survey_region_area_id), survey_region_area_id, geoloc_area_id)) %>%
   select(-c(survey_region_name, survey_region_area_id)) 
 
@@ -92,8 +92,8 @@ fertility_mics_data <- transform_mics(mics_survey_data, mics_indicators)
 fertility_mics_data$hh <- fertility_mics_data$hh %>%
   mutate(
     mics_area_name_label = case_when(
-      survey_id == "CIV2000MICS" ~ "Côte d'Ivoire",
-      survey_id == "CIV2006MICS" ~ "Côte d'Ivoire",
+      survey_id == "CIV2000MICS" ~ "Cote d'Ivoire",
+      survey_id == "CIV2006MICS" ~ "Cote d'Ivoire",
       TRUE ~ mics_area_name_label
     )
   ) 

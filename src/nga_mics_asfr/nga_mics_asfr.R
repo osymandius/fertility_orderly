@@ -10,6 +10,10 @@ areas_long <- areas %>% st_drop_geometry
 mics_births_to_women <- read.csv(paste0("depends/", tolower(iso3), "_mics_births_to_women.csv"))
 mics_wm <- read.csv(paste0("depends/", tolower(iso3), "_mics_women.csv"))
 
+lvl_map <- read.csv("resources/iso_mapping_fit.csv")
+lvl <- lvl_map$fertility_fit_level[lvl_map$iso3 == iso3]
+admin1_lvl <- lvl_map$admin1_level[lvl_map$iso3 == iso3]
+
 mics_wm_asfr <- mics_wm %>%
   type.convert() %>%
   arrange(survey_id, area_id) %>%
@@ -85,12 +89,14 @@ mics_asfr_plot <- mics_asfr_plot %>%
          !(survey_id == "NGA2011MICS" & period <= 2006))
 
 mics_wm_tfr <- mics_wm_asfr %>%
-  bind_rows %>%
+  lapply(aggregate_mics_admin1, areas, areas_wide, admin1_lvl) %>%
+  bind_rows() %>%
   arrange(survey_id, area_id) %>%
   group_split(survey_id, area_id)
 
 mics_births_tfr <- mics_births_asfr %>%
-  bind_rows %>%
+  lapply(aggregate_mics_admin1, areas, areas_wide, admin1_lvl) %>%
+  bind_rows() %>%
   arrange(survey_id, area_id) %>%
   group_split(survey_id, area_id)
 

@@ -41,5 +41,5 @@ depends:
     use:
       depends/naomi_areas.geojson: naomi_areas.geojson
       depends/naomi_population.csv: naomi_population.csv
-      depends/fertility_survey.csv: fertility_survey.csv
+      depends/fertility_asfr.csv: fertility_asfr.csv
       depends/fertility_fr_plot.csv: fertility_fr_plot.csv
