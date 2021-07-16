@@ -1,10 +1,8 @@
 iso3 <- "GMB"
 
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
-# areas <- read_sf("archive/gmb_data_areas/20210114-155305-1014e3b3/gmb_areas.geojson")
-
 clusters <- read.csv(paste0("depends/", tolower(iso3), "_dhs_clusters.csv"))
-# clusters <- read.csv("archive/gmb_survey/20210125-104701-8e9c1f3d/gmb_dhs_clusters.csv")
+source("resources/utility_funs.R")
 
 areas_wide <- spread_areas(areas)
 areas_long <- areas %>% st_drop_geometry
@@ -101,11 +99,12 @@ tfr_admin1 <- Map(calc_tfr, dat_admin1$ir,
 
 ### MICS DATA
 
-mics_births_to_women <- read.csv(paste0("depends/", tolower(iso3), "_mics_births_to_women.csv")) %>%
-  filter(survey_id != "GMB2018MICS")
-mics_wm <- read.csv(paste0("depends/", tolower(iso3), "_mics_women.csv")) %>%
-  filter(survey_id != "GMB2018MICS")
+mics_births_to_women <- read.csv(paste0("depends/", tolower(iso3), "_mics_births_to_women.csv"))
+mics_wm <- read.csv(paste0("depends/", tolower(iso3), "_mics_women.csv"))
 
+lvl_map <- read.csv("resources/iso_mapping_fit.csv")
+lvl <- lvl_map$fertility_fit_level[lvl_map$iso3 == iso3]
+admin1_lvl <- lvl_map$admin1_level[lvl_map$iso3 == iso3]
 # mics_births_to_women <- read.csv("archive/gmb_survey/20210125-165253-87b6844a/gmb_mics_births_to_women.csv")
 # mics_wm <- read.csv("archive/gmb_survey/20210125-165253-87b6844a/gmb_mics_women.csv")
 
