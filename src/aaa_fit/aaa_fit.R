@@ -13,8 +13,10 @@ admin1_lvl <- lvl_map$admin1_level[lvl_map$iso3 == iso3]
 
 mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level = lvl, project=2020)
 
-# TMB::compile("resources/tmb_regular.cpp")               # Compile the C++ file
-# dyn.load(dynlib("resources/tmb_regular"))
+validate_model_frame(mf, areas)
+
+# TMB::compile("parallel.cpp", flags = "-w")               # Compile the C++ file
+# dyn.load(dynlib("parallel"))
 
 tmb_int <- list()
 
@@ -69,7 +71,9 @@ tmb_int$data <- list(
   
   X_spike_2000_ais = model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
   X_spike_1999_ais = model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
-  X_spike_2001_ais = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS")))
+  X_spike_2001_ais = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
+  
+  n_threads = parallel::detectCores()
   
   # out_toggle = mf$out_toggle
   # A_obs = mf$observations$A_obs,
@@ -92,7 +96,7 @@ tmb_int$par <- list(
   # omega1 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_age))),
   # log_prec_omega1 = 0,
   # lag_logit_omega1_phi_age = 0,
-  # 
+  #
   # omega2 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_period))),
   # log_prec_omega2 = 0,
   # lag_logit_omega2_phi_period = 0,
@@ -160,14 +164,16 @@ if(mf$mics_toggle) {
 }
 
 
-# f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
-#                                parameters = tmb_int$par,
-#                                DLL = "dfertility",
-#                                silent=0,
-#                                checkParameterOrder=FALSE)
-# })
-#
-# parallel::mccollect(f)
+f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
+                                          parameters = tmb_int$par,
+                                          DLL = "dfertility",
+                                          silent=0,
+                                          checkParameterOrder=FALSE)
+})
+
+if(is.null(parallel::mccollect(f)[[1]])) {
+  stop("TMB model is invalid. This is most likely an indexing error e.g. iterating over dimensions in an array that do not exist. Check mf model object")
+}
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                        parameters = tmb_int$par,
@@ -185,7 +191,7 @@ fit <- c(f, obj = list(obj))
 class(fit) <- "naomi_fit"  # this is hacky...
 fit <- naomi::sample_tmb(fit, random_only=TRUE)
 
-tmb_results <- dfertility::tmb_outputs(fit, mf, areas) 
+tmb_results <- dfertility::tmb_outputs(fit, mf, areas)
 
 write_csv(tmb_results, "fr.csv")
 

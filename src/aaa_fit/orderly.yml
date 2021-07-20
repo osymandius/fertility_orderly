@@ -15,6 +15,9 @@ artefacts:
 global_resources:
   resources/iso_mapping_fit.csv: iso_mapping_fit.csv
 
+resources:
+  - parallel.cpp
+
 displayname: Fertility model fit
 
 parameters:
@@ -32,6 +35,7 @@ packages:
   - stringr
   - TMB
   - Matrix
+  - parallel
 
 
 

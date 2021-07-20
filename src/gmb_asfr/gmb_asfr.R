@@ -198,29 +198,22 @@ mics_births_tfr <- mics_births_asfr %>%
   arrange(survey_id, area_id) %>%
   group_split(survey_id, area_id)
 
-# mics_tfr <- Map(calc_tfr, mics_wm_tfr,
-#                 by = list(~area_id + survey_id),
-#                 tips = list(c(0,15)),
-#                 period = list(1995:2019),
-#                 clusters = list(~cluster),
-#                 strata = list(NULL),
-#                 id = list("unique_id"),
-#                 dob = list("wdob"),
-#                 intv = list("doi"),
-#                 weight = list("weight"),
-#                 bhdata = mics_births_tfr,
-#                 bvars = list("cdob")) %>%
-#   bind_rows %>%
-#   type.convert %>%
-#   mutate(iso3 = iso3,
-#          survtype = "MICS",
-#          variable = "tfr")
-
-mics_tfr <- mics_asfr %>%
-  group_by(survey_id, area_id, period) %>%
-  summarise(tfr = 5*sum(asfr)) %>%
-  ungroup %>%
-  mutate(iso3 = iso3, 
+mics_tfr <- Map(calc_tfr, mics_wm_tfr,
+                by = list(~area_id + survey_id),
+                tips = list(c(0,15)),
+                period = list(1995:2019),
+                clusters = list(~cluster),
+                strata = list(NULL),
+                id = list("unique_id"),
+                dob = list("wdob"),
+                intv = list("doi"),
+                weight = list("weight"),
+                bhdata = mics_births_tfr,
+                bvars = list("cdob")) %>%
+  bind_rows %>%
+  separate(col=survey_id, into=c(NA, "survyear", NA), sep=c(3,7), remove = FALSE, convert = TRUE) %>%
+  type.convert %>%
+  mutate(iso3 = iso3,
          survtype = "MICS",
          variable = "tfr")
 

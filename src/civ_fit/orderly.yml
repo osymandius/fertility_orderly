@@ -34,7 +34,7 @@ depends:
   civ_data_population:
     id: latest
     use:
-      depends/civ_population_gpw.csv: civ_population_gpw.csv
+      depends/civ_population.csv: civ_population.csv
   civ_asfr:
     id: latest
     use:
