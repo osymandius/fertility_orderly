@@ -15,8 +15,8 @@ mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level = lvl, p
 
 validate_model_frame(mf, areas)
 
-# TMB::compile("parallel.cpp", flags = "-w")               # Compile the C++ file
-# dyn.load(dynlib("parallel"))
+# TMB::compile("dfertility.cpp", flags = "-w")               # Compile the C++ file
+# dyn.load(dynlib("dfertility"))
 
 tmb_int <- list()
 
@@ -108,7 +108,9 @@ tmb_int$par <- list(
   beta_period = 0,
   
   u_spatial_str = rep(0, ncol(mf$Z$Z_spatial)),
+  # u_spatial_iid = rep(0, ncol(mf$Z$Z_spatial)),
   log_prec_spatial = 0,
+  # logit_spatial_rho = 0,
   
   beta_spike_2000 = 0,
   beta_spike_1999 = 0,
@@ -131,6 +133,7 @@ tmb_int$par <- list(
 
 tmb_int$random <- c("beta_0",
                     "u_spatial_str",
+                    # "u_spatial_iid",
                     "u_age",
                     "u_period",
                     "beta_period",
@@ -189,7 +192,7 @@ fit <- c(f, obj = list(obj))
 # fit$sdreport <- sdreport(fit$obj, fit$par)
 
 class(fit) <- "naomi_fit"  # this is hacky...
-fit <- naomi::sample_tmb(fit, random_only=TRUE)
+fit <- naomi::sample_tmb(fit, random_only=FALSE)
 
 tmb_results <- dfertility::tmb_outputs(fit, mf, areas)
 

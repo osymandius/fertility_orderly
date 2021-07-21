@@ -2,9 +2,10 @@ iso3 <- "NGA"
 
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
 
+source("resources/utility_funs.R")
+
 areas_wide <- spread_areas(areas)
 areas_long <- areas %>% st_drop_geometry
-
 ### MICS DATA
 
 mics_births_to_women <- read.csv(paste0("depends/", tolower(iso3), "_mics_births_to_women.csv"))

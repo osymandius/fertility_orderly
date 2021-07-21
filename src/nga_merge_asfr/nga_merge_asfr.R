@@ -19,11 +19,11 @@ write_csv(dhs_asfr, paste0(tolower(iso3), "_dhs_asfr.csv"))
 write_csv(mics_asfr, paste0(tolower(iso3), "_mics_asfr.csv"))
 
 plot_dat <- asfr_admin1 %>%
-  bind_rows(mics_asfr_plot) %>%
+  bind_rows(mics_asfr_admin1) %>%
   select(-c(births, pys)) %>%
   rename(value = asfr) %>%
   bind_rows(
-    bind_rows(tfr_admin1, mics_tfr) %>%
+    bind_rows(tfr_admin1, mics_tfr_admin1) %>%
       select(-se_tfr) %>%
       rename(value = tfr)
   )

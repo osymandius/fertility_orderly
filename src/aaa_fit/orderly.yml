@@ -17,6 +17,8 @@ global_resources:
 
 resources:
   - parallel.cpp
+  - bym2_tmb.cpp
+  - bym2_inla.cpp
 
 displayname: Fertility model fit
 
