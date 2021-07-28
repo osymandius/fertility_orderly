@@ -2,12 +2,12 @@ script: aaa_scale_pop.R
 
 artefacts:
   - data:
-      description: population file formatted for fertility model
+      description: WorldPop populations scaled to WPP2019 by age and sex 1995-2020
       filenames:
-        - fertility_population.csv
+        - interpolated_population.csv
 
 
-displayname: Scale worldpop populations to WPP 2019
+displayname: WorldPop populations scaled to WPP2019 by age and sex 1995-2020
 
 packages:
   - readr

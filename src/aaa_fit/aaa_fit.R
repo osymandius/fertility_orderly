@@ -1,8 +1,11 @@
-population <- read.csv("depends/fertility_population.csv") %>%
+population <- read.csv("depends/interpolated_population.csv") %>%
   rename(period = year) %>%
-  mutate(iso3 = iso3)
+  mutate(iso3 = iso3) %>%
+  filter(sex == "female")
+
 areas <- read_sf("depends/naomi_areas.geojson") %>%
   mutate(iso3 = iso3)
+
 asfr <- read.csv("depends/fertility_asfr.csv")
 
 lvl_map <- read.csv("resources/iso_mapping_fit.csv")

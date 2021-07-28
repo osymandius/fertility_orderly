@@ -105,20 +105,16 @@ for(i in 1:4) {
   )
 }
 
-female_pop <- pop_wpp19 %>%
-  left_join(get_age_groups() %>% select(age_group, age_group_sort_order)) %>%
-  filter(sex == "female", age_group_sort_order %in% 16:22) %>%
-  select(area_id, year, age_group, population)
-
-fertility_population <- crossing(area_id = areas$area_id,
+interpolated_populations <- crossing(area_id = areas$area_id,
          year = 1995:2020,
-         age_group = unique(female_pop$age_group)) %>%
-  left_join(female_pop) %>%
-  group_by(area_id, age_group) %>%
+         sex = c("male", "female"),
+         age_group = unique(pop_wpp19$age_group)) %>%
+  left_join(pop_wpp19 %>% select(area_id, year, sex, age_group, population)) %>%
+  group_by(area_id, sex, age_group) %>%
   mutate(population = log(population),
          population = zoo::na.approx(population, na.rm=FALSE),
          population = exp(population)) %>%
   fill(population, .direction = "up")
   
 
-write_csv(fertility_population, "fertility_population.csv")
+write_csv(interpolated_populations, "interpolated_population.csv")

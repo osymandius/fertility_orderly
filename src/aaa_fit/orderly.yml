@@ -58,4 +58,4 @@ depends:
   aaa_scale_pop:
     id: latest(parameter:iso3 == iso3)
     use:
-      depends/fertility_population.csv: fertility_population.csv
+      depends/interpolated_population.csv: interpolated_population.csv
