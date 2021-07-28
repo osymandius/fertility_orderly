@@ -51,6 +51,7 @@ write_csv(asfr, paste0(tolower(iso3), "_dhs_asfr.csv"))
 
 cluster_list_admin1 <- clusters %>%
   left_join(areas_wide %>% st_drop_geometry, by=c("geoloc_area_id" = "area_id")) %>%
+  mutate(area_id1 = ifelse(str_detect(geoloc_area_id, "_1_"), geoloc_area_id, area_id1)) %>%
   rename(area_id = area_id1) %>%
   select(survey_id, cluster_id, area_id) %>%
   group_by(survey_id) %>%

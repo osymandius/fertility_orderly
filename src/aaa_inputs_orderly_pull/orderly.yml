@@ -5,10 +5,10 @@ artefacts:
       description: boundaries file formatted for naomi
       filenames:
         - naomi_areas.geojson
-  - data:
-      description: population file formatted for naomi
-      filenames:
-        - naomi_population.csv
+  # - data:
+  #     description: population file formatted for naomi
+  #     filenames:
+  #       - naomi_population.csv
   - data:
       description: asfr file formatted for fertility analysis
       filenames:
@@ -186,111 +186,118 @@ depends:
     id: latest
     use:
       depends/zwe_areas.geojson: zwe_areas.geojson
+      
+  #####
+  # 
+  # aaa_data_population_gpw:
+  #   id: latest(parameter:iso3 == iso3)
+  #   use:
+  #     depends/fertilt.csv: population_gpw_naomi.csv
 
-  aaa_data_population_gpw:
-    id: latest(parameter:iso3 == iso3)
-    use:
-      depends/population_gpw_naomi.csv: population_gpw_naomi.csv
-
-  aaa_data_population_worldpop:
-    id: latest(parameter:iso3 == iso3)
-    use:
-      depends/population_worldpop_naomi.csv: population_worldpop_naomi.csv
-
-  ago_data_population:
-    id: latest
-    use:
-      depends/ago_population_worldpop-2015.csv: ago_population_worldpop-2015.csv
-  bdi_data_population:
-    id: latest
-    use:
-      depends/bdi_population_gpw.csv: bdi_population_gpw_80pl_adjusted.csv
-  bfa_data_population:
-    id: latest
-    use:
-      depends/bfa_population_gpw.csv: bfa_population_gpw.csv
-  # bwa_data_population:
+  # aaa_data_population_gpw:
+  #   id: latest(parameter:iso3 == iso3)
+  #   use:
+  #     depends/population_gpw_naomi.csv: population_gpw_naomi.csv
+  # 
+  # aaa_data_population_worldpop:
+  #   id: latest(parameter:iso3 == iso3)
+  #   use:
+  #     depends/population_worldpop_naomi.csv: population_worldpop_naomi.csv
+  # 
+  # ago_data_population:
   #   id: latest
   #   use:
-  #     depends/bwa_population_stats-bw.csv: bwa_population_stats-bw.csv
-  civ_data_population:
-    id: latest
-    use:
-      depends/civ_population.csv: civ_population.csv
-  cod_data_population-local:
-    id: latest
-    use:
-      depends/cod_population_local.csv: cod_population_local.csv
-  cmr_data_population:
-    id: latest
-    use:
-      depends/cmr_population_ins.csv: cmr_population_ins.csv
-  eth_data_population:
-    id: latest
-    use:
-      depends/eth_population.csv: eth_population.csv
-  gmb_data_population:
-    id: latest
-    use:
-      depends/gmb_population_moh-projections_health-region.csv: gmb_population_moh-projections_health-region.csv
-  # hti_data_population:
+  #     depends/ago_population_worldpop-2015.csv: ago_population_worldpop-2015.csv
+  # bdi_data_population:
   #   id: latest
   #   use:
-  #     depends/hti_population_ihsi.csv: hti_population_ihsi.csv
-  ken_data_population:
-    id: latest
-    use:
-      depends/ken_population_knbs-census19.csv: ken_population_knbs-census19.csv
-  lso_data_population:
-    id: latest
-    use:
-      depends/lso_population_census16.csv: lso_population_census16.csv
-  moz_data_population:
-    id: latest
-    use:
-      depends/moz_population_nso.csv: moz_population_nso.csv
-
-  mwi_data_population:
-    id: latest
-    use:
-      depends/mwi_population_projections18.csv: mwi_population_projections18.csv
-
-  nam_data_population:
-    id: latest
-    use:
-      depends/nam_population_gpw.csv: nam_population_gpw.csv
-  nga_data_population:
-    id: latest
-    use:
-      depends/nga_population_npopc.csv: nga_population_npopc.csv
-  rwa_data_population:
-    id: latest
-    use:
-      depends/rwa_population.csv: rwa_population.csv
-  swz_data_population:
-    id: latest
-    use:
-      depends/swz_population_worldpop.csv: swz_population_worldpop.csv
-  tgo_data_population:
-    id: latest
-    use:
-      depends/tgo_population_nso.csv: tgo_population_nso.csv
-  tza_data_population:
-    id: latest
-    use:
-      depends/tza_population_tnbs.csv: tza_population_tnbs.csv
-  uga_data_population:
-    id: latest
-    use:
-      depends/uga_population_ubos.csv: uga_population_ubos.csv
-  zmb_data_population:
-    id: latest
-    use:
-      depends/zmb_population_nso.csv: zmb_population_nso.csv
-  zwe_data_population:
-    id: latest
-    use:
-      depends/zwe_population_nso.csv: zwe_population_nso.csv
+  #     depends/bdi_population_gpw.csv: bdi_population_gpw_80pl_adjusted.csv
+  # bfa_data_population:
+  #   id: latest
+  #   use:
+  #     depends/bfa_population_gpw.csv: bfa_population_gpw.csv
+  # # bwa_data_population:
+  # #   id: latest
+  # #   use:
+  # #     depends/bwa_population_stats-bw.csv: bwa_population_stats-bw.csv
+  # civ_data_population:
+  #   id: latest
+  #   use:
+  #     depends/civ_population.csv: civ_population.csv
+  # cod_data_population-local:
+  #   id: latest
+  #   use:
+  #     depends/cod_population_local.csv: cod_population_local.csv
+  # cmr_data_population:
+  #   id: latest
+  #   use:
+  #     depends/cmr_population_ins.csv: cmr_population_ins.csv
+  # eth_data_population:
+  #   id: latest
+  #   use:
+  #     depends/eth_population.csv: eth_population.csv
+  # gmb_data_population:
+  #   id: latest
+  #   use:
+  #     depends/gmb_population_moh-projections_health-region.csv: gmb_population_moh-projections_health-region.csv
+  # # hti_data_population:
+  # #   id: latest
+  # #   use:
+  # #     depends/hti_population_ihsi.csv: hti_population_ihsi.csv
+  # ken_data_population:
+  #   id: latest
+  #   use:
+  #     depends/ken_population_knbs-census19.csv: ken_population_knbs-census19.csv
+  # lso_data_population:
+  #   id: latest
+  #   use:
+  #     depends/lso_population_census16.csv: lso_population_census16.csv
+  # moz_data_population:
+  #   id: latest
+  #   use:
+  #     depends/moz_population_nso.csv: moz_population_nso.csv
+  # 
+  # mwi_data_population:
+  #   id: latest
+  #   use:
+  #     depends/mwi_population_projections18.csv: mwi_population_projections18.csv
+  # 
+  # nam_data_population:
+  #   id: latest
+  #   use:
+  #     depends/nam_population_gpw.csv: nam_population_gpw.csv
+  # nga_data_population:
+  #   id: latest
+  #   use:
+  #     depends/nga_population_npopc.csv: nga_population_npopc.csv
+  # rwa_data_population:
+  #   id: latest
+  #   use:
+  #     depends/rwa_population.csv: rwa_population.csv
+  # swz_data_population:
+  #   id: latest
+  #   use:
+  #     depends/swz_population_worldpop.csv: swz_population_worldpop.csv
+  # tgo_data_population:
+  #   id: latest
+  #   use:
+  #     depends/tgo_population_nso.csv: tgo_population_nso.csv
+  # tza_data_population:
+  #   id: latest
+  #   use:
+  #     depends/tza_population_tnbs.csv: tza_population_tnbs.csv
+  # uga_data_population:
+  #   id: latest
+  #   use:
+  #     depends/uga_population_ubos.csv: uga_population_ubos.csv
+  # zmb_data_population:
+  #   id: latest
+  #   use:
+  #     depends/zmb_population_nso.csv: zmb_population_nso.csv
+  # zwe_data_population:
+  #   id: latest
+  #   use:
+  #     depends/zwe_population_nso.csv: zwe_population_nso.csv
 
 ### ASFR
 

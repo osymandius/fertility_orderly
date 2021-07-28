@@ -1,4 +1,6 @@
-population <- read.csv("depends/naomi_population.csv")
+population <- read.csv("depends/fertility_population.csv") %>%
+  rename(period = year) %>%
+  mutate(iso3 = iso3)
 areas <- read_sf("depends/naomi_areas.geojson") %>%
   mutate(iso3 = iso3)
 asfr <- read.csv("depends/fertility_asfr.csv")
@@ -10,13 +12,14 @@ admin1_lvl <- lvl_map$admin1_level[lvl_map$iso3 == iso3]
 # population <- read.csv("archive/aaa_data_population_worldpop/20210106-203832-d9202b45/population_worldpop_naomi.csv")
 # areas <- read_sf("archive/ago_data_areas/20210105-150243-778fa342/ago_areas.geojson")
 # asfr <- read.csv("archive/ago_asfr/20210122-093323-ccda8444/ago_dhs_asfr.csv")
+debugonce(make_model_frames_dev)
 
 mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level = lvl, project=2020)
 
 validate_model_frame(mf, areas)
 
-# TMB::compile("dfertility.cpp", flags = "-w")               # Compile the C++ file
-# dyn.load(dynlib("dfertility"))
+# TMB::compile("parallel.cpp", flags = "-w")               # Compile the C++ file
+# dyn.load(dynlib("parallel"))
 
 tmb_int <- list()
 
@@ -96,7 +99,7 @@ tmb_int$par <- list(
   # omega1 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_age))),
   # log_prec_omega1 = 0,
   # lag_logit_omega1_phi_age = 0,
-  #
+  # 
   # omega2 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_period))),
   # log_prec_omega2 = 0,
   # lag_logit_omega2_phi_period = 0,
@@ -108,9 +111,7 @@ tmb_int$par <- list(
   beta_period = 0,
   
   u_spatial_str = rep(0, ncol(mf$Z$Z_spatial)),
-  # u_spatial_iid = rep(0, ncol(mf$Z$Z_spatial)),
   log_prec_spatial = 0,
-  # logit_spatial_rho = 0,
   
   beta_spike_2000 = 0,
   beta_spike_1999 = 0,
@@ -133,7 +134,6 @@ tmb_int$par <- list(
 
 tmb_int$random <- c("beta_0",
                     "u_spatial_str",
-                    # "u_spatial_iid",
                     "u_age",
                     "u_period",
                     "beta_period",
@@ -168,10 +168,10 @@ if(mf$mics_toggle) {
 
 
 f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
-                                          parameters = tmb_int$par,
-                                          DLL = "dfertility",
-                                          silent=0,
-                                          checkParameterOrder=FALSE)
+                               parameters = tmb_int$par,
+                               DLL = "dfertility",
+                               silent=0,
+                               checkParameterOrder=FALSE)
 })
 
 if(is.null(parallel::mccollect(f)[[1]])) {
@@ -194,7 +194,12 @@ fit <- c(f, obj = list(obj))
 class(fit) <- "naomi_fit"  # this is hacky...
 fit <- naomi::sample_tmb(fit, random_only=FALSE)
 
-tmb_results <- dfertility::tmb_outputs(fit, mf, areas)
+hyper <- fit$sample %>%
+  list_modify("lambda_out" = zap(), "tfr_out" = zap())
+
+saveRDS(hyper, "hyper.rds")
+
+tmb_results <- dfertility::tmb_outputs(fit, mf, areas) 
 
 write_csv(tmb_results, "fr.csv")
 
