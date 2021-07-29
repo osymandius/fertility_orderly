@@ -195,8 +195,9 @@ fit$sdreport <- sdreport(fit$obj, fit$par)
 
 sd_report <- fit$sdreport
 sd_report <- summary(sd_report, "all") %>%
-  .[rownames(.) %in% c("log_prec_rw_tips", "log_prec_spatial", "log_prec_eta1", "lag_logit_eta1_phi_age", "lag_logit_eta1_phi_period", "log_prec_eta2", "lag_logit_eta2_phi_period", "log_prec_eta3", "lag_logit_eta3_phi_age", "log_prec_rw_age", "log_prec_rw_period", "lag_logit_phi_arima_period", "beta_tips_dummy"), ] %>%
-  data.frame()
+  .[rownames(.) %in% c("log_prec_rw_tips", "log_prec_spatial", "log_prec_eta1", "lag_logit_eta1_phi_age", "lag_logit_eta1_phi_period", "log_prec_eta2", "lag_logit_eta2_phi_period", "log_prec_eta3", "lag_logit_eta3_phi_age", "log_prec_rw_age", "log_prec_rw_period", "lag_logit_phi_arima_period", "beta_tips_dummy"), ] 
+
+sd_report <- data.frame(sd_report, "hyper" = rownames(sd_report), iso = iso3)
 
 write_csv(sd_report, "sd_report.csv")
 
