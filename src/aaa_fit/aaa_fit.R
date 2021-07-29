@@ -15,7 +15,6 @@ admin1_lvl <- lvl_map$admin1_level[lvl_map$iso3 == iso3]
 # population <- read.csv("archive/aaa_data_population_worldpop/20210106-203832-d9202b45/population_worldpop_naomi.csv")
 # areas <- read_sf("archive/ago_data_areas/20210105-150243-778fa342/ago_areas.geojson")
 # asfr <- read.csv("archive/ago_asfr/20210122-093323-ccda8444/ago_dhs_asfr.csv")
-debugonce(make_model_frames_dev)
 
 mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level = lvl, project=2020)
 
@@ -45,8 +44,8 @@ tmb_int$data <- list(
   Z_interaction2 = sparse.model.matrix(~0 + id.interaction2, mf$mf_model),
   Z_interaction3 = sparse.model.matrix(~0 + id.interaction3, mf$mf_model),
   Z_country = mf$Z$Z_country,
-  Z_omega1 = sparse.model.matrix(~0 + id.omega1, mf$mf_model),
-  Z_omega2 = sparse.model.matrix(~0 + id.omega2, mf$mf_model),
+  # Z_omega1 = sparse.model.matrix(~0 + id.omega1, mf$mf_model),
+  # Z_omega2 = sparse.model.matrix(~0 + id.omega2, mf$mf_model),
   R_tips = mf$R$R_tips,
   R_age = mf$R$R_age,
   R_period = make_rw_structure_matrix(ncol(mf$Z$Z_period), 1, adjust_diagonal = TRUE),
@@ -192,53 +191,59 @@ f$par.fixed <- f$par
 f$par.full <- obj$env$last.par
 
 fit <- c(f, obj = list(obj))
-# fit$sdreport <- sdreport(fit$obj, fit$par)
+fit$sdreport <- sdreport(fit$obj, fit$par)
 
-class(fit) <- "naomi_fit"  # this is hacky...
-fit <- naomi::sample_tmb(fit, random_only=FALSE)
+sd_report <- fit$sdreport
+sd_report <- summary(sd_report, "all") %>%
+  .[rownames(.) %in% c("log_prec_rw_tips", "log_prec_spatial", "log_prec_eta1", "lag_logit_eta1_phi_age", "lag_logit_eta1_phi_period", "log_prec_eta2", "lag_logit_eta2_phi_period", "log_prec_eta3", "lag_logit_eta3_phi_age", "log_prec_rw_age", "log_prec_rw_period", "lag_logit_phi_arima_period", "beta_tips_dummy"), ] %>%
+  data.frame()
 
-hyper <- fit$sample %>%
-  list_modify("lambda_out" = zap(), "tfr_out" = zap())
+write_csv(sd_report, "sd_report.csv")
 
-saveRDS(hyper, "hyper.rds")
-
-tmb_results <- dfertility::tmb_outputs(fit, mf, areas) 
-
-write_csv(tmb_results, "fr.csv")
-
-fr_plot <- read.csv("depends/fertility_fr_plot.csv")
-# fr_plot <- read.csv("archive/ago_asfr/20210122-093323-ccda8444/ago_fr_plot.csv")
-
-fr_plot <- fr_plot %>%
-  left_join(areas %>% st_drop_geometry() %>% select(area_id, area_name))
-
-tfr_plot <- tmb_results %>%
-  filter(area_level == admin1_lvl, variable == "tfr") %>%
-  ggplot(aes(x=period, y=median)) +
-  geom_line() +
-  geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
-  geom_point(data = fr_plot %>% filter(variable == "tfr", value <10), aes(y=value, color=survey_id)) +
-  facet_wrap(~area_name, ncol=5) +
-  labs(y="TFR", x=element_blank(), color="Survey ID", title=paste(iso3, "| Provincial TFR")) +
-  theme_minimal() +
-  theme(
-    legend.position = "bottom",
-    text = element_text(size=14)
-  )
-
-district_tfr <- tmb_results %>%
-  filter(area_level == lvl, variable == "tfr") %>%
-  ggplot(aes(x=period, y=median)) +
-  geom_line() +
-  geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
-  facet_wrap(~area_name, ncol=8) +
-  theme_minimal() +
-  labs(y="TFR", x=element_blank(), title=paste(iso3, "| District TFR"))
-
-dir.create("check")
-pdf("check/tfr_admin1.pdf", h = 12, w = 20)
-tfr_plot
-dev.off()
-pdf("check/tfr_district.pdf", h = 12, w = 20)
-district_tfr
-dev.off()
+# class(fit) <- "naomi_fit"  # this is hacky...
+# fit <- naomi::sample_tmb(fit, random_only=FALSE)
+# 
+# hyper <- fit$sample %>%
+#   list_modify("lambda_out" = zap(), "tfr_out" = zap())
+# 
+# saveRDS(hyper, "hyper.rds")
+# 
+# tmb_results <- dfertility::tmb_outputs(fit, mf, areas) 
+# 
+# write_csv(tmb_results, "fr.csv")
+# 
+# fr_plot <- read.csv("depends/fertility_fr_plot.csv")
+# 
+# fr_plot <- fr_plot %>%
+#   left_join(areas %>% st_drop_geometry() %>% select(area_id, area_name))
+# 
+# tfr_plot <- tmb_results %>%
+#   filter(area_level == admin1_lvl, variable == "tfr") %>%
+#   ggplot(aes(x=period, y=median)) +
+#   geom_line() +
+#   geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
+#   geom_point(data = fr_plot %>% filter(variable == "tfr", value <10), aes(y=value, color=survey_id)) +
+#   facet_wrap(~area_name, ncol=5) +
+#   labs(y="TFR", x=element_blank(), color="Survey ID", title=paste(iso3, "| Provincial TFR")) +
+#   theme_minimal() +
+#   theme(
+#     legend.position = "bottom",
+#     text = element_text(size=14)
+#   )
+# 
+# district_tfr <- tmb_results %>%
+#   filter(area_level == lvl, variable == "tfr") %>%
+#   ggplot(aes(x=period, y=median)) +
+#   geom_line() +
+#   geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
+#   facet_wrap(~area_name, ncol=8) +
+#   theme_minimal() +
+#   labs(y="TFR", x=element_blank(), title=paste(iso3, "| District TFR"))
+# 
+# dir.create("check")
+# pdf("check/tfr_admin1.pdf", h = 12, w = 20)
+# tfr_plot
+# dev.off()
+# pdf("check/tfr_district.pdf", h = 12, w = 20)
+# district_tfr
+# dev.off()
