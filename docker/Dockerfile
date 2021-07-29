@@ -12,3 +12,5 @@ RUN install_remote \
         reside-ic/spud \
         vimc/orderly.sharepoint \
         osymandius/dfertility
+
+RUN install_inla
