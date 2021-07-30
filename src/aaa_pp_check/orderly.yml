@@ -1,23 +1,19 @@
-script: aaa_fit.R
+script: aaa_pp_check.R
 
-artefacts:
-  - data:
-      description: sd report
-      filenames:
-        - sd_report.csv
-  # - data:
-  #     description: fertility indicator dataset
-  #     filenames:
-  #       - fr.csv
-  # - data:
-  #     description: hyperparameters and random effect samples
-  #     filenames:
-  #       - hyper.rds
-  # - staticgraph:
-  #     description: Validate admin-1 TFRs
-  #     filenames:
-  #       - check/tfr_admin1.pdf
-  #       - check/tfr_district.pdf
+# artefacts:
+#   - data:
+#       description: fertility indicator dataset
+#       filenames:
+#         - fr.csv
+#   - data:
+#       description: hyperparameters and random effect samples
+#       filenames:
+#         - hyper.rds
+#   - staticgraph:
+#       description: Validate admin-1 TFRs
+#       filenames:
+#         - check/tfr_admin1.pdf
+#         - check/tfr_district.pdf
 
 
 global_resources:
