@@ -6,18 +6,22 @@ artefacts:
       filenames:
         - sd_report.csv
   # - data:
-  #     description: fertility indicator dataset
+  #     description: tips
   #     filenames:
-  #       - fr.csv
+  #       - tips.csv
+  - data:
+      description: fertility indicator dataset
+      filenames:
+        - fr.csv
   # - data:
   #     description: hyperparameters and random effect samples
   #     filenames:
   #       - hyper.rds
-  # - staticgraph:
-  #     description: Validate admin-1 TFRs
-  #     filenames:
-  #       - check/tfr_admin1.pdf
-  #       - check/tfr_district.pdf
+  - staticgraph:
+      description: Validate admin-1 TFRs
+      filenames:
+        - check/tfr_admin1.pdf
+        - check/tfr_district.pdf
 
 
 global_resources:
@@ -27,6 +31,10 @@ resources:
   # - parallel.cpp
   # - parallel.o
   # - parallel.so
+  - tmb_all_level_poisson.cpp
+  - tmb_all_level_poisson.o
+  - tmb_all_level_poisson.so
+
 
 displayname: Fertility model fit
 

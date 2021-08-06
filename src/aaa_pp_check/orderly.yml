@@ -20,9 +20,7 @@ global_resources:
   resources/iso_mapping_fit.csv: iso_mapping_fit.csv
 
 resources:
-  # - parallel.cpp
-  # - parallel.o
-  # - parallel.so
+  - tmb_all_level_poisson.cpp
 
 displayname: Fertility model fit
 

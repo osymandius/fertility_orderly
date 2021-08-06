@@ -20,8 +20,8 @@ mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level = lvl, p
 
 validate_model_frame(mf, areas)
 
-# TMB::compile("parallel.cpp", flags = "-w")               # Compile the C++ file
-# dyn.load(dynlib("parallel"))
+TMB::compile("tmb_all_level_poisson.cpp", flags = "-w")               # Compile the C++ file
+dyn.load(dynlib("tmb_all_level_poisson"))
 
 tmb_int <- list()
 
@@ -109,8 +109,8 @@ tmb_int$par <- list(
   u_period = rep(0, ncol(mf$Z$Z_period)),
   log_prec_rw_period = 0,
   # lag_logit_phi_period = 0,
-  lag_logit_phi_arima_period = 0,
-  beta_period = 0,
+  # lag_logit_phi_arima_period = 0,
+  # beta_period = 0,
   
   u_spatial_str = rep(0, ncol(mf$Z$Z_spatial)),
   log_prec_spatial = 0,
@@ -120,33 +120,33 @@ tmb_int$par <- list(
   beta_spike_2001 = 0,
   # log_overdispersion = 0,
   
-  eta1 = array(0, c(ncol(mf$Z$Z_country), ncol(mf$Z$Z_period), ncol(mf$Z$Z_age))),
-  log_prec_eta1 = 0,
-  lag_logit_eta1_phi_age = 0,
-  lag_logit_eta1_phi_period = 0,
+  # eta1 = array(0, c(ncol(mf$Z$Z_country), ncol(mf$Z$Z_period), ncol(mf$Z$Z_age))),
+  # log_prec_eta1 = 0,
+  # lag_logit_eta1_phi_age = 0,
+  # lag_logit_eta1_phi_period = 0,
   #
   eta2 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_period))),
-  log_prec_eta2 = 0,
-  lag_logit_eta2_phi_period = 0,
+  log_prec_eta2 = 0
+  # lag_logit_eta2_phi_period = 0
   #
-  eta3 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_age))),
-  log_prec_eta3 = 0,
-  lag_logit_eta3_phi_age = 0
+  # eta3 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_age))),
+  # log_prec_eta3 = 0,
+  # lag_logit_eta3_phi_age = 0
 )
 
 tmb_int$random <- c("beta_0",
                     "u_spatial_str",
                     "u_age",
                     "u_period",
-                    "beta_period",
+                    # "beta_period",
                     "beta_tips_dummy",
                     "u_tips",
                     "beta_spike_2000",
                     "beta_spike_1999",
                     "beta_spike_2001",
-                    "eta1",
-                    "eta2",
-                    "eta3"
+                    # "eta1",
+                    "eta2"
+                    # "eta3"
                     # "omega1",
                     # "omega2"
 )
@@ -171,7 +171,7 @@ if(mf$mics_toggle) {
 
 f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
                                           parameters = tmb_int$par,
-                                          DLL = "dfertility",
+                                          DLL = "tmb_all_level_poisson",
                                           silent=0,
                                           checkParameterOrder=FALSE)
 })
@@ -182,7 +182,7 @@ if(is.null(parallel::mccollect(f)[[1]])) {
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                        parameters = tmb_int$par,
-                       DLL = "dfertility",
+                       DLL = "tmb_all_level_poisson",
                        random = tmb_int$random,
                        hessian = FALSE)
 
@@ -195,14 +195,109 @@ fit$sdreport <- sdreport(fit$obj, fit$par)
 
 sd_report <- fit$sdreport
 sd_report <- summary(sd_report, "all") %>%
-  .[rownames(.) %in% c("log_prec_rw_tips", "log_prec_spatial", "log_prec_eta1", "lag_logit_eta1_phi_age", "lag_logit_eta1_phi_period", "log_prec_eta2", "lag_logit_eta2_phi_period", "log_prec_eta3", "lag_logit_eta3_phi_age", "log_prec_rw_age", "log_prec_rw_period", "lag_logit_phi_arima_period", "beta_tips_dummy"), ] 
+  .[rownames(.) %in% c("log_prec_rw_tips", "log_prec_spatial", "log_prec_eta1", "lag_logit_eta1_phi_age", "lag_logit_eta1_phi_period", "log_prec_eta2", "lag_logit_eta2_phi_period", "log_prec_eta3", "lag_logit_eta3_phi_age", "log_prec_rw_age", "log_prec_rw_period", "lag_logit_phi_arima_period", "beta_tips_dummy"), ]
 
-sd_report <- data.frame(sd_report, "hyper" = rownames(sd_report), iso = iso3)
+hyper_sd <- data.frame(sd_report, "hyper" = rownames(sd_report), iso = iso3) %>%
+  mutate(source = "RW1 both")
 
-write_csv(sd_report, "sd_report.csv")
+class(fit) <- "naomi_fit"  # this is hacky...
+fit <- naomi::sample_tmb(fit, random_only=TRUE)
 
-# class(fit) <- "naomi_fit"  # this is hacky...
-# fit <- naomi::sample_tmb(fit, random_only=FALSE)
+tmb_results <- dfertility::tmb_outputs(fit, mf, areas)
+
+fr_plot <- read.csv("depends/fertility_fr_plot.csv")
+
+fr_plot <- fr_plot %>%
+  left_join(areas %>% st_drop_geometry() %>% select(area_id, area_name))
+
+tmb_results %>%
+  filter(area_level == admin1_lvl, variable == "tfr") %>%
+  ggplot(aes(x=period, y=median)) +
+  geom_line() +
+  geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
+  geom_point(data = fr_plot %>% filter(variable == "tfr", value <10), aes(y=value, color=survey_id)) +
+  facet_wrap(~area_name, ncol=5) +
+  labs(y="TFR", x=element_blank(), color="Survey ID", title=paste(iso3, "| Provincial TFR")) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    text = element_text(size=14)
+  )
+
+eta2_v <- apply(fit$sample$eta2, 1, median)
+dim(eta2_v) <- c(135,26)
+data.frame(eta2_v) %>%
+  mutate(idx = row_number()) %>%
+  pivot_longer(-idx) %>%
+  mutate(name = rep(1:26, times = 135)) %>%
+  ggplot(aes(x=name, y=value)) +
+    geom_point() +
+    geom_line() +
+    facet_wrap(~idx)
+
+full_obs_pp <- mf$observations$full_obs %>%
+  ungroup %>%
+  mutate(idx = row_number())
+
+births_pred_dhs <- rpois(length(fit$sample$mu_obs_pred_dhs),
+                      exp(fit$sample$mu_obs_pred_dhs)
+)
+
+dim(births_pred_dhs) <- dim(fit$sample$mu_obs_pred_dhs)
+
+foo <- data.frame(births_pred_dhs) %>%
+  cbind("idx" = as.numeric(mf$X_extract$X_extract_dhs %*% full_obs_pp$idx)) %>%
+  type.convert()
+
+foo %>%
+  left_join(mf$observations$full_obs %>% select(survey_id, area_id, period, age_group, tips, births, idx) %>% type.convert()) %>%
+  select(survey_id, area_id, period, age_group, tips, births, everything(), -idx) %>%
+  group_by(survey_id, area_id, period, tips) %>%
+  summarise(births = sum(births), 
+            across(X1:X1000, sum))
+
+# u_tips <- apply(fit$sample$u_tips, 1, median)
 # 
-# hyper <- fit$sample %>%
-#   list_modify("lambda_out" = zap(), "tfr_out" = zap())
+# beta_tips_dummy <- apply(fit$sample$beta_tips_dummy, 1, median)
+# log_sd_tips <- sqrt(1/apply(fit$sample$log_prec_rw_tips, 1, median))
+# 
+# data.frame(u_tips = u_tips,
+#            log_sigma_tips = log_sd_tips,
+#            beta_tips_dummy = beta_tips_dummy) %>%
+#   mutate(idx = row_number() - 1,
+#          dummy = ifelse(idx<6, 0, 1),
+#          beta_tips_dummy = beta_tips_dummy * dummy,
+#          est = u_tips*log_sigma_tips + beta_tips_dummy
+#   ) 
+
+foo %>%
+  filter(period == 2015) %>%
+  pivot_longer(-c(survey_id, area_id, period, tips, births)) %>%
+  group_by(survey_id, area_id, period, tips, births) %>%
+  summarise(median = median(value),
+            lower = quantile(value, 0.025),
+            upper = quantile(value, 0.975))
+
+full_obs_pp
+
+mf$X_extract$X_extract_dhs %*% mf$observations$full_obs$births
+mf$X_extract$X_extract_ais
+mf$X_extract$X_extract_mics
+
+hyper <- fit$sample["lambda_out"]
+
+admin1_samples <- mf$out$mf_out %>%
+  filter(variable == "asfr") %>%
+  cbind(hyper$lambda_out) %>%
+  filter(str_detect(area_id, "_1_"))
+
+mf$out$mf_out %>%
+  filter(variable == "asfr") %>%
+  filter(str_detect(area_id, "_1_")) %>%
+  cbind(t(data.frame(apply(admin1_samples[,6:1000], 1, sample, 50))))
+
+
+
+hist(rpois(200, 0.25))
+
+
