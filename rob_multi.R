@@ -1,3 +1,12 @@
+library(tidyverse)
+library(naomi)
+library(sf)
+library(dfertility)
+library(Matrix)
+library(TMB)
+library(orderly)
+library(INLA)
+
 iso <- c("BDI", "BEN", "BFA", "CIV", "CMR", "COG", "GMB", "KEN", "LSO", "MLI", "MWI", "SLE", "SWZ", "TCD", "TGO", "ZWE", "AGO", "GAB", "GHA", "GIN", "LBR", "NAM", "NER", "RWA", "SEN", "TZA", "UGA", "ZMB")
 
 latest_orderly_pulls <- lapply(iso, function(x){
@@ -38,7 +47,7 @@ lvl_map <- read.csv("global/iso_mapping_fit.csv") %>%
 
 areas <- areas[order(names(areas))]
 
-debugonce(make_model_frames_batch)
+# debugonce(make_model_frames_batch)
 mf <- make_model_frames_batch(lvl_map, population, asfr, areas_list = areas, project=2020)
 
 validate_model_frame(mf, areas %>% bind_rows())
@@ -231,14 +240,14 @@ sd_report <- fit$sdreport
 sd_report <- summary(sd_report, "all")
 sd_report <- data.frame(sd_report, "hyper" = rownames(sd_report), iso = iso3)
 
-write_csv(sd_report, "sd_report.csv")
+write.csv(sd_report, "sd_report.csv")
 
 class(fit) <- "naomi_fit"  # this is hacky...
 fit <- naomi::sample_tmb(fit, random_only=TRUE)
 
 tmb_results <- dfertility::tmb_outputs(fit, mf, areas)
 #
-write_csv(tmb_results, "fr.csv")
+write.csv(tmb_results, "fr.csv")
 
 fit <- naomi::sample_tmb(fit, random_only=FALSE)
 
