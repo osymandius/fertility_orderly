@@ -9,6 +9,11 @@ library(INLA)
 
 iso <- c("BDI", "BEN", "BFA", "CIV", "CMR", "COG", "GMB", "KEN", "LSO", "MLI", "MWI", "SLE", "SWZ", "TCD", "TGO", "ZWE", "AGO", "GAB", "GHA", "GIN", "LBR", "NAM", "NER", "RWA", "SEN", "TZA", "UGA", "ZMB")
 
+lapply(iso, function(x){
+  orderly_pull_archive("aaa_scale_pop", id = paste0('latest(parameter:iso3 == "', x, '")'), remote = "fertility")
+  orderly_pull_archive("aaa_inputs_orderly_pull", id = paste0('latest(parameter:iso3 == "', x, '")'), remote = "fertility")
+})
+
 latest_orderly_pulls <- lapply(iso, function(x){
   orderly_search(paste0('latest(parameter:iso3 == "', x, '")'), name = "aaa_inputs_orderly_pull")
 })
