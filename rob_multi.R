@@ -1,3 +1,5 @@
+devtools::install_github("osymandius/dfertility")
+
 library(tidyverse)
 library(naomi)
 library(sf)
