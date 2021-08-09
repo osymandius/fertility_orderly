@@ -22,6 +22,9 @@ Type objective_function<Type>::operator() ()
   DATA_SPARSE_MATRIX(Z_tips);
   DATA_SPARSE_MATRIX(R_tips);
 
+  DATA_SPARSE_MATRIX(R_survey);
+  DATA_SPARSE_MATRIX(Z_survey);
+  DATA_SPARSE_MATRIX(Z_zeta1);
 
   DATA_SPARSE_MATRIX(X_extract_dhs);
   DATA_SPARSE_MATRIX(X_extract_ais);
@@ -87,6 +90,35 @@ Type objective_function<Type>::operator() ()
   vector<Type> u_tips_constr = u_tips - u_tips[3];
 
   /////////////////
+
+  PARAMETER_VECTOR(u_survey);
+  PARAMETER(log_prec_survey);
+
+  Type prec_survey = exp(log_prec_survey); 
+  nll -= dgamma(log_prec_survey, Type(1), Type(2000), true);
+  
+  nll -= Type(-0.5) * (u_survey * (R_survey * u_survey)).sum();
+  nll -= dnorm(u_survey.sum(), Type(0), Type(0.01) * u_survey.size(), 1);
+
+  /////////
+
+  PARAMETER_ARRAY(zeta1);
+  PARAMETER(log_prec_zeta1);
+  PARAMETER(logit_zeta1_phi_tips);
+
+  Type prec_zeta1 = exp(log_prec_zeta1);
+  nll -= dgamma(log_prec_zeta1, Type(1), Type(2000), true);
+
+  Type zeta1_phi_tips(exp(logit_zeta1_phi_tips)/(1+exp(logit_zeta1_phi_tips)));
+  nll -= log(zeta1_phi_tips) +  log(1 - zeta1_phi_tips); // Jacobian adjustment for inverse logit'ing the parameter... 
+  nll -= dnorm(zeta1_phi_tips, Type(0), Type(1.5), true);
+  
+  nll += SEPARABLE(AR1(Type(zeta1_phi_tips)), GMRF(R_survey))(zeta1);
+  
+  for (int i = 0; i < zeta1.cols(); i++) {
+    nll -= dnorm(zeta1.col(i).sum(), Type(0), Type(0.01) * zeta1.col(i).size(), true);}
+
+  vector<Type> zeta1_v(zeta1);
 
   // nll -= dnorm(beta_urban_dummy, Type(0), Type(sqrt(1/0.001)), true).sum();
 
@@ -391,6 +423,8 @@ Type objective_function<Type>::operator() ()
   vector<Type> spike_1999_lh(X_spike_1999 * beta_spike_1999);
   vector<Type> spike_2000_lh(X_spike_2000 * beta_spike_2000);
   vector<Type> spike_2001_lh(X_spike_2001 * beta_spike_2001);
+  vector<Type> zeta1_lh(Z_zeta1 * zeta1_v * sqrt(1/prec_zeta1));
+  vector<Type> survey_lh(Z_survey * u_survey * sqrt(1/prec_survey));
 
   vector<Type> mu_obs_pred_dhs(X_extract_dhs * (M_full_obs * log(lambda_out))
                                 + X_extract_dhs * tips_lh
@@ -398,6 +432,8 @@ Type objective_function<Type>::operator() ()
                                 + X_extract_dhs * spike_1999_lh
                                 + X_extract_dhs * spike_2000_lh
                                 + X_extract_dhs * spike_2001_lh
+                                + X_extract_dhs * zeta1_lh
+                                + X_extract_dhs * survey_lh
                                 + log_offset_dhs
 
                 );
@@ -407,6 +443,8 @@ Type objective_function<Type>::operator() ()
                                 + X_extract_ais * spike_1999_lh
                                 + X_extract_ais * spike_2000_lh
                                 + X_extract_ais * spike_2001_lh
+                                + X_extract_ais * zeta1_lh
+                                + X_extract_ais * survey_lh
                                 + log_offset_ais
 
                 );
@@ -450,6 +488,10 @@ Type objective_function<Type>::operator() ()
                                   + X_extract_mics * spike_1999_lh
                                   + X_extract_mics * spike_2000_lh
                                   + X_extract_mics * spike_2001_lh
+                                  // + X_spike_2000_mics * beta_spike_2000          // spike 2000
+                                  // + X_spike_1999_mics * beta_spike_1999          // spike 1999
+                                  // + X_spike_2001_mics * beta_spike_2001          // spike 2001
+                                  // + X_extract_mics * u_smooth_lh
                                   + log_offset_mics
 
                 );
@@ -501,6 +543,10 @@ Type objective_function<Type>::operator() ()
   REPORT(phi_arima_period);
 
   REPORT(beta_tips_dummy);
+
+  REPORT(log_prec_survey);
+  REPORT(log_prec_zeta1);
+  REPORT(zeta1_phi_tips);
   // // REPORT(beta_urban_dummy);
 
   // REPORT(u_period);

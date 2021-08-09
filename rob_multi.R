@@ -63,6 +63,10 @@ validate_model_frame(mf, areas %>% bind_rows())
 TMB::compile("multi_country.cpp", flags = "-w")               # Compile the C++ file
 dyn.load(dynlib("multi_country"))
 
+mf$observations$full_obs <- mf$observations$full_obs %>%
+  mutate(id.zeta1 = factor(group_indices(., tips, survey_id)),
+         id.zeta1 = fct_expand(id.zeta1, as.character(1:2175)))
+
 tmb_int <- list()
 
 tmb_int$data <- list(
@@ -74,9 +78,9 @@ tmb_int$data <- list(
   X_extract_dhs = mf$X_extract$X_extract_dhs,
   X_extract_ais = mf$X_extract$X_extract_ais,
   X_extract_mics = mf$X_extract$X_extract_mics,
-  # Z_tips = mf$Z$Z_tips,
-  Z_tips_dhs = mf$Z$Z_tips_dhs,
-  Z_tips_ais = mf$Z$Z_tips_ais,
+  Z_tips = sparse.model.matrix(~0 + tips_f, mf$observations$full_obs),
+  # Z_tips_dhs = mf$Z$Z_tips_dhs,
+  # Z_tips_ais = mf$Z$Z_tips_ais,
   Z_age = mf$Z$Z_age,
   Z_period = mf$Z$Z_period,
   Z_spatial = mf$Z$Z_spatial,
@@ -84,8 +88,10 @@ tmb_int$data <- list(
   Z_interaction2 = sparse.model.matrix(~0 + id.interaction2, mf$mf_model),
   Z_interaction3 = sparse.model.matrix(~0 + id.interaction3, mf$mf_model),
   Z_country = mf$Z$Z_country,
+  Z_survey = sparse.model.matrix(~0 + survey_id, mf$observations$full_obs %>% mutate(survey_id = factor(survey_id))),
   Z_omega1 = sparse.model.matrix(~0 + id.omega1, mf$mf_model),
   Z_omega2 = sparse.model.matrix(~0 + id.omega2, mf$mf_model),
+  Z_zeta1 = sparse.model.matrix(~0 + id.zeta1, mf$observations$full_obs),
   # Z_smooth_iid = sparse.model.matrix(~0 + id.smooth, mf$observations$full_obs),
   # Z_smooth_iid_ais = sparse.model.matrix(~0 + id.smooth, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
   # R_smooth_iid = R_smooth_iid,
@@ -94,6 +100,7 @@ tmb_int$data <- list(
   R_period = make_rw_structure_matrix(ncol(mf$Z$Z_period), 1, adjust_diagonal = TRUE),
   R_spatial = mf$R$R_spatial,
   R_country = mf$R$R_country,
+  R_survey = as(diag(1, length(unique(mf$observations$full_obs$survey_id))), "dgTMatrix"),
   rankdef_R_spatial = 1,
   
   log_offset_naomi = log(mf$observations$naomi_level_obs$pys),
@@ -106,25 +113,17 @@ tmb_int$data <- list(
   births_obs_ais = filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS"))$births,
   
   pop = mf$mf_model$population,
-  # A_asfr_out = mf$out$A_asfr_out,
   A_tfr_out = mf$out$A_tfr_out,
   
   A_full_obs = mf$observations$A_full_obs,
   
   mics_toggle = mf$mics_toggle,
   
-  X_spike_2000_dhs = model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype == "DHS")),
-  X_spike_1999_dhs = model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype == "DHS")),
-  X_spike_2001_dhs = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype == "DHS")),
-  
-  X_spike_2000_ais = model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
-  X_spike_1999_ais = model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
-  X_spike_2001_ais = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
+  X_spike_2000 = model.matrix(~0 + spike_2000, mf$observations$full_obs),
+  X_spike_1999 = model.matrix(~0 + spike_1999, mf$observations$full_obs),
+  X_spike_2001 = model.matrix(~0 + spike_2001, mf$observations$full_obs),
   
   n_threads = parallel::detectCores()
-  
-  # out_toggle = mf$out_toggle
-  # A_obs = mf$observations$A_obs,
 )
 
 tmb_int$par <- list(
@@ -247,14 +246,14 @@ sd_report <- fit$sdreport
 sd_report <- summary(sd_report, "all")
 sd_report <- data.frame(sd_report, "hyper" = rownames(sd_report), iso = iso3)
 
-write.csv(sd_report, "sd_report.csv")
+write.csv(sd_report, "sd_report_multi.csv")
 
 class(fit) <- "naomi_fit"  # this is hacky...
 fit <- naomi::sample_tmb(fit, random_only=TRUE)
 
-tmb_results <- dfertility::tmb_outputs(fit, mf, areas)
+tmb_results <- dfertility::tmb_outputs(fit, mf, areas %>% bind_rows())
 #
-write.csv(tmb_results, "fr.csv")
+write.csv(tmb_results, "fr_multi.csv")
 
 fit <- naomi::sample_tmb(fit, random_only=FALSE)
 
@@ -262,4 +261,155 @@ hyper <- fit$sample %>%
   list_modify("lambda_out" = zap(),
               "tfr_out" = zap())
  
-saveRDS(hyper, "hyper.rds")
+saveRDS(hyper, "hyper_multi.rds")
+
+############# SECOND MODEL FITTING WITH TIPS INTERACTION
+
+TMB::compile("multi_country_tips_survey.cpp", flags = "-w")               # Compile the C++ file
+dyn.load(dynlib("multi_country_tips_survey"))
+
+tmb_int$par <- list(
+  beta_0 = 0,
+  
+  beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
+  # # beta_urban_dummy = rep(0, ncol(X_urban_dummy)),
+  u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
+  log_prec_rw_tips = 0,
+  
+  zeta1 = array(0, c(length(unique(mf$observations$full_obs$survey_id)), ncol(mf$Z$Z_tips_dhs))),
+  log_prec_zeta1 = 0,
+  logit_zeta1_phi_tips = 0,
+  
+  u_survey = rep(0, length(unique(mf$observations$full_obs$survey_id))),
+  log_prec_survey = 0,
+  
+  u_age = rep(0, ncol(mf$Z$Z_age)),
+  log_prec_rw_age = 0,
+  
+  u_country = rep(0, ncol(mf$Z$Z_country)),
+  log_prec_country = 0,
+  
+  omega1 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_age))),
+  log_prec_omega1 = 0,
+  logit_omega1_phi_age = 0,
+  #
+  omega2 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_period))),
+  log_prec_omega2 = 0,
+  logit_omega2_phi_period = 0,
+  
+  u_period = rep(0, ncol(mf$Z$Z_period)),
+  log_prec_rw_period = 0,
+  # lag_logit_phi_period = 0,
+  lag_logit_phi_arima_period = 0,
+  beta_period = 0,
+  
+  # log_prec_smooth_iid = 0,
+  # u_smooth_iid = rep(0, ncol(R_smooth_iid)),
+  
+  u_spatial_str = rep(0, ncol(mf$Z$Z_spatial)),
+  log_prec_spatial = 0,
+  
+  beta_spike_2000 = 0,
+  beta_spike_1999 = 0,
+  beta_spike_2001 = 0,
+  # log_overdispersion = 0,
+  
+  # eta1 = array(0, c(ncol(mf$Z$Z_country), ncol(mf$Z$Z_period), ncol(mf$Z$Z_age))),
+  eta1 = array(0, c(ncol(mf$Z$Z_country), ncol(mf$Z$Z_period), ncol(mf$Z$Z_age))),
+  log_prec_eta1 = 0,
+  logit_eta1_phi_age = 0,
+  logit_eta1_phi_period = 0,
+  # # #
+  eta2 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_period))),
+  log_prec_eta2 = 0,
+  logit_eta2_phi_period = 0,
+  # # #
+  eta3 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_age))),
+  log_prec_eta3 = 0,
+  logit_eta3_phi_age = 0
+)
+
+tmb_int$random <- c("beta_0",
+                    "u_spatial_str",
+                    "u_age",
+                    "u_period",
+                    # "u_smooth_iid",
+                    "beta_period",
+                    "beta_tips_dummy",
+                    "u_tips",
+                    "beta_spike_2000",
+                    "beta_spike_1999",
+                    "beta_spike_2001",
+                    "eta1",
+                    "eta2",
+                    "eta3",
+                    "omega1",
+                    "omega2",
+                    "zeta1",
+                    "u_survey"
+)
+
+if(mf$mics_toggle) {
+  tmb_int$data <- c(tmb_int$data,
+                    "Z_tips_mics" = mf$Z$Z_tips_mics,
+                    "R_tips_mics" = mf$R$R_tips_mics,
+                    "log_offset_mics" = list(log(filter(mf$observations$full_obs, survtype == "MICS")$pys)),
+                    "births_obs_mics" = list(filter(mf$observations$full_obs, survtype == "MICS")$births),
+                    
+                    "X_spike_2000_mics" = list(model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype == "MICS"))),
+                    "X_spike_1999_mics" = list(model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype == "MICS"))),
+                    "X_spike_2001_mics" = list(model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype == "MICS")))
+                    
+                    # "Z_smooth_iid_mics" = sparse.model.matrix(~0 + id.smooth, mf$observations$full_obs %>% filter(survtype == "MICS"))
+  )
+  tmb_int$par <- c(tmb_int$par,
+                   "u_tips_mics" = list(rep(0, ncol(mf$Z$Z_tips_mics)))
+  )
+  tmb_int$random <- c(tmb_int$random, "u_tips_mics")
+}
+
+
+f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
+                                          parameters = tmb_int$par,
+                                          DLL = "multi_country_tips_survey",
+                                          silent=0,
+                                          checkParameterOrder=FALSE)
+})
+
+if(is.null(parallel::mccollect(f)[[1]])) {
+  stop("TMB model is invalid. This is most likely an indexing error e.g. iterating over dimensions in an array that do not exist. Check mf model object")
+}
+
+obj <-  TMB::MakeADFun(data = tmb_int$data,
+                       parameters = tmb_int$par,
+                       DLL = "multi_country_tips_survey",
+                       random = tmb_int$random,
+                       hessian = FALSE)
+
+f <- stats::nlminb(obj$par, obj$fn, obj$gr)
+f$par.fixed <- f$par
+f$par.full <- obj$env$last.par
+
+fit <- c(f, obj = list(obj))
+fit$sdreport <- sdreport(fit$obj, fit$par)
+
+sd_report <- fit$sdreport
+sd_report <- summary(sd_report, "all")
+sd_report <- data.frame(sd_report, "hyper" = rownames(sd_report), iso = iso3)
+
+write.csv(sd_report, "sd_report_multi_tips_survey.csv")
+
+class(fit) <- "naomi_fit"  # this is hacky...
+fit <- naomi::sample_tmb(fit, random_only=TRUE)
+
+tmb_results <- dfertility::tmb_outputs(fit, mf, areas %>% bind_rows())
+#
+write.csv(tmb_results, "fr_multi_tips_survey.csv")
+
+fit <- naomi::sample_tmb(fit, random_only=FALSE)
+
+hyper <- fit$sample %>%
+  list_modify("lambda_out" = zap(),
+              "tfr_out" = zap())
+
+saveRDS(hyper, "hyper_multi_tips_survey.rds")
