@@ -1,4 +1,4 @@
-organisation,country,iso3,pop_data_source,fertility_fit_level,admin1_level,mics_cutoff,dhs
+organisation,country,iso3,pop_data_source,fertility_fit_level,admin1_level,mics,dhs
 angola,Angola,AGO,orderly,2,1,0,1
 burundi,Burundi,BDI,orderly,2,1,1,1
 benin,Benin,BEN,gpw,3,2,1,1
@@ -10,7 +10,7 @@ republique-democratique-du-congo,"Congo, The Democratic Republic of the",COD,ord
 congo,Congo,COG,worldpop,2,1,1,1
 ethiopia,Ethiopia,ETH,gpw,2,1,0,1
 gabon,Gabon,GAB,worldpop,2,1,0,1
-ghana,Ghana,GHA,worldpop,2,1,0,1
+ghana,Ghana,GHA,worldpop,2,1,1,1
 guinee,Guinea,GIN,worldpop,2,1,0,1
 gambia,Gambia,GMB,orderly ,3,2,1,1
 guinea-ecuatorial,Equatorial Guinea,GNQ,,,,,0
@@ -24,12 +24,12 @@ namibia,Namibia,NAM,gpw,2,1,0,1
 niger,Niger,NER,worldpop,2,1,0,1
 nigeria,Nigeria,NGA,orderly,3,2,1,1
 rwanda,Rwanda,RWA,orderly,2,1,0,1
-senegal,Senegal,SEN,worldpop,2,1,0,1
+senegal,Senegal,SEN,worldpop,2,1,1,1
 sierra-leone,Sierra Leone,SLE,worldpop,2,1,1,1
-eswatini,Eswatini,SWZ,orderly,2,1,NA,1
+eswatini,Eswatini,SWZ,orderly,2,1,1,1
 chad,Chad,TCD,worldpop,2,1,1,1
 togo,Togo,TGO,orderly,2,1,1,1
 tanzania,"Tanzania, United Republic of",TZA,orderly,3,2,0,1
 uganda,Uganda,UGA,orderly,3,1,0,1
 zambia-moh,Zambia,ZMB,orderly,2,1,0,1
-zimbabwe,Zimbabwe,ZWE,orderly,2,1,NA,1
+zimbabwe,Zimbabwe,ZWE,orderly,2,1,1,1

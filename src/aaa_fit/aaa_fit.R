@@ -6,33 +6,31 @@ population <- read.csv("depends/interpolated_population.csv") %>%
 areas <- read_sf("depends/naomi_areas.geojson") %>%
   mutate(iso3 = iso3)
 
-asfr <- read.csv("depends/fertility_asfr.csv")
+asfr <- read.csv("depends/fertility_asfr.csv") %>%
+  filter(survtype != "MICS")
 
-# asfr <- readRDS("~/Documents/GitHub/subnat_fertility/countries/UGA/data/UGA_asfr_admin1.rds") %>%
-#   filter(!is.na(surveyid)) %>%
-#   select(area_id:births, survey_id = surveyid) %>%
-#   convert_age_groups()
+mics_asfr <- read.csv("resources/mics_asfr.csv") %>%
+  filter(iso3 == iso3)
+
+asfr <- asfr %>% bind_rows(mics_asfr)
 
 lvl_map <- read.csv("resources/iso_mapping_fit.csv")
 lvl <- lvl_map$fertility_fit_level[lvl_map$iso3 == iso3]
 admin1_lvl <- lvl_map$admin1_level[lvl_map$iso3 == iso3]
 
-# population <- read.csv("archive/aaa_data_population_worldpop/20210106-203832-d9202b45/population_worldpop_naomi.csv")
-# areas <- read_sf("archive/ago_data_areas/20210105-150243-778fa342/ago_areas.geojson")
-# asfr <- read.csv("archive/ago_asfr/20210122-093323-ccda8444/ago_dhs_asfr.csv")
+mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level = lvl, project=2020)
 
-mf <- make_model_frames_batch(lvl_map, population, asfr,  areas, naomi_level = lvl, project=2020)
+spline_mat <- splines::bs(1:26, knots = seq(2, 24, 2))
+class(spline_mat) <- "matrix"
+spline_mat <- as(spline_mat, "sparseMatrix")
 
-# mf$observations$full_obs <- mf$observations$full_obs %>%
-#   mutate(id.smooth = factor(group_indices(., survey_id, tips, area_id, period, age_group)))
-# 
-# R_smooth_iid <- sparseMatrix(i=1:max(mf$observations$full_obs$id.smooth), j=1:max(mf$observations$full_obs$id.smooth), x=1)
+mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
 
 validate_model_frame(mf, areas)
 
 # TMB::compile("src/aaa_fit/tmb_all_level_poisson.cpp", flags = "-w")               # Compile the C++ file
-TMB::compile("multi_country.cpp", flags = "-w")               # Compile the C++ file
-dyn.load(dynlib("multi_country"))
+TMB::compile("tmb_all_level_poisson.cpp", flags = "-w")               # Compile the C++ file
+dyn.load(dynlib("tmb_all_level_poisson"))
 
 tmb_int <- list()
 
@@ -51,121 +49,127 @@ tmb_int$data <- list(
   Z_age = mf$Z$Z_age,
   Z_period = mf$Z$Z_period,
   Z_spatial = mf$Z$Z_spatial,
-  Z_interaction1 = sparse.model.matrix(~0 + id.interaction1, mf$mf_model),
-  Z_interaction2 = sparse.model.matrix(~0 + id.interaction2, mf$mf_model),
-  Z_interaction3 = sparse.model.matrix(~0 + id.interaction3, mf$mf_model),
+  # Z_interaction1 = sparse.model.matrix(~0 + id.interaction1, mf$mf_model),
+  # Z_interaction2 = sparse.model.matrix(~0 + id.interaction2, mf$mf_model),
+  # Z_interaction3 = sparse.model.matrix(~0 + id.interaction3, mf$mf_model),
+  Z_interaction1 = mgcv::tensor.prod.model.matrix(list(mf$Z$Z_age, mf$Z$Z_period, mf$Z$Z_country)),
+  Z_interaction2 = mgcv::tensor.prod.model.matrix(list(mf$Z$Z_spatial, mf$Z$Z_period)),
+  Z_interaction3 = mgcv::tensor.prod.model.matrix(list(mf$Z$Z_spatial, mf$Z$Z_age)),
   Z_country = mf$Z$Z_country,
   # Z_omega1 = sparse.model.matrix(~0 + id.omega1, mf$mf_model),
   # Z_omega2 = sparse.model.matrix(~0 + id.omega2, mf$mf_model),
-  Z_smooth_iid = sparse.model.matrix(~0 + id.smooth, mf$observations$full_obs),
+  # Z_smooth_iid = sparse.model.matrix(~0 + id.smooth, mf$observations$full_obs),
   # Z_smooth_iid_ais = sparse.model.matrix(~0 + id.smooth, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
-  R_smooth_iid = R_smooth_iid,
+  # R_smooth_iid = R_smooth_iid,
   R_tips = mf$R$R_tips,
   R_age = mf$R$R_age,
-  R_period = make_rw_structure_matrix(ncol(mf$Z$Z_period), 2, adjust_diagonal = TRUE),
+  # R_period = make_rw_structure_matrix(ncol(mf$Z$Z_period), 1, adjust_diagonal = TRUE),
+  R_period = make_rw_structure_matrix(ncol(spline_mat), 1, adjust_diagonal = TRUE),
+  # R_spline_mat = spline_mat,
   R_spatial = mf$R$R_spatial,
   R_country = mf$R$R_country,
   rankdef_R_spatial = 1,
-  
+
   log_offset_naomi = log(mf$observations$naomi_level_obs$pys),
   births_obs_naomi = mf$observations$naomi_level_obs$births,
-  
+
   log_offset_dhs = log(filter(mf$observations$full_obs, survtype == "DHS")$pys),
   births_obs_dhs = filter(mf$observations$full_obs, survtype == "DHS")$births,
-  
+
   log_offset_ais = log(filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS"))$pys),
   births_obs_ais = filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS"))$births,
-  
+
   pop = mf$mf_model$population,
   # A_asfr_out = mf$out$A_asfr_out,
   A_tfr_out = mf$out$A_tfr_out,
-  
+
   A_full_obs = mf$observations$A_full_obs,
-  
+
   mics_toggle = mf$mics_toggle,
-  
+
   X_spike_2000_dhs = model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype == "DHS")),
   X_spike_1999_dhs = model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype == "DHS")),
   X_spike_2001_dhs = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype == "DHS")),
-  
+
   X_spike_2000_ais = model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
   X_spike_1999_ais = model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
   X_spike_2001_ais = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
-  
+
   n_threads = parallel::detectCores()
-  
+
   # out_toggle = mf$out_toggle
   # A_obs = mf$observations$A_obs,
 )
 
 tmb_int$par <- list(
   beta_0 = 0,
-  
-  # beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
+
+  beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
   # # beta_urban_dummy = rep(0, ncol(X_urban_dummy)),
-  # u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
-  # log_prec_rw_tips = 0,
-  
-  # u_age = rep(0, ncol(mf$Z$Z_age)),
-  # log_prec_rw_age = 0,
-  
+  u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
+  log_prec_rw_tips = 0,
+
+  u_age = rep(0, ncol(mf$Z$Z_age)),
+  log_prec_rw_age = 0,
+
   # u_country = rep(0, ncol(mf$Z$Z_country)),
   # log_prec_country = 0,
-  
+
   # omega1 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_age))),
   # log_prec_omega1 = 0,
   # lag_logit_omega1_phi_age = 0,
-  # 
+  #
   # omega2 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_period))),
   # log_prec_omega2 = 0,
   # lag_logit_omega2_phi_period = 0,
-  
-  u_period = rep(0, ncol(mf$Z$Z_period)),
+
+  # u_period = rep(0, ncol(mf$Z$Z_period)),
+  u_period = rep(0, ncol(spline_mat)),
   log_prec_rw_period = 0,
   # lag_logit_phi_period = 0,
-  # lag_logit_phi_arima_period = 0,
-  # beta_period = 0,
-  
+  lag_logit_phi_arima_period = 0,
+  beta_period = 0,
+
   # log_prec_smooth_iid = 0,
   # u_smooth_iid = rep(0, ncol(R_smooth_iid)),
-  
+
   u_spatial_str = rep(0, ncol(mf$Z$Z_spatial)),
-  log_prec_spatial = 0
-  
-  # beta_spike_2000 = 0,
-  # beta_spike_1999 = 0,
-  # beta_spike_2001 = 0
+  log_prec_spatial = 0,
+
+  beta_spike_2000 = 0,
+  beta_spike_1999 = 0,
+  beta_spike_2001 = 0,
   # log_overdispersion = 0,
-  
-  # eta1 = array(0, c(ncol(mf$Z$Z_country), ncol(mf$Z$Z_period), ncol(mf$Z$Z_age))),
-  # eta1 = array(0, c(ncol(mf$Z$Z_country), ncol(mf$Z$Z_period), ncol(mf$Z$Z_age))),
-  # log_prec_eta1 = 0,
-  # logit_eta1_phi_age = 0,
-  # logit_eta1_phi_period = 0,
-  # # # #
+
+  eta1 = array(0, c(ncol(mf$Z$Z_country), ncol(mf$Z$Z_period), ncol(mf$Z$Z_age))),
+  log_prec_eta1 = 0,
+  logit_eta1_phi_age = 0,
+  logit_eta1_phi_period = 0,
+  #
   # eta2 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_period))),
-  # log_prec_eta2 = 0,
-  # logit_eta2_phi_period = 0,
-  # # # #
-  # eta3 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_age))),
-  # log_prec_eta3 = 0,
-  # logit_eta3_phi_age = 0
+  eta2 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_period))),
+  log_prec_eta2 = 0,
+  logit_eta2_phi_period = 0,
+  #
+  eta3 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_age))),
+  log_prec_eta3 = 0,
+  logit_eta3_phi_age = 0
 )
 
 tmb_int$random <- c("beta_0",
                     "u_spatial_str",
-                    # "u_age",
-                    "u_period"
+                    "u_age",
+                    "u_period",
                     # "u_smooth_iid",
-                    # "beta_period",
-                    # "beta_tips_dummy",
-                    # "u_tips",
-                    # "beta_spike_2000",
-                    # "beta_spike_1999",
-                    # "beta_spike_2001"
-                    # "eta1",
-                    # "eta2",
-                    # "eta3"
+                    "beta_period",
+                    "beta_tips_dummy",
+                    "u_tips",
+                    "beta_spike_2000",
+                    "beta_spike_1999",
+                    "beta_spike_2001",
+                    "eta1",
+                    "eta2",
+                    "eta3"
                     # "omega1",
                     # "omega2"
 )
@@ -176,11 +180,11 @@ if(mf$mics_toggle) {
                     "R_tips_mics" = mf$R$R_tips_mics,
                     "log_offset_mics" = list(log(filter(mf$observations$full_obs, survtype == "MICS")$pys)),
                     "births_obs_mics" = list(filter(mf$observations$full_obs, survtype == "MICS")$births),
-                    
+
                     "X_spike_2000_mics" = list(model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype == "MICS"))),
                     "X_spike_1999_mics" = list(model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype == "MICS"))),
                     "X_spike_2001_mics" = list(model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype == "MICS")))
-                    
+
                     # "Z_smooth_iid_mics" = sparse.model.matrix(~0 + id.smooth, mf$observations$full_obs %>% filter(survtype == "MICS"))
   )
   # tmb_int$par <- c(tmb_int$par,
@@ -192,7 +196,7 @@ if(mf$mics_toggle) {
 
 f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
                                parameters = tmb_int$par,
-                               DLL = "multi_country",
+                               DLL = "tmb_all_level_poisson",
                                silent=0,
                                checkParameterOrder=FALSE)
 })
@@ -203,7 +207,7 @@ if(is.null(parallel::mccollect(f)[[1]])) {
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                        parameters = tmb_int$par,
-                       DLL = "multi_country",
+                       DLL = "tmb_all_level_poisson",
                        random = tmb_int$random,
                        hessian = FALSE)
 
@@ -221,7 +225,7 @@ sd_report <- summary(sd_report, "all")
 
 sd_report <- data.frame(sd_report, "hyper" = rownames(sd_report), iso = iso3)
 
-# write_csv(sd_report, "uga_sd_report.csv")
+write_csv(sd_report, "sd_report.csv")
 
 class(fit) <- "naomi_fit"  # this is hacky...
 fit <- naomi::sample_tmb(fit, random_only=TRUE)
@@ -232,26 +236,26 @@ fit <- naomi::sample_tmb(fit, random_only=TRUE)
 # 
 # write_csv(tips_vec, "tips_vec.csv")
 # 
-# hyper <- fit$sample %>%
-#   list_modify("lambda_out" = zap(), "tfr_out" = zap())
-# 
-# saveRDS(hyper, "hyper.rds")
-# 
+hyper <- fit$sample %>%
+  list_modify("lambda_out" = zap(), "tfr_out" = zap())
+ 
+saveRDS(hyper, "hyper.rds")
+
 tmb_results <- dfertility::tmb_outputs(fit, mf, areas)
-#
-# write_csv(tmb_results, "fr.csv")
-# 
+
+write_csv(tmb_results, "fr.csv")
+ 
 fr_plot <- read.csv("depends/fertility_fr_plot.csv")
 
 fr_plot <- fr_plot %>%
   left_join(areas %>% st_drop_geometry() %>% select(area_id, area_name))
 
-tmb_results %>%
+tfr_plot <- tmb_results %>%
   filter(area_level == admin1_lvl, variable == "tfr") %>%
   ggplot(aes(x=period, y=median)) +
-  geom_line() +
-  geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
-  # geom_point(data = fr_plot %>% filter(variable == "tfr", value <10), aes(y=value, color=survey_id)) +
+  geom_line(aes(color=fct_rev(source)), size=1) +
+  geom_ribbon(aes(ymin=lower, ymax=upper, fill=fct_rev(source)), alpha=0.5) +
+  geom_point(data = fr_plot %>% filter(variable == "tfr", value <10), aes(y=value, color=survey_id)) +
   facet_wrap(~area_name, ncol=5) +
   labs(y="TFR", x=element_blank(), color="Survey ID", title=paste(iso3, "| Provincial TFR")) +
   theme_minimal() +
@@ -259,7 +263,7 @@ tmb_results %>%
     legend.position = "bottom",
     text = element_text(size=14)
   )
-
+ 
 district_tfr <- tmb_results %>%
   filter(area_level == lvl, variable == "tfr") %>%
   ggplot(aes(x=period, y=median)) +

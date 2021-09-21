@@ -13,10 +13,10 @@ artefacts:
       description: fertility indicator dataset
       filenames:
         - fr.csv
-  # - data:
-  #     description: hyperparameters and random effect samples
-  #     filenames:
-  #       - hyper.rds
+  - data:
+      description: hyperparameters and random effect samples
+      filenames:
+        - hyper.rds
   - staticgraph:
       description: Validate admin-1 TFRs
       filenames:
@@ -26,6 +26,7 @@ artefacts:
 
 global_resources:
   resources/iso_mapping_fit.csv: iso_mapping_fit.csv
+  reources/mics_asfr.csv: mics_asfr.csv
 
 resources:
   # - parallel.cpp
@@ -56,6 +57,7 @@ packages:
   - parallel
   - purrr
   - rlang
+  - mgcv
 
 
 

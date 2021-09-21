@@ -57,8 +57,8 @@ Type objective_function<Type>::operator() ()
   // PARAMETER(lag_logit_eta1_phi_period);
 
   DATA_SPARSE_MATRIX(Z_interaction2);
-  PARAMETER_ARRAY(eta2);
-  PARAMETER(log_prec_eta2);
+  // PARAMETER_ARRAY(eta2);
+  // PARAMETER(log_prec_eta2);
   // PARAMETER(lag_logit_eta2_phi_period);
 
   DATA_SPARSE_MATRIX(Z_interaction3);
@@ -230,15 +230,15 @@ Type objective_function<Type>::operator() ()
   // DATA_SPARSE_MATRIX(R_period_iid);
 
   // nll -= dnorm(log_prec_eta2, Type(6.92577668), Type(0.23404592), true);
-  nll -= dlgamma(log_prec_eta2, Type(1), Type(20000), true);
-  Type prec_eta2 = exp(log_prec_eta2);
+  // nll -= dlgamma(log_prec_eta2, Type(1), Type(20000), true);
+  // Type prec_eta2 = exp(log_prec_eta2);
 
   // nll -= dnorm(lag_logit_eta2_phi_period, Type(-1.85559582), Type(0.37270676), true);
   // nll -= dnorm(lag_logit_eta2_phi_period, Type(0), Type(sqrt(1/0.15)), true);
   // Type eta2_phi_period = 2*exp(lag_logit_eta2_phi_period)/(1+exp(lag_logit_eta2_phi_period))-1;
   
   // nll += SEPARABLE(AR1(Type(eta2_phi_period)), GMRF(R_spatial))(eta2);
-  nll += SEPARABLE(GMRF(R_period), GMRF(R_spatial))(eta2);
+  // nll += SEPARABLE(GMRF(R_period), GMRF(R_spatial))(eta2);
 
   // Adjust normalising constant for rank deficience of R_spatial. SEPARABLE calculates the
   // normalizing constant assuming full rank precision matrix. Add the component of the
@@ -248,14 +248,14 @@ Type objective_function<Type>::operator() ()
   // nll -= rankdef_R_spatial * 0.5 * (log_det_Qar1_eta2 - log(2 * PI));
 
   // sum-to-zero on space x time interaction. Ensure each space effects (row) in each year (col) sum to zeo.
-  for (int i = 0; i < eta2.cols(); i++) {
-    nll -= dnorm(eta2.col(i).sum(), Type(0), Type(0.01) * eta2.col(i).size(), true);}
+  // for (int i = 0; i < eta2.cols(); i++) {
+  //   nll -= dnorm(eta2.col(i).sum(), Type(0), Type(0.01) * eta2.col(i).size(), true);}
 
-  for (int i = 0; i < eta2.transpose().cols(); i++) {
-    nll -= dnorm(eta2.transpose().col(i).sum(), Type(0), Type(0.01) * eta2.transpose().col(i).size(), true);}
+  // for (int i = 0; i < eta2.transpose().cols(); i++) {
+  //   nll -= dnorm(eta2.transpose().col(i).sum(), Type(0), Type(0.01) * eta2.transpose().col(i).size(), true);}
 
 
-  vector<Type> eta2_v(eta2);
+  // vector<Type> eta2_v(eta2);
 
   ////////////////////
 
@@ -312,7 +312,7 @@ Type objective_function<Type>::operator() ()
                      // + Z_omega1 * omega1_v * sqrt(1/prec_omega1)
                      // + Z_omega2 * omega2_v * sqrt(1/prec_omega2)
                      // + Z_interaction1 * eta1_v * sqrt(1/prec_eta1)
-                     + Z_interaction2 * eta2_v * sqrt(1/prec_eta2)
+                     // + Z_interaction2 * eta2_v * sqrt(1/prec_eta2)
                      // + Z_interaction3 * eta3_v * sqrt(1/prec_eta3)
                      );
 
@@ -433,14 +433,14 @@ Type objective_function<Type>::operator() ()
   // REPORT(log_prec_smooth_iid);
   // REPORT(u_smooth_iid);
 
-  REPORT(log_prec_spatial);
+  // REPORT(log_prec_spatial);
   // REPORT(logit_spatial_rho);
 
   // REPORT(log_prec_eta1);
   // REPORT(eta1_phi_age);
   // REPORT(eta1_phi_period);
 
-  REPORT(log_prec_eta2);
+  // REPORT(log_prec_eta2);
   // REPORT(eta2_phi_period);
 
   // REPORT(log_prec_eta3);
@@ -454,8 +454,8 @@ Type objective_function<Type>::operator() ()
   // REPORT(log_prec_omega2);
   // REPORT(omega2_phi_period);
 
-  REPORT(log_prec_rw_age);
-  REPORT(log_prec_rw_period);
+  // REPORT(log_prec_rw_age);
+  // REPORT(log_prec_rw_period);
   // REPORT(log_prec_rw_tips);
 
   // REPORT(beta_period);
@@ -464,19 +464,19 @@ Type objective_function<Type>::operator() ()
   // REPORT(beta_tips_dummy);
   // // REPORT(beta_urban_dummy);
 
-  REPORT(u_period);
-  REPORT(u_age);
-  REPORT(u_spatial_str);
+  // REPORT(u_period);
+  // REPORT(u_age);
+  // REPORT(u_spatial_str);
   // REPORT(u_tips);
   // REPORT(eta1);
-  REPORT(eta2);
+  // REPORT(eta2);
   // REPORT(eta3);
 
-  REPORT(beta_0);
+  // REPORT(beta_0);
 
   // Posterior predictive checks
-  // REPORT(mu_obs_pred_ais);
-  // REPORT(mu_obs_pred_dhs);
+  REPORT(mu_obs_pred_ais);
+  REPORT(mu_obs_pred_dhs);
 
 
   return nll;

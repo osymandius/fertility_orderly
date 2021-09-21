@@ -6,7 +6,8 @@ population <- read.csv("depends/interpolated_population.csv") %>%
 areas <- read_sf("depends/naomi_areas.geojson") %>%
   mutate(iso3 = iso3)
 
-asfr <- read.csv("depends/fertility_asfr.csv")
+asfr <- read.csv("depends/fertility_asfr.csv") %>%
+  filter(survtype == "DHS")
 
 lvl_map <- read.csv("resources/iso_mapping_fit.csv")
 lvl <- lvl_map$fertility_fit_level[lvl_map$iso3 == iso3]
@@ -87,10 +88,10 @@ tmb_int$data <- list(
 tmb_int$par <- list(
   beta_0 = 0,
   
-  beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
+  # beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
   # # beta_urban_dummy = rep(0, ncol(X_urban_dummy)),
-  u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
-  log_prec_rw_tips = 0,
+  # u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
+  # log_prec_rw_tips = 0,
   
   u_age = rep(0, ncol(mf$Z$Z_age)),
   log_prec_rw_age = 0,
@@ -117,7 +118,7 @@ tmb_int$par <- list(
   
   beta_spike_2000 = 0,
   beta_spike_1999 = 0,
-  beta_spike_2001 = 0,
+  beta_spike_2001 = 0
   # log_overdispersion = 0,
   
   # eta1 = array(0, c(ncol(mf$Z$Z_country), ncol(mf$Z$Z_period), ncol(mf$Z$Z_age))),
@@ -125,8 +126,8 @@ tmb_int$par <- list(
   # lag_logit_eta1_phi_age = 0,
   # lag_logit_eta1_phi_period = 0,
   #
-  eta2 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_period))),
-  log_prec_eta2 = 0
+  # eta2 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_period))),
+  # log_prec_eta2 = 0
   # lag_logit_eta2_phi_period = 0
   #
   # eta3 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_age))),
@@ -139,13 +140,13 @@ tmb_int$random <- c("beta_0",
                     "u_age",
                     "u_period",
                     # "beta_period",
-                    "beta_tips_dummy",
-                    "u_tips",
+                    # "beta_tips_dummy",
+                    # "u_tips",
                     "beta_spike_2000",
                     "beta_spike_1999",
-                    "beta_spike_2001",
+                    "beta_spike_2001"
                     # "eta1",
-                    "eta2"
+                    # "eta2"
                     # "eta3"
                     # "omega1",
                     # "omega2"
@@ -191,49 +192,49 @@ f$par.fixed <- f$par
 f$par.full <- obj$env$last.par
 
 fit <- c(f, obj = list(obj))
-fit$sdreport <- sdreport(fit$obj, fit$par)
-
-sd_report <- fit$sdreport
-sd_report <- summary(sd_report, "all") %>%
-  .[rownames(.) %in% c("log_prec_rw_tips", "log_prec_spatial", "log_prec_eta1", "lag_logit_eta1_phi_age", "lag_logit_eta1_phi_period", "log_prec_eta2", "lag_logit_eta2_phi_period", "log_prec_eta3", "lag_logit_eta3_phi_age", "log_prec_rw_age", "log_prec_rw_period", "lag_logit_phi_arima_period", "beta_tips_dummy"), ]
-
-hyper_sd <- data.frame(sd_report, "hyper" = rownames(sd_report), iso = iso3) %>%
-  mutate(source = "RW1 both")
+# fit$sdreport <- sdreport(fit$obj, fit$par)
+# 
+# sd_report <- fit$sdreport
+# sd_report <- summary(sd_report, "all") %>%
+#   .[rownames(.) %in% c("log_prec_rw_tips", "log_prec_spatial", "log_prec_eta1", "lag_logit_eta1_phi_age", "lag_logit_eta1_phi_period", "log_prec_eta2", "lag_logit_eta2_phi_period", "log_prec_eta3", "lag_logit_eta3_phi_age", "log_prec_rw_age", "log_prec_rw_period", "lag_logit_phi_arima_period", "beta_tips_dummy"), ]
+# 
+# hyper_sd <- data.frame(sd_report, "hyper" = rownames(sd_report), iso = iso3) %>%
+#   mutate(source = "RW1 both")
 
 class(fit) <- "naomi_fit"  # this is hacky...
 fit <- naomi::sample_tmb(fit, random_only=TRUE)
 
-tmb_results <- dfertility::tmb_outputs(fit, mf, areas)
-
-fr_plot <- read.csv("depends/fertility_fr_plot.csv")
-
-fr_plot <- fr_plot %>%
-  left_join(areas %>% st_drop_geometry() %>% select(area_id, area_name))
-
-tmb_results %>%
-  filter(area_level == admin1_lvl, variable == "tfr") %>%
-  ggplot(aes(x=period, y=median)) +
-  geom_line() +
-  geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
-  geom_point(data = fr_plot %>% filter(variable == "tfr", value <10), aes(y=value, color=survey_id)) +
-  facet_wrap(~area_name, ncol=5) +
-  labs(y="TFR", x=element_blank(), color="Survey ID", title=paste(iso3, "| Provincial TFR")) +
-  theme_minimal() +
-  theme(
-    legend.position = "bottom",
-    text = element_text(size=14)
-  )
-
-eta2_v <- apply(fit$sample$eta2, 1, median)
-dim(eta2_v) <- c(135,26)
-data.frame(eta2_v) %>%
-  mutate(idx = row_number()) %>%
-  pivot_longer(-idx) %>%
-  mutate(name = rep(1:26, times = 135)) %>%
-  ggplot(aes(x=name, y=value)) +
-    geom_point() +
-    geom_line() +
-    facet_wrap(~idx)
+# tmb_results <- dfertility::tmb_outputs(fit, mf, areas)
+# 
+# fr_plot <- read.csv("depends/fertility_fr_plot.csv")
+# 
+# fr_plot <- fr_plot %>%
+#   left_join(areas %>% st_drop_geometry() %>% select(area_id, area_name))
+# 
+# tmb_results %>%
+#   filter(area_level == admin1_lvl, variable == "tfr") %>%
+#   ggplot(aes(x=period, y=median)) +
+#   geom_line() +
+#   geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
+#   geom_point(data = fr_plot %>% filter(variable == "tfr", value <10), aes(y=value, color=survey_id)) +
+#   facet_wrap(~area_name, ncol=5) +
+#   labs(y="TFR", x=element_blank(), color="Survey ID", title=paste(iso3, "| Provincial TFR")) +
+#   theme_minimal() +
+#   theme(
+#     legend.position = "bottom",
+#     text = element_text(size=14)
+#   )
+# 
+# eta2_v <- apply(fit$sample$eta2, 1, median)
+# dim(eta2_v) <- c(135,26)
+# data.frame(eta2_v) %>%
+#   mutate(idx = row_number()) %>%
+#   pivot_longer(-idx) %>%
+#   mutate(name = rep(1:26, times = 135)) %>%
+#   ggplot(aes(x=name, y=value)) +
+#     geom_point() +
+#     geom_line() +
+#     facet_wrap(~idx)
 
 full_obs_pp <- mf$observations$full_obs %>%
   ungroup %>%
@@ -246,58 +247,66 @@ births_pred_dhs <- rpois(length(fit$sample$mu_obs_pred_dhs),
 dim(births_pred_dhs) <- dim(fit$sample$mu_obs_pred_dhs)
 
 foo <- data.frame(births_pred_dhs) %>%
-  cbind("idx" = as.numeric(mf$X_extract$X_extract_dhs %*% full_obs_pp$idx)) %>%
+  # cbind("idx" = as.numeric(mf$X_extract$X_extract_dhs %*% full_obs_pp$idx)) %>%
   type.convert()
 
-foo %>%
-  left_join(mf$observations$full_obs %>% select(survey_id, area_id, period, age_group, tips, births, idx) %>% type.convert()) %>%
-  select(survey_id, area_id, period, age_group, tips, births, everything(), -idx) %>%
-  group_by(survey_id, area_id, period, tips) %>%
+t1 <- foo %>%
+  cbind(mf$observations$full_obs %>% select(survey_id, area_id, period, age_group, tips, births, pys, idx) %>% type.convert()) %>%
+  filter(str_detect(area_id, "_2_"),
+         period %in% 2000:2015) %>%
+  # left_join(spread_areas(areas) %>% select(area_id1, area_id) %>% st_drop_geometry()) %>%
+  select(survey_id, area_id, period, age_group, tips, births, pys, everything(), -idx) %>%
+  group_by(survey_id, area_id, age_group, period, tips) %>%
   summarise(births = sum(births), 
-            across(X1:X1000, sum))
+            pys = sum(pys),
+            across(X1:X1000, sum)
+  )
 
-# u_tips <- apply(fit$sample$u_tips, 1, median)
-# 
-# beta_tips_dummy <- apply(fit$sample$beta_tips_dummy, 1, median)
-# log_sd_tips <- sqrt(1/apply(fit$sample$log_prec_rw_tips, 1, median))
-# 
-# data.frame(u_tips = u_tips,
-#            log_sigma_tips = log_sd_tips,
-#            beta_tips_dummy = beta_tips_dummy) %>%
-#   mutate(idx = row_number() - 1,
-#          dummy = ifelse(idx<6, 0, 1),
-#          beta_tips_dummy = beta_tips_dummy * dummy,
-#          est = u_tips*log_sigma_tips + beta_tips_dummy
-#   ) 
+t1_line <- t1 %>%
+  ungroup %>%
+  rowwise() %>%
+  mutate(lower = quantile(c_across(X1:X1000), 0.025),
+         median = quantile(c_across(X1:X1000), 0.5),
+         upper = quantile(c_across(X1:X1000), 0.975),
+         p = mean(births >= c_across(X1:X1000))
+         ) %>%
+  select(survey_id:pys, lower:upper, p)
 
-foo %>%
-  filter(period == 2015) %>%
-  pivot_longer(-c(survey_id, area_id, period, tips, births)) %>%
-  group_by(survey_id, area_id, period, tips, births) %>%
-  summarise(median = median(value),
-            lower = quantile(value, 0.025),
-            upper = quantile(value, 0.975))
+t1_line %>%
+  ungroup %>%
+  mutate(width_est = upper - lower) %>%
+  left_join(mf$observations$full_obs %>%
+              filter(str_detect(area_id, "_2_"),
+                    period %in% 2000:2015) %>%
+              mutate(lower_data = qpois(0.025, births),
+                     median_data = qpois(0.5, births),
+                     upper_data = qpois(0.975, births),
+                     width_data = upper_data - lower_data
+              ) %>%
+              select(survey_id:pys, width_data) %>%
+              type.convert()) %>%
+  arrange(width_data) %>%
+  ggplot(aes(x=width_data, y=width_est)) +
+    geom_point()
 
-full_obs_pp
+t1 <- t1 %>%
+  pivot_longer(-c(survey_id:pys))
 
-mf$X_extract$X_extract_dhs %*% mf$observations$full_obs$births
-mf$X_extract$X_extract_ais
-mf$X_extract$X_extract_mics
+t1_lab <- t1 %>%
+  select(survey_id:pys) %>%
+  distinct()
 
-hyper <- fit$sample["lambda_out"]
-
-admin1_samples <- mf$out$mf_out %>%
-  filter(variable == "asfr") %>%
-  cbind(hyper$lambda_out) %>%
-  filter(str_detect(area_id, "_1_"))
-
-mf$out$mf_out %>%
-  filter(variable == "asfr") %>%
-  filter(str_detect(area_id, "_1_")) %>%
-  cbind(t(data.frame(apply(admin1_samples[,6:1000], 1, sample, 50))))
-
-
-
-hist(rpois(200, 0.25))
+t1 %>%
+  filter(area_id1 == "RWA_1_1") %>%
+  ggplot() +
+    geom_density(aes(x=value)) +
+    geom_vline(data = t1_lab %>% filter(area_id1 == "RWA_1_1"), aes(xintercept = births)) +
+    facet_grid(tips ~ period)
 
 
+
+t1_line %>%
+  ungroup %>%
+  ggplot(aes(sample = median)) + 
+  stat_qq(distribution = stats::qpois,
+          dparams = list(lambda = median(t1_line$births)))
