@@ -1,7 +1,7 @@
 organisation,country,iso3,pop_data_source,fertility_fit_level,admin1_level,mics,dhs
 angola,Angola,AGO,orderly,2,1,0,1
 burundi,Burundi,BDI,orderly,2,1,1,1
-benin,Benin,BEN,gpw,3,2,1,1
+benin,Benin,BEN,gpw,3,1,1,1
 burkina-faso,Burkina Faso,BFA,gpw,2,1,1,1
 republique-centrafricaine,Central African Republic,CAF,worldpop,2,1,1,0
 cote-d-ivoire,Cote d'Ivoire,CIV,orderly,2,1,1,1
@@ -12,7 +12,7 @@ ethiopia,Ethiopia,ETH,gpw,2,1,0,1
 gabon,Gabon,GAB,worldpop,2,1,0,1
 ghana,Ghana,GHA,worldpop,2,1,1,1
 guinee,Guinea,GIN,worldpop,2,1,0,1
-gambia,Gambia,GMB,orderly ,3,2,1,1
+gambia,Gambia,GMB,orderly ,3,1,1,1
 guinea-ecuatorial,Equatorial Guinea,GNQ,,,,,0
 kenya-moh,Kenya,KEN,orderly,2,1,1,1
 liberia,Liberia,LBR,worldpop,2,1,0,1

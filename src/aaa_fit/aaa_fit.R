@@ -230,23 +230,16 @@ sd_report <- data.frame(sd_report, "hyper" = rownames(sd_report), iso = iso3)
 write_csv(sd_report, "sd_report.csv")
 
 class(fit) <- "naomi_fit"  # this is hacky...
-fit <- naomi::sample_tmb(fit, random_only=TRUE)
 
-# tips_vec <- apply(fit$sample$u_tips, 1, median)
-# 
-# tips_vec <- data.frame("x"=1:length(tips_vec), "val" = tips_vec, iso = iso3)
-# 
-# write_csv(tips_vec, "tips_vec.csv")
-# 
+fit <- naomi::sample_tmb(fit, random_only=TRUE)
+tmb_results <- dfertility::tmb_outputs(fit, mf, areas)
+write_csv(tmb_results, "fr.csv")
+
+fit <- naomi::sample_tmb(fit, random_only=FALSE)
 hyper <- fit$sample %>%
   list_modify("lambda_out" = zap(), "tfr_out" = zap())
- 
 saveRDS(hyper, "hyper.rds")
 
-tmb_results <- dfertility::tmb_outputs(fit, mf, areas)
-
-write_csv(tmb_results, "fr.csv")
- 
 fr_plot <- read.csv("depends/fertility_fr_plot.csv")
 
 fr_plot <- fr_plot %>%

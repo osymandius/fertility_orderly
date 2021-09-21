@@ -180,23 +180,23 @@ Type objective_function<Type>::operator() ()
 
   // ARIMA(1,1,0) with trend
   DATA_SPARSE_MATRIX(X_period);
-  // PARAMETER(lag_logit_phi_arima_period);
+  PARAMETER(lag_logit_phi_arima_period);
 
   PARAMETER_VECTOR(beta_period);
   nll -= dnorm(beta_period, Type(0), Type(sqrt(1/0.001)), true).sum();
 
-  // nll -= dnorm(lag_logit_phi_arima_period, Type(0), Type(sqrt(1/0.15)), true);
-  // Type phi_arima_period = 2*exp(lag_logit_phi_arima_period)/(1+exp(lag_logit_phi_arima_period))-1;
-  // 
-  // int n = u_period.size();
-  // 
-  // vector<Type> u_period_diff(n - 1);
-  // 
-  // for (int i = 1; i < n; i++) {
-  //   u_period_diff[i - 1] = u_period[i] - u_period[i - 1];
-  // }
-  // 
-  // nll += AR1(Type(phi_arima_period))(u_period_diff);
+  nll -= dnorm(lag_logit_phi_arima_period, Type(0), Type(sqrt(1/0.15)), true);
+  Type phi_arima_period = 2*exp(lag_logit_phi_arima_period)/(1+exp(lag_logit_phi_arima_period))-1;
+
+  int n = u_period.size();
+
+  vector<Type> u_period_diff(n - 1);
+
+  for (int i = 1; i < n; i++) {
+    u_period_diff[i - 1] = u_period[i] - u_period[i - 1];
+  }
+
+  nll += AR1(Type(phi_arima_period))(u_period_diff);
 
   ///
 
@@ -457,18 +457,18 @@ Type objective_function<Type>::operator() ()
   // REPORT(u_period_lh);
   // REPORT(lambda);
 
-  // REPORT(log_prec_spatial);
+  REPORT(log_prec_spatial);
   // REPORT(logit_spatial_rho);
 
-  // REPORT(log_prec_eta1);
-  // REPORT(eta1_phi_age);
-  // REPORT(eta1_phi_period);
+  REPORT(log_prec_eta1);
+  REPORT(eta1_phi_age);
+  REPORT(eta1_phi_period);
 
-  // REPORT(log_prec_eta2);
-  // REPORT(eta2_phi_period);
+  REPORT(log_prec_eta2);
+  REPORT(eta2_phi_period);
 
-  // REPORT(log_prec_eta3);
-  // REPORT(eta3_phi_age);
+  REPORT(log_prec_eta3);
+  REPORT(eta3_phi_age);
 
   // REPORT(log_prec_country);
 
@@ -478,14 +478,14 @@ Type objective_function<Type>::operator() ()
   // REPORT(log_prec_omega2);
   // REPORT(omega2_phi_period);
 
-  // REPORT(log_prec_rw_age);
-  // REPORT(log_prec_rw_period);
-  // REPORT(log_prec_rw_tips);
+  REPORT(log_prec_rw_age);
+  REPORT(log_prec_rw_period);
+  REPORT(log_prec_rw_tips);
 
-  // REPORT(beta_period);
-  // REPORT(phi_arima_period);
+  REPORT(beta_period);
+  REPORT(phi_arima_period);
 
-  // REPORT(beta_tips_dummy);
+  REPORT(beta_tips_dummy);
   // // REPORT(beta_urban_dummy);
 
   // REPORT(u_period);
@@ -499,8 +499,8 @@ Type objective_function<Type>::operator() ()
   // REPORT(beta_0);
 
   // Posterior predictive checks
-  // REPORT(mu_obs_pred_ais);
-  // REPORT(mu_obs_pred_dhs);
+  REPORT(mu_obs_pred_ais);
+  REPORT(mu_obs_pred_dhs);
 
 
   return nll;
