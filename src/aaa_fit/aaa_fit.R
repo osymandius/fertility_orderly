@@ -1,3 +1,5 @@
+iso3_c <- iso3
+
 population <- read.csv("depends/interpolated_population.csv") %>%
   rename(period = year) %>%
   mutate(iso3 = iso3) %>%
@@ -10,7 +12,7 @@ asfr <- read.csv("depends/fertility_asfr.csv") %>%
   filter(survtype != "MICS")
 
 mics_asfr <- read.csv("resources/mics_asfr.csv") %>%
-  filter(iso3 == iso3)
+  filter(iso3 == iso3_c)
 
 asfr <- asfr %>% bind_rows(mics_asfr)
 
