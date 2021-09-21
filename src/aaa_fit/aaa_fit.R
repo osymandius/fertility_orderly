@@ -255,8 +255,8 @@ fr_plot <- fr_plot %>%
 tfr_plot <- tmb_results %>%
   filter(area_level == admin1_lvl, variable == "tfr") %>%
   ggplot(aes(x=period, y=median)) +
-  geom_line(aes(color=fct_rev(source)), size=1) +
-  geom_ribbon(aes(ymin=lower, ymax=upper, fill=fct_rev(source)), alpha=0.5) +
+  geom_line(size=1) +
+  geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
   geom_point(data = fr_plot %>% filter(variable == "tfr", value <10), aes(y=value, color=survey_id)) +
   facet_wrap(~area_name, ncol=5) +
   labs(y="TFR", x=element_blank(), color="Survey ID", title=paste(iso3, "| Provincial TFR")) +
