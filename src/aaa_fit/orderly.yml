@@ -26,7 +26,7 @@ artefacts:
 
 global_resources:
   resources/iso_mapping_fit.csv: iso_mapping_fit.csv
-  reources/mics_asfr.csv: mics_asfr.csv
+  resources/mics_asfr.csv: mics_asfr.csv
 
 resources:
   # - parallel.cpp
