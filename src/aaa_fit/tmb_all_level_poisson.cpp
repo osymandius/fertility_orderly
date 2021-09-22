@@ -479,7 +479,8 @@ Type objective_function<Type>::operator() ()
   REPORT(log_prec_rw_tips);
 
   REPORT(beta_period);
-  REPORT(phi_arima_period);
+  REPORT(lag_logit_phi_period);
+  // REPORT(phi_arima_period);
 
   REPORT(beta_tips_dummy);
   // // REPORT(beta_urban_dummy);
