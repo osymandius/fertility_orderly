@@ -128,8 +128,8 @@ tmb_int$par <- list(
   # u_period = rep(0, ncol(mf$Z$Z_period)),
   u_period = rep(0, ncol(spline_mat)),
   log_prec_rw_period = 0,
-  # lag_logit_phi_period = 0,
-  lag_logit_phi_arima_period = 0,
+  lag_logit_phi_period = 0,
+  # lag_logit_phi_arima_period = 0,
   beta_period = 0,
 
   # log_prec_smooth_iid = 0,
