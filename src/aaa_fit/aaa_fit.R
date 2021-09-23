@@ -22,7 +22,7 @@ admin1_lvl <- lvl_map$admin1_level[lvl_map$iso3 == iso3]
 
 mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level = lvl, project=2020)
 
-spline_mat <- splines::bs(1:26, knots = seq(2, 24, 2))
+spline_mat <- splines::bs(1:26, knots = seq(2, 24, 4))
 class(spline_mat) <- "matrix"
 spline_mat <- as(spline_mat, "sparseMatrix")
 
