@@ -16,7 +16,6 @@ artefacts:
 global_resources:
   resources/iso_mapping_fit.csv: iso_mapping_fit.csv
   resources/utility_funs.R: utility_funs.R
-  resources/moz_areas_maputo.geojson: moz_areas_maputo.geojson
 
 packages:
   - demogsurv

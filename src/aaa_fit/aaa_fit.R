@@ -41,7 +41,7 @@ tmb_int$data <- list(
   M_full_obs = mf$M_full_obs,
   X_tips_dummy = mf$Z$X_tips_dummy,
   X_period = mf$Z$X_period,
-  # X_urban_dummy = mf$Z$X_urban_dummy,
+  X_urban_dummy = mf$Z$X_urban_dummy,
   X_extract_dhs = mf$X_extract$X_extract_dhs,
   X_extract_ais = mf$X_extract$X_extract_ais,
   X_extract_mics = mf$X_extract$X_extract_mics,
@@ -107,7 +107,7 @@ tmb_int$par <- list(
   beta_0 = 0,
 
   beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
-  # # beta_urban_dummy = rep(0, ncol(X_urban_dummy)),
+  # beta_urban_dummy = rep(0, ncol(mf$Z$X_urban_dummy)),
   u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
   log_prec_rw_tips = 0,
 
@@ -128,7 +128,7 @@ tmb_int$par <- list(
   # u_period = rep(0, ncol(mf$Z$Z_period)),
   u_period = rep(0, ncol(spline_mat)),
   log_prec_rw_period = 0,
-  lag_logit_phi_period = 0,
+  logit_phi_period = 0,
   # lag_logit_phi_arima_period = 0,
   beta_period = 0,
 
@@ -165,6 +165,7 @@ tmb_int$random <- c("beta_0",
                     # "u_smooth_iid",
                     "beta_period",
                     "beta_tips_dummy",
+                    # "beta_urban_dummy",
                     "u_tips",
                     "beta_spike_2000",
                     "beta_spike_1999",
@@ -222,10 +223,9 @@ fit$sdreport <- sdreport(fit$obj, fit$par)
 
 sd_report <- fit$sdreport
 sd_report <- summary(sd_report, "all")
-  # .[rownames(.) %in% c("u_tips", "log_prec_rw_tips", "log_prec_spatial", "log_prec_eta1", "lag_logit_eta1_phi_age", "lag_logit_eta1_phi_period", "log_prec_eta2", "logit_eta2_phi_period", "log_prec_eta3", "lag_logit_eta3_phi_age", "log_prec_rw_age", "log_prec_rw_period", "lag_logit_phi_arima_period", "beta_tips_dummy", "eta2"), ]
-  # .[rownames(.) %in% c("u_tips", "u_period", "u_age", "u_spatial_str"), ]
 
 sd_report <- data.frame(sd_report, "hyper" = rownames(sd_report), iso = iso3)
+# sd_report <- data.frame(x= "foo")
 
 write_csv(sd_report, "sd_report.csv")
 

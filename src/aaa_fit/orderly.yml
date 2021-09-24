@@ -27,6 +27,7 @@ artefacts:
 global_resources:
   resources/iso_mapping_fit.csv: iso_mapping_fit.csv
   resources/mics_asfr.csv: mics_asfr.csv
+  resources/moz_areas_maputo.geojson: moz_areas_maputo.geojson
 
 resources:
   # - parallel.cpp

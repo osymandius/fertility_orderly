@@ -167,11 +167,14 @@ Type objective_function<Type>::operator() ()
   // nll -= dnorm(u_period.sum(), Type(0), Type(0.01) * u_period.size(), true);
 
   // // AR1
-  PARAMETER(lag_logit_phi_period);
+  PARAMETER(logit_phi_period);
   // 
-  nll -= dnorm(lag_logit_phi_period, Type(0), Type(sqrt(1/0.15)), true);
-  Type phi_period = 2*exp(lag_logit_phi_period)/(1+exp(lag_logit_phi_period))-1;
+  // nll -= dnorm(lag_logit_phi_period, Type(0), Type(sqrt(1/0.15)), true);
+  // Type phi_period = 2*exp(lag_logit_phi_period)/(1+exp(lag_logit_phi_period))-1;
   // 
+  Type phi_period(exp(logit_phi_period)/(1+exp(logit_phi_period)));
+  nll -= log(phi_period) +  log(1 - phi_period); // Jacobian adjustment for inverse logit'ing the parameter...
+  nll -= dbeta(phi_period, Type(0.5), Type(0.5), true);
   nll += AR1(Type(phi_period))(u_period);
 
   // ARIMA(1,1,0) with trend
@@ -332,6 +335,7 @@ Type objective_function<Type>::operator() ()
                      + X_period * beta_period
                      // + Z_spatial * spatial                     
                      + Z_spatial * u_spatial_str * sqrt(1/prec_spatial)
+                     // + X_urban_dummy * beta_urban_dummy
                      // + Z_country * u_country * sqrt(1/prec_country)
                      // + Z_omega1 * omega1_v * sqrt(1/prec_omega1)
                      // + Z_omega2 * omega2_v * sqrt(1/prec_omega2)
@@ -479,7 +483,7 @@ Type objective_function<Type>::operator() ()
   REPORT(log_prec_rw_tips);
 
   REPORT(beta_period);
-  REPORT(lag_logit_phi_period);
+  REPORT(logit_phi_period);
   // REPORT(phi_arima_period);
 
   REPORT(beta_tips_dummy);
