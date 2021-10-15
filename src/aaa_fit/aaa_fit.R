@@ -22,7 +22,7 @@ admin1_lvl <- lvl_map$admin1_level[lvl_map$iso3 == iso3]
 
 mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level = lvl, project=2020)
 
-spline_mat <- splines::bs(1:26, knots = seq(2, 24, 4))
+spline_mat <- splines::bs(1:26, knots = seq(1, 25, 3))
 class(spline_mat) <- "matrix"
 spline_mat <- as(spline_mat, "sparseMatrix")
 
@@ -128,7 +128,8 @@ tmb_int$par <- list(
   # u_period = rep(0, ncol(mf$Z$Z_period)),
   u_period = rep(0, ncol(spline_mat)),
   log_prec_rw_period = 0,
-  logit_phi_period = 0,
+  # logit_phi_period = 0,
+  lag_logit_phi_period = 0,
   # lag_logit_phi_arima_period = 0,
   beta_period = 0,
 
@@ -147,15 +148,14 @@ tmb_int$par <- list(
   log_prec_eta1 = 0,
   logit_eta1_phi_age = 0,
   logit_eta1_phi_period = 0,
-  #
-  # eta2 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_period))),
+
   eta2 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_period))),
-  log_prec_eta2 = 0,
-  logit_eta2_phi_period = 0,
-  #
-  eta3 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_age))),
-  log_prec_eta3 = 0,
-  logit_eta3_phi_age = 0
+  # log_prec_eta2 = 0
+  logit_eta2_phi_period = 0
+  # #
+  # eta3 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_age))),
+  # log_prec_eta3 = 0,
+  # logit_eta3_phi_age = 0
 )
 
 tmb_int$random <- c("beta_0",
@@ -171,8 +171,8 @@ tmb_int$random <- c("beta_0",
                     "beta_spike_1999",
                     "beta_spike_2001",
                     "eta1",
-                    "eta2",
-                    "eta3"
+                    "eta2"
+                    # "eta3"
                     # "omega1",
                     # "omega2"
 )
@@ -223,29 +223,29 @@ fit$sdreport <- sdreport(fit$obj, fit$par)
 
 sd_report <- fit$sdreport
 sd_report <- summary(sd_report, "all")
-
-sd_report <- data.frame(sd_report, "hyper" = rownames(sd_report), iso = iso3)
-# sd_report <- data.frame(x= "foo")
-
-write_csv(sd_report, "sd_report.csv")
+# 
+# sd_report <- data.frame(sd_report, "hyper" = rownames(sd_report), iso = iso3)
+# # sd_report <- data.frame(x= "foo")
+# 
+# write_csv(sd_report, "sd_report.csv")
 
 class(fit) <- "naomi_fit"  # this is hacky...
 
 fit <- naomi::sample_tmb(fit, random_only=TRUE)
 tmb_results <- dfertility::tmb_outputs(fit, mf, areas)
-write_csv(tmb_results, "fr.csv")
-
-# fit <- naomi::sample_tmb(fit, random_only=FALSE)
-hyper <- fit$sample %>%
-  list_modify("lambda_out" = zap(), "tfr_out" = zap())
-saveRDS(hyper, "hyper.rds")
+# write_csv(tmb_results, "fr.csv")
+# 
+# # fit <- naomi::sample_tmb(fit, random_only=FALSE)
+# hyper <- fit$sample %>%
+#   list_modify("lambda_out" = zap(), "tfr_out" = zap())
+# saveRDS(hyper, "hyper.rds")
 
 fr_plot <- read.csv("depends/fertility_fr_plot.csv")
 
 fr_plot <- fr_plot %>%
   left_join(areas %>% st_drop_geometry() %>% select(area_id, area_name))
 
-tfr_plot <- tmb_results %>%
+tmb_results %>%
   filter(area_level == admin1_lvl, variable == "tfr") %>%
   ggplot(aes(x=period, y=median)) +
   geom_line(size=1) +

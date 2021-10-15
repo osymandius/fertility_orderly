@@ -5,14 +5,13 @@ areas <- read_sf("src/ssd_fit/ssd_areas.geojson") %>%
          spectrum_region_code = 1,
          area_sort_order = row_number())
 
+sf::st_write(areas, "src/ssd_data_areas/ssd_areas.geojson", delete_dsn = TRUE)
+
 asfr <- read.csv("src/ssd_fit/ssd_asfr.csv") 
 
-population <- crossing(area_id = areas$area_id,
-         age_group = filter(get_age_groups(), age_group_sort_order %in% 16:22)$age_group,
-         period = 1995:2020) %>%
-  mutate(population = 1, 
-         sex = "female",
-         )
+population <- read.csv("archive/aaa_scale_pop/20210924-130905-59c6ce93/interpolated_population.csv") %>%
+  filter(sex == "female") %>%
+  rename(period = year)
 
 mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level = 1, project=2020)
 validate_model_frame(mf, areas)
@@ -22,8 +21,6 @@ class(spline_mat) <- "matrix"
 spline_mat <- as(spline_mat, "sparseMatrix")
 
 mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
-
-
 
 # TMB::compile("src/aaa_fit/tmb_all_level_poisson.cpp", flags = "-w")               # Compile the C++ file
 TMB::compile("tmb_all_level_poisson.cpp", flags = "-w")               # Compile the C++ file
@@ -241,11 +238,11 @@ fr_plot <- fr_plot %>%
   left_join(areas %>% st_drop_geometry() %>% select(area_id, area_name))
 
 tfr_plot <- tmb_results %>%
-  filter(area_level == admin1_lvl, variable == "tfr") %>%
+  filter(area_level == 1, variable == "tfr") %>%
   ggplot(aes(x=period, y=median)) +
   geom_line(size=1) +
   geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
-  geom_point(data = fr_plot %>% filter(variable == "tfr", value <10), aes(y=value, color=survey_id)) +
+  # geom_point(data = fr_plot %>% filter(variable == "tfr", value <10), aes(y=value, color=survey_id)) +
   facet_wrap(~area_name, ncol=5) +
   labs(y="TFR", x=element_blank(), color="Survey ID", title=paste(iso3, "| Provincial TFR")) +
   theme_minimal() +
