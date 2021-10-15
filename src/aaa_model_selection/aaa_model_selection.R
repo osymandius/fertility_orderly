@@ -356,6 +356,9 @@ tmb_results <- tmb_results %>%
 
 ######### RW1 + trend
 
+TMB::compile("rw_trend.cpp", flags = "-w")               # Compile the C++ file
+dyn.load(dynlib("rw_trend"))
+
 tmb_int$data <- list(
   M_naomi_obs = mf$M_naomi_obs,
   M_full_obs = mf$M_full_obs,
@@ -518,7 +521,7 @@ tmb_int$random <- c("beta_0",
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                        parameters = tmb_int$par,
-                       DLL = "rw",
+                       DLL = "rw_trend",
                        random = tmb_int$random,
                        hessian = FALSE)
 
