@@ -16,6 +16,11 @@ mics_asfr <- read.csv("resources/mics_asfr.csv") %>%
 
 asfr <- asfr %>% bind_rows(mics_asfr)
 
+end_year <- max(asfr$period) - 5
+
+asfr <- asfr %>%
+  filter(period <= end_year)
+
 lvl_map <- read.csv("resources/iso_mapping_fit.csv")
 lvl <- lvl_map$fertility_fit_level[lvl_map$iso3 == iso3]
 admin1_lvl <- lvl_map$admin1_level[lvl_map$iso3 == iso3]
