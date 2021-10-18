@@ -47,6 +47,10 @@ depends:
     id: latest
     use:
       depends/bfa_areas.geojson: bfa_areas.geojson
+  bwa_data_areas:
+    id: latest
+    use:
+      depends/bwa_areas.geojson: bwa_areas.geojson
   caf_data_areas:
     id: latest
     use:
@@ -171,6 +175,10 @@ depends:
     id: latest
     use:
       depends/uga_areas.geojson: uga_areas.geojson
+  zaf_data_areas:
+    id: latest
+    use:
+      depends/zaf_areas.geojson: zaf_areas.geojson
   zmb_data_areas:
     id: latest
     use:
