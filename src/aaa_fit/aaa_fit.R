@@ -235,10 +235,10 @@ fit <- naomi::sample_tmb(fit, random_only=TRUE)
 tmb_results <- dfertility::tmb_outputs(fit, mf, areas)
 write_csv(tmb_results, "fr.csv")
  
-# fit <- naomi::sample_tmb(fit, random_only=FALSE)
-# hyper <- fit$sample %>%
-#   list_modify("lambda_out" = zap(), "tfr_out" = zap())
-# saveRDS(hyper, "hyper.rds")
+fit <- naomi::sample_tmb(fit, random_only=FALSE)
+hyper <- fit$sample %>%
+  list_modify("lambda_out" = zap(), "tfr_out" = zap())
+saveRDS(hyper, "hyper.rds")
 
 fr_plot <- read.csv("depends/fertility_fr_plot.csv")
 
