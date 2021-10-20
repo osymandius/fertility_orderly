@@ -31,8 +31,8 @@ mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
 validate_model_frame(mf, areas)
 
 # TMB::compile("src/aaa_fit/tmb_all_level_poisson.cpp", flags = "-w")               # Compile the C++ file
-TMB::compile("tmb_all_level_poisson.cpp", flags = "-w")               # Compile the C++ file
-dyn.load(dynlib("tmb_all_level_poisson"))
+# TMB::compile("tmb_all_level_poisson.cpp", flags = "-w")               # Compile the C++ file
+# dyn.load(dynlib("tmb_all_level_poisson"))
 
 tmb_int <- list()
 
@@ -129,8 +129,8 @@ tmb_int$par <- list(
   u_period = rep(0, ncol(spline_mat)),
   log_prec_rw_period = 0,
   # logit_phi_period = 0,
-  lag_logit_phi_period = 0,
-  # lag_logit_phi_arima_period = 0,
+  # lag_logit_phi_period = 0,
+  lag_logit_phi_arima_period = 0,
   beta_period = 0,
 
   # log_prec_smooth_iid = 0,
@@ -148,14 +148,14 @@ tmb_int$par <- list(
   log_prec_eta1 = 0,
   logit_eta1_phi_age = 0,
   logit_eta1_phi_period = 0,
-
+  
   eta2 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_period))),
-  # log_prec_eta2 = 0
-  logit_eta2_phi_period = 0
+  log_prec_eta2 = 0,
+  logit_eta2_phi_period = 0,
   # #
-  # eta3 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_age))),
-  # log_prec_eta3 = 0,
-  # logit_eta3_phi_age = 0
+  eta3 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_age))),
+  log_prec_eta3 = 0,
+  logit_eta3_phi_age = 0
 )
 
 tmb_int$random <- c("beta_0",
@@ -171,8 +171,8 @@ tmb_int$random <- c("beta_0",
                     "beta_spike_1999",
                     "beta_spike_2001",
                     "eta1",
-                    "eta2"
-                    # "eta3"
+                    "eta2",
+                    "eta3"
                     # "omega1",
                     # "omega2"
 )
@@ -199,7 +199,7 @@ if(mf$mics_toggle) {
 
 f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
                                parameters = tmb_int$par,
-                               DLL = "tmb_all_level_poisson",
+                               DLL = "dfertility",
                                silent=0,
                                checkParameterOrder=FALSE)
 })
@@ -210,7 +210,7 @@ if(is.null(parallel::mccollect(f)[[1]])) {
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                        parameters = tmb_int$par,
-                       DLL = "tmb_all_level_poisson",
+                       DLL = "dfertility",
                        random = tmb_int$random,
                        hessian = FALSE)
 
@@ -219,10 +219,10 @@ f$par.fixed <- f$par
 f$par.full <- obj$env$last.par
 
 fit <- c(f, obj = list(obj))
-fit$sdreport <- sdreport(fit$obj, fit$par)
-
-sd_report <- fit$sdreport
-sd_report <- summary(sd_report, "all")
+# fit$sdreport <- sdreport(fit$obj, fit$par)
+# 
+# sd_report <- fit$sdreport
+# sd_report <- summary(sd_report, "all")
 # 
 # sd_report <- data.frame(sd_report, "hyper" = rownames(sd_report), iso = iso3)
 # # sd_report <- data.frame(x= "foo")
@@ -233,19 +233,19 @@ class(fit) <- "naomi_fit"  # this is hacky...
 
 fit <- naomi::sample_tmb(fit, random_only=TRUE)
 tmb_results <- dfertility::tmb_outputs(fit, mf, areas)
-# write_csv(tmb_results, "fr.csv")
-# 
-# # fit <- naomi::sample_tmb(fit, random_only=FALSE)
-# hyper <- fit$sample %>%
-#   list_modify("lambda_out" = zap(), "tfr_out" = zap())
-# saveRDS(hyper, "hyper.rds")
+write_csv(tmb_results, "fr.csv")
+ 
+fit <- naomi::sample_tmb(fit, random_only=FALSE)
+hyper <- fit$sample %>%
+  list_modify("lambda_out" = zap(), "tfr_out" = zap())
+saveRDS(hyper, "hyper.rds")
 
 fr_plot <- read.csv("depends/fertility_fr_plot.csv")
 
 fr_plot <- fr_plot %>%
   left_join(areas %>% st_drop_geometry() %>% select(area_id, area_name))
 
-tmb_results %>%
+tfr_plot <- tmb_results %>%
   filter(area_level == admin1_lvl, variable == "tfr") %>%
   ggplot(aes(x=period, y=median)) +
   geom_line(size=1) +

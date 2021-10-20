@@ -1,10 +1,10 @@
 script: aaa_fit.R
 
 artefacts:
-  - data:
-      description: sd report
-      filenames:
-        - sd_report.csv
+  # - data:
+  #     description: sd report
+  #     filenames:
+  #       - sd_report.csv
   # - data:
   #     description: tips
   #     filenames:
