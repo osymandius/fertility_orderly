@@ -9,19 +9,19 @@ artefacts:
   #     description: tips
   #     filenames:
   #       - tips.csv
-  - data:
-      description: fertility indicator dataset
-      filenames:
-        - fr.csv
+  # - data:
+  #     description: fertility indicator dataset
+  #     filenames:
+  #       - fr.csv
   - data:
       description: hyperparameters and random effect samples
       filenames:
         - hyper.rds
-  - staticgraph:
-      description: Validate admin-1 TFRs
-      filenames:
-        - check/tfr_admin1.pdf
-        - check/tfr_district.pdf
+  # - staticgraph:
+  #     description: Validate admin-1 TFRs
+  #     filenames:
+  #       - check/tfr_admin1.pdf
+  #       - check/tfr_district.pdf
 
 
 global_resources:
