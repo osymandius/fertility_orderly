@@ -110,6 +110,15 @@ survey_regions <- tibble(survey_id = survey_id,
                          survey_region_name = names(survey_region_id),
                          survey_region_area_id = survey_region_area_id[names(survey_region_id)])
 
+#' Add survey region boundary
+
+survey_regions <- survey_regions %>%
+  left_join(
+    areas %>% select(survey_region_area_id = area_id)
+  ) %>%
+  st_as_sf() %>%
+  st_make_valid()
+
 
 #' Inspect area_id assigments to confirm
 
@@ -120,44 +129,6 @@ survey_regions %>%
     select(area_id, area_name, area_level, area_level_label),
     by = c("survey_region_area_id" = "area_id")
   )
-
-
-#' Add survey region boundary 
-
-survey_regions <- survey_regions %>%
-  left_join(
-    spread_areas(as.data.frame(areas)) %>%
-    left_join(select(areas, area_id), by = "area_id") %>%
-    st_as_sf() %>%
-    group_by(survey_region_name) %>%
-    summarise(.groups = "drop"),
-    by = "survey_region_name"
-  ) %>%
-  st_as_sf()
-
-
-p_check_survey_regions <- ggplot(survey_regions) +
-  geom_sf(aes(fill = survey_region_name), color = "grey60", alpha = 0.6) +
-  geom_sf(data = areas %>% filter(area_level == 2), fill = NA, inherit.aes = FALSE) +
-  ggtitle("Survey regions and health provinces (black lines)",
-          "Mulange is in South West in MPHIA but South East\nin MoH classification") +
-  naomi::th_map()
-
-dir.create("check")
-ggsave("check/compare_survey_regions.png", p_check_survey_regions, h=5, w=4)
-
-
-#' Inspect area_id assigments to confirm
-
-survey_regions %>%
-  left_join(
-    areas %>%
-    as.data.frame() %>%
-    select(area_id, area_name, area_level, area_level_label),
-    by = c("survey_region_area_id" = "area_id")
-  ) %>%
-  st_drop_geometry() %>%
-  select(survey_region_name, area_name, area_level_label)
 
 
 #' *** Should not require edits beyond this point ***
@@ -192,16 +163,30 @@ survey_clusters <- hh %>%
 #' (These are the candidate areas where a cluster could be located)
 
 survey_region_areas  <- survey_regions %>%
-  left_join(
-    get_area_collection(as.data.frame(areas),
-                        area_scope = survey_regions$survey_region_area_id),
-    by = c("survey_region_area_id" = "area_scope")
+  st_join(
+    st_point_on_surface(areas) %>%
+    filter(area_level == max(area_level)) %>%
+    select(area_id)
   ) %>%
+  st_set_geometry(NULL) %>%
   left_join(
     areas %>% select(area_id, geometry),
     by = "area_id"
   ) %>%
   select(survey_region_id, area_id, geometry_area = geometry)
+
+#' Seke district cuts into Harare due to Epworth --> Seke allocation.
+#' Add this manually.
+
+survey_region_areas <- survey_region_areas %>%
+  rbind(
+    areas %>%
+    filter(area_name == "Seke") %>%
+    mutate(survey_region_id = 9) %>%
+    as.data.frame() %>%
+    select(survey_region_id, area_id, geometry_area = geometry)
+  )
+
 
 #' Calculate distance to each candidate area for each cluster
 

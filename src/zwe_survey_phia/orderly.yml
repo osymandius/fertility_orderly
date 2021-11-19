@@ -10,10 +10,6 @@ artefacts:
         - zwe2016phia_survey_individuals.csv
         - zwe2016phia_survey_biomarker.csv
         - zwe2016phia_survey_circumcision.csv
-  - staticgraph:
-      description: Comparison of survey regions and health zones
-      filenames: 
-        - check/compare_survey_regions.png
 
 packages:
   - dplyr
