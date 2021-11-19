@@ -25,3 +25,5 @@ orderly_envir.yml
 .DS_Store
 src/.DS_Store
 .orderly
+
+*~
