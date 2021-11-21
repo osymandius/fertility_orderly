@@ -58,7 +58,7 @@ phia <- ind %>%
 
 chphia <- chind %>%
   filter(indstatus == 1) %>%
-  select(centroid, zone, urban, householdid,
+  select(centroidid, zone, urban, householdid,
          personid, surveystyear, surveystmonth,
          intwt0, gender, age, agem) %>%
   full_join(
