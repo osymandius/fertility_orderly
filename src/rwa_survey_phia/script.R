@@ -39,7 +39,7 @@ chind <- rdhs::read_zipdata(phia_files$chind)
 #' 
 phia <- ind %>%
   filter(indstatus == 1) %>%  # Respondent
-  select(varstrat, varunit, province, urban, householdid,
+  select(centroidid, province, urban, householdid,
          personid, surveystyear, surveystmonth,
          intwt0, gender, age,
          mcstatus, mcage, mcwho) %>%
@@ -51,12 +51,12 @@ phia <- ind %>%
     by = "personid"
   ) %>%
   mutate(survey_id = survey_id,
-         cluster_id = paste(varstrat, varunit))
+         cluster_id = centroidid)
 
 
 chphia <- chind %>%
   filter(indstatus == 1) %>%
-  select(varstrat, varunit, province, urban, householdid,
+  select(centroidid, province, urban, householdid,
          personid, surveystyear, surveystmonth,
          intwt0, gender, age, agem) %>%
   full_join(
@@ -67,7 +67,7 @@ chphia <- chind %>%
     by = "personid"
   ) %>%
   mutate(survey_id = survey_id,
-         cluster_id = paste(varstrat, varunit))
+         cluster_id = centroidid)
 
 
 
@@ -135,14 +135,12 @@ survey_regions %>%
 
 survey_clusters <- hh %>%
   transmute(survey_id = survey_id,
-            cluster_id = paste(varstrat, varunit),
+            cluster_id = centroidid,
             cluster_id,
             res_type = factor(urban, 1:2, c("urban", "rural")),
-            survey_region_id,
-            centroidid) %>%
+            survey_region_id) %>%
   distinct() %>%
-  left_join(geo, by = "centroidid") %>%
-  select(-centroidid) %>%
+  left_join(geo, by = c("cluster_id" = "centroidid")) %>%
   sf::st_as_sf(coords = c("longitude", "latitude"), remove = FALSE) %>%
   sf::`st_crs<-`(4326)
 
