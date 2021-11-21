@@ -2,7 +2,7 @@ script: script.R
 
 artefacts:
   - data:
-      description: LePHIA 2016-17 survey microdata
+      description: NAMPHIA 2017 survey microdata
       filenames:
         - nam2017phia_survey_meta.csv
         - nam2017phia_survey_regions.csv

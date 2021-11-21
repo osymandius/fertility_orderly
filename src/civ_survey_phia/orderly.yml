@@ -1,0 +1,35 @@
+script: script.R
+
+artefacts:
+  - data:
+      description: CIPHIA 2017 survey microdata
+      filenames:
+        - civ2017phia_survey_meta.csv
+        - civ2017phia_survey_regions.csv
+        - civ2017phia_survey_clusters.csv
+        - civ2017phia_survey_individuals.csv
+        - civ2017phia_survey_biomarker.csv
+        - civ2017phia_survey_circumcision.csv
+  - staticgraph:
+      description: Survey region boundaries
+      filenames:
+        - civ2017phia_survey-region-alignment.pdf
+
+packages:
+  - dplyr
+  - forcats
+  - ggplot2
+  - haven
+  - naomi
+  - spud
+  - rdhs
+  - readr
+  - sf
+  - tidyr
+
+depends:
+  civ_data_areas:
+    id: latest
+    use:
+      depends/civ_areas.geojson: civ_areas.geojson
+  
