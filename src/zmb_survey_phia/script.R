@@ -31,7 +31,7 @@ chind <- rdhs::read_zipdata(phia_files$survey, "zamphia2016childind.dta")
 
 phia <- ind %>%
   filter(indstatus == 1) %>%  # Respondent
-  select(cluster_id, province, urban, householdid,
+  select(centroidid, province, urban, householdid,
          personid, surveystyear, surveystmonth,
          intwt0, gender, age, religion, ethniccode,
          mcstatus, mcage, mcwho) %>%
