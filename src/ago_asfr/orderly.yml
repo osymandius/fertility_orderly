@@ -4,8 +4,17 @@ artefacts:
   - data:
       description: ago ASFR dataset
       filenames:
+        - ago_asfr.csv
         - ago_dhs_asfr.csv
         - ago_fr_plot.csv
+  - staticgraph:
+      description: Validate admin-1 TFRs
+      filenames:
+        - check/tfr_admin1.pdf
+
+global_resources:
+  resources/iso_mapping_fit.csv: iso_mapping_fit.csv
+  resources/utility_funs.R: utility_funs.R
 
 packages:
   - demogsurv

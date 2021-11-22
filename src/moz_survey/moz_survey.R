@@ -3,7 +3,7 @@
 #' ISO3 country code
 iso3 <- "MOZ"
 
-areas <- read_sf("resources/moz_areas_maputo.geojson")
+areas <- read_sf("depends/moz_areas.geojson")
 areas_wide <- spread_areas(areas)
 
 surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%

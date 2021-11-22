@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -ex
+HERE=$(dirname $0)
+PACKAGE_ROOT=$(realpath $HERE/..)
+PACKAGE_NAME=fertilityorderly
+PACKAGE_ORG=osymandius
+GIT_SHA=$(git -C "$PACKAGE_ROOT" rev-parse --short=7 HEAD)
+TAG_SHA="${PACKAGE_ORG}/${PACKAGE_NAME}:${GIT_SHA}"
+
+docker build --pull \
+       -t $TAG_SHA \
+       -f docker/Dockerfile \
+       $PACKAGE_ROOT

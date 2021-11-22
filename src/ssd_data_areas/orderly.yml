@@ -1,0 +1,21 @@
+script: script.R
+
+artefacts:
+  - data:
+      description: Naomi areas
+      filenames:
+        - ssd_areas.geojson
+
+
+packages:
+  - readr
+  - naomi
+  - sf
+  - spud
+  - dplyr
+  - tidyr
+  - readxl
+  - forcats
+
+resources:
+  - ssd_areas_in.geojson

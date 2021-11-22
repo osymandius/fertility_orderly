@@ -2,6 +2,7 @@ iso3 <- "TZA"
 
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson"))
 clusters <- read.csv(paste0("depends/", tolower(iso3), "_dhs_clusters.csv"))
+source("resources/utility_funs.R")
 
 areas_wide <- spread_areas(areas)
 areas_long <- areas %>% st_drop_geometry
@@ -106,3 +107,4 @@ plot <- asfr_admin1 %>%
   )
 
 write_csv(plot, paste0(tolower(iso3), "_fr_plot.csv"))
+write_csv(asfr, paste0(tolower(iso3), "_asfr.csv"))

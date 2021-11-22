@@ -1,0 +1,59 @@
+script: aaa_pp_check.R
+
+# artefacts:
+#   - data:
+#       description: fertility indicator dataset
+#       filenames:
+#         - fr.csv
+#   - data:
+#       description: hyperparameters and random effect samples
+#       filenames:
+#         - hyper.rds
+#   - staticgraph:
+#       description: Validate admin-1 TFRs
+#       filenames:
+#         - check/tfr_admin1.pdf
+#         - check/tfr_district.pdf
+
+
+global_resources:
+  resources/iso_mapping_fit.csv: iso_mapping_fit.csv
+
+resources:
+  - tmb_all_level_poisson.cpp
+
+displayname: Fertility model fit
+
+parameters:
+  iso3:
+    default: ~
+
+packages:
+  - dplyr
+  - tidyr
+  - dfertility
+  - ggplot2
+  - naomi
+  - readr
+  - sf
+  - stringr
+  - TMB
+  - Matrix
+  - parallel
+  - purrr
+  - rlang
+
+
+
+depends:
+  aaa_inputs_orderly_pull:
+    id: latest(parameter:iso3 == iso3)
+    use:
+      depends/naomi_areas.geojson: naomi_areas.geojson
+      # depends/naomi_population.csv: naomi_population.csv
+      depends/fertility_asfr.csv: fertility_asfr.csv
+      depends/fertility_fr_plot.csv: fertility_fr_plot.csv
+  aaa_scale_pop:
+    id: latest(parameter:iso3 == iso3)
+    use:
+      depends/interpolated_population.csv: interpolated_population.csv

@@ -2,7 +2,7 @@
 iso3 <- "GMB"
 
 areas <- read_sf("depends/gmb_areas.geojson")
-areas <- read_sf("archive/gmb_data_areas/20210114-155305-1014e3b3/gmb_areas.geojson")
+# areas <- read_sf("archive/gmb_data_areas/20210114-155305-1014e3b3/gmb_areas.geojson")
 areas_wide <- spread_areas(areas)
 
 surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%
@@ -24,7 +24,7 @@ validate_survey_region_areas(survey_region_areas, survey_region_boundaries)
 survey_regions <- create_survey_regions_dhs(survey_region_areas)
 
 #' # Survey clusters dataset
-debugonce(get_datasets)
+
 survey_clusters <- create_survey_clusters_dhs(surveys)
 
 #' Snap survey clusters to areas

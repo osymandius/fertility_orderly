@@ -8,6 +8,10 @@ artefacts:
         - nga_mics_asfr_admin1.csv
         - nga_mics_tfr_admin1.csv
 
+global_resources:
+  resources/iso_mapping_fit.csv: iso_mapping_fit.csv
+  resources/utility_funs.R: utility_funs.R
+
 packages:
   - demogsurv
   - tidyr

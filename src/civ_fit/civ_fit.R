@@ -1,6 +1,6 @@
 iso3 <- "CIV"
 
-population <- read.csv(paste0("depends/", tolower(iso3), "_population_gpw.csv"))
+population <- read.csv(paste0("depends/", tolower(iso3), "_population.csv"))
 areas <- read_sf(paste0("depends/", tolower(iso3), "_areas.geojson")) %>%
   mutate(iso3 = iso3)
 asfr <- read.csv(paste0("depends/", tolower(iso3), "_asfr.csv"))
@@ -84,13 +84,13 @@ tmb_int$par <- list(
   # u_country = rep(0, ncol(mf$Z$Z_country)),
   # log_prec_country = 0,
 
-  omega1 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_age))),
-  log_prec_omega1 = 0,
-  lag_logit_omega1_phi_age = 0,
-
-  omega2 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_period))),
-  log_prec_omega2 = 0,
-  lag_logit_omega2_phi_period = 0,
+  # omega1 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_age))),
+  # log_prec_omega1 = 0,
+  # lag_logit_omega1_phi_age = 0,
+  # 
+  # omega2 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_period))),
+  # log_prec_omega2 = 0,
+  # lag_logit_omega2_phi_period = 0,
   
   u_period = rep(0, ncol(mf$Z$Z_period)),
   log_prec_rw_period = 0,

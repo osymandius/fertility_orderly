@@ -79,7 +79,8 @@ fertility_mics_data <- transform_mics(mics_survey_data, mics_indicators)
 fertility_mics_data$hh <- fertility_mics_data$hh %>%
   mutate(
     mics_area_name_label = case_when(
-      mics_area_name_label == "Sã©Gou" ~ "Segou",
+      mics_area_name_label == "Sã©Gou" ~ "Ségou",
+      mics_area_name_label == "Segou" ~ "Ségou",
       TRUE ~ mics_area_name_label
     )
   ) 
