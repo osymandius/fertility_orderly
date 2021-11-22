@@ -45,9 +45,9 @@ tmb_int$data <- list(
   X_extract_dhs = mf$X_extract$X_extract_dhs,
   X_extract_ais = mf$X_extract$X_extract_ais,
   X_extract_mics = mf$X_extract$X_extract_mics,
-  # Z_tips = mf$Z$Z_tips,
-  Z_tips_dhs = mf$Z$Z_tips_dhs,
-  Z_tips_ais = mf$Z$Z_tips_ais,
+  Z_tips = sparse.model.matrix(~0 + tips_f, mf$observations$full_obs),
+  # Z_tips_dhs = mf$Z$Z_tips_dhs,
+  # Z_tips_ais = mf$Z$Z_tips_ais,
   Z_age = mf$Z$Z_age,
   Z_period = mf$Z$Z_period,
   Z_spatial = mf$Z$Z_spatial,
@@ -88,14 +88,18 @@ tmb_int$data <- list(
   A_full_obs = mf$observations$A_full_obs,
 
   mics_toggle = mf$mics_toggle,
+  
+  X_spike_2000 = model.matrix(~0 + spike_2000, mf$observations$full_obs),
+  X_spike_1999 = model.matrix(~0 + spike_1999, mf$observations$full_obs),
+  X_spike_2001 = model.matrix(~0 + spike_2001, mf$observations$full_obs),
 
-  X_spike_2000_dhs = model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype == "DHS")),
-  X_spike_1999_dhs = model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype == "DHS")),
-  X_spike_2001_dhs = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype == "DHS")),
-
-  X_spike_2000_ais = model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
-  X_spike_1999_ais = model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
-  X_spike_2001_ais = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
+  # X_spike_2000_dhs = model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype == "DHS")),
+  # X_spike_1999_dhs = model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype == "DHS")),
+  # X_spike_2001_dhs = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype == "DHS")),
+  # 
+  # X_spike_2000_ais = model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
+  # X_spike_1999_ais = model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
+  # X_spike_2001_ais = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
 
   n_threads = parallel::detectCores()
 
@@ -182,11 +186,11 @@ if(mf$mics_toggle) {
                     "Z_tips_mics" = mf$Z$Z_tips_mics,
                     "R_tips_mics" = mf$R$R_tips_mics,
                     "log_offset_mics" = list(log(filter(mf$observations$full_obs, survtype == "MICS")$pys)),
-                    "births_obs_mics" = list(filter(mf$observations$full_obs, survtype == "MICS")$births),
+                    "births_obs_mics" = list(filter(mf$observations$full_obs, survtype == "MICS")$births)
 
-                    "X_spike_2000_mics" = list(model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype == "MICS"))),
-                    "X_spike_1999_mics" = list(model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype == "MICS"))),
-                    "X_spike_2001_mics" = list(model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype == "MICS")))
+                    # "X_spike_2000_mics" = list(model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype == "MICS"))),
+                    # "X_spike_1999_mics" = list(model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype == "MICS"))),
+                    # "X_spike_2001_mics" = list(model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype == "MICS")))
 
                     # "Z_smooth_iid_mics" = sparse.model.matrix(~0 + id.smooth, mf$observations$full_obs %>% filter(survtype == "MICS"))
   )
