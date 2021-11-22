@@ -18,6 +18,7 @@ packages:
   - naomi
   - naomi.utils
   - rdhs
+  - readr
   - sf
 
 depends:

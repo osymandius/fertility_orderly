@@ -1,5 +1,3 @@
-orderly::orderly_pull_archive("rwa_data_areas")
-
 #' ISO3 country code
 iso3 <- "RWA"
 
@@ -14,8 +12,7 @@ surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%
 
 #' This is the contents of naomi.utils::create_survey_meta_dhs. Unpacked to get around 2 reports for 2005 DHS which fails the duplicated check
 publications <- rdhs::dhs_publications(surveyIds = surveys$SurveyId)
-final_rep <- dplyr::filter(publications, PublicationTitle == 
-                             "Final Report")
+final_rep <- dplyr::filter(publications, PublicationTitle == "Final Report")
 final_rep <- dplyr::select(final_rep, SurveyId, report_url = PublicationURL) %>%
   dplyr::group_by(SurveyId) %>%
   dplyr::filter(row_number() == 1)
@@ -87,6 +84,7 @@ ggplot() +
         axis.ticks = element_blank(),
         panel.grid = element_blank())
 
+dev.off()
 
 #' The three current Kigali City districts overlap both the Kigali City and Kigali
 #' Rural regions in the 2000 DHS.

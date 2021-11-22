@@ -1,0 +1,29 @@
+script: script.R
+
+artefacts:
+  - data:
+      description: LePHIA 2016-17 survey microdata
+      filenames:
+        - lso2017phia_survey_meta.csv
+        - lso2017phia_survey_regions.csv
+        - lso2017phia_survey_clusters.csv
+        - lso2017phia_survey_individuals.csv
+        - lso2017phia_survey_biomarker.csv
+        - lso2017phia_survey_circumcision.csv
+
+packages:
+  - dplyr
+  - ggplot2
+  - haven
+  - naomi
+  - spud
+  - rdhs
+  - readr
+  - sf
+
+depends:
+  lso_data_areas:
+    id: latest
+    use:
+      depends/lso_areas.geojson: lso_areas.geojson
+  

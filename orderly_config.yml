@@ -1,4 +1,11 @@
 remote:
+  fertility:
+    driver: orderly.sharepoint::orderly_remote_sharepoint
+    args:
+      url: https://imperiallondon.sharepoint.com
+      site: HIVInferenceGroup-WP
+      path: Shared Documents/orderly/fertility
+
   real:
     driver: orderly.sharepoint::orderly_remote_sharepoint
     args:
@@ -18,12 +25,6 @@ remote:
   #     url: https://imperiallondon.sharepoint.com
   #     site: HIVInferenceGroup-WP
   #     path: Shared Documents/orderly/mics
-  fertility:
-    driver: orderly.sharepoint::orderly_remote_sharepoint
-    args:
-      url: https://imperiallondon.sharepoint.com
-      site: HIVInferenceGroup-WP
-      path: Shared Documents/orderly/fertility
   malawi:
     driver: orderly.sharepoint::orderly_remote_sharepoint
     args:
