@@ -1,17 +1,17 @@
 remote:
-  fertility:
+  real:
     driver: orderly.sharepoint::orderly_remote_sharepoint
     args:
       url: https://imperiallondon.sharepoint.com
       site: HIVInferenceGroup-WP
       path: Shared Documents/orderly/fertility
 
-  real:
-    driver: orderly.sharepoint::orderly_remote_sharepoint
-    args:
-      url: https://imperiallondon.sharepoint.com
-      site: HIVInferenceGroup-WP
-      path: Shared Documents/orderly/naomi-data-orderly
+  # real:
+  #   driver: orderly.sharepoint::orderly_remote_sharepoint
+  #   args:
+  #     url: https://imperiallondon.sharepoint.com
+  #     site: HIVInferenceGroup-WP
+  #     path: Shared Documents/orderly/naomi-data-orderly
 
   naomi_2021:
     driver: orderly.sharepoint::orderly_remote_sharepoint
