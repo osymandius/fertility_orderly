@@ -103,10 +103,10 @@ depends:
     id: latest
     use:
       depends/hti_areas.geojson: hti_areas.geojson
-  ken_data_areas:
+  ken_data_areas_subcounty:
     id: latest
     use:
-      depends/ken_areas.geojson: ken_areas.geojson
+      depends/ken_areas.geojson: ken_areas_subcounty.geojson
   lbr_data_areas:
     id: latest
     use:

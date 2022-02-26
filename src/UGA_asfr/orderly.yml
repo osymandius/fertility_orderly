@@ -1,4 +1,4 @@
-script: uga_asfr.R
+script: UGA_asfr.R
 
 artefacts:
   - data:

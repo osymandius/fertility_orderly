@@ -31,6 +31,12 @@ remote:
       url: https://imperiallondon.sharepoint.com
       site: HIVInferenceGroup-WP
       path: Shared Documents/orderly/mwi-hiv-orderly
+  kp:
+    driver: orderly.sharepoint::orderly_remote_sharepoint
+    args:
+      url: https://imperiallondon.sharepoint.com
+      site: HIVInferenceGroup-WP
+      path: Shared Documents/orderly/kp-data
 
 fields:
   requester:

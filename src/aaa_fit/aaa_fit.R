@@ -6,7 +6,8 @@ population <- read.csv("depends/interpolated_population.csv") %>%
   filter(sex == "female")
 
 areas <- read_sf("depends/naomi_areas.geojson") %>%
-  mutate(iso3 = iso3)
+  mutate(iso3 = iso3) %>%
+  st_make_valid()
 
 asfr <- read.csv("depends/fertility_asfr.csv") %>%
   filter(survtype != "MICS")
@@ -14,7 +15,12 @@ asfr <- read.csv("depends/fertility_asfr.csv") %>%
 mics_asfr <- read.csv("resources/mics_asfr.csv") %>%
   filter(iso3 == iso3_c)
 
-asfr <- asfr %>% bind_rows(mics_asfr)
+phia_asfr <- read.csv("resources/phia_asfr.csv") %>%
+  separate(area_id, into=c("iso3", NA), sep = 3, remove = FALSE) %>%
+  filter(iso3 == iso3_c) %>%
+  mutate(survtype = "PHIA")
+
+asfr <- asfr %>% bind_rows(mics_asfr, phia_asfr)
 
 lvl_map <- read.csv("resources/iso_mapping_fit.csv")
 lvl <- lvl_map$fertility_fit_level[lvl_map$iso3 == iso3]
@@ -30,9 +36,9 @@ mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
 
 validate_model_frame(mf, areas)
 
-# TMB::compile("src/aaa_fit/tmb_all_level_poisson.cpp", flags = "-w")               # Compile the C++ file
-# TMB::compile("tmb_all_level_poisson.cpp", flags = "-w")               # Compile the C++ file
-# dyn.load(dynlib("tmb_all_level_poisson"))
+# TMB::compile("src/aaa_fit/phia.cpp", flags = "-w")               # Compile the C++ file
+# TMB::compile("phia.cpp", flags = "-w")               # Compile the C++ file
+# dyn.load(dynlib("phia"))
 
 tmb_int <- list()
 
@@ -45,6 +51,7 @@ tmb_int$data <- list(
   X_extract_dhs = mf$X_extract$X_extract_dhs,
   X_extract_ais = mf$X_extract$X_extract_ais,
   X_extract_mics = mf$X_extract$X_extract_mics,
+  X_extract_phia = mf$X_extract$X_extract_phia,
   Z_tips = sparse.model.matrix(~0 + tips_f, mf$observations$full_obs),
   # Z_tips_dhs = mf$Z$Z_tips_dhs,
   # Z_tips_ais = mf$Z$Z_tips_ais,
@@ -80,6 +87,9 @@ tmb_int$data <- list(
 
   log_offset_ais = log(filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS"))$pys),
   births_obs_ais = filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS"))$births,
+  
+  log_offset_phia = log(filter(mf$observations$full_obs, survtype == "PHIA")$pys),
+  births_obs_phia = filter(mf$observations$full_obs, survtype == "PHIA")$births,
 
   pop = mf$mf_model$population,
   # A_asfr_out = mf$out$A_asfr_out,
@@ -223,15 +233,15 @@ f$par.fixed <- f$par
 f$par.full <- obj$env$last.par
 
 fit <- c(f, obj = list(obj))
-# fit$sdreport <- sdreport(fit$obj, fit$par)
-# 
-# sd_report <- fit$sdreport
-# sd_report <- summary(sd_report, "all")
-# 
-# sd_report <- data.frame(sd_report, "hyper" = rownames(sd_report), iso = iso3)
-# # sd_report <- data.frame(x= "foo")
-# 
-# write_csv(sd_report, "sd_report.csv")
+fit$sdreport <- sdreport(fit$obj, fit$par)
+
+sd_report <- fit$sdreport
+sd_report <- summary(sd_report, "all")
+
+sd_report <- data.frame(sd_report, "hyper" = rownames(sd_report), iso = iso3)
+# sd_report <- data.frame(x= "foo")
+
+write_csv(sd_report, "sd_report.csv")
 
 class(fit) <- "naomi_fit"  # this is hacky...
 
@@ -248,6 +258,20 @@ fr_plot <- read.csv("depends/fertility_fr_plot.csv")
 
 fr_plot <- fr_plot %>%
   left_join(areas %>% st_drop_geometry() %>% select(area_id, area_name))
+
+fr_plot <- fr_plot %>%
+  bind_rows(
+    read_csv("resources/phia_asfr_admin1.csv") %>%
+      separate(area_id1, into=c("iso3", NA), sep = 3, remove = FALSE) %>%
+      filter(iso3 == iso3_c) %>%
+      group_by(survey_id, period, area_id1) %>%
+      summarise(value = 5*sum(asfr)) %>%
+      ungroup %>%
+      rename(area_id = area_id1) %>%
+      left_join(areas %>% st_drop_geometry() %>% select(area_id, area_name)) %>%
+      mutate(variable = "tfr")
+  )
+
 
 tfr_plot <- tmb_results %>%
   filter(area_level == admin1_lvl, variable == "tfr") %>%

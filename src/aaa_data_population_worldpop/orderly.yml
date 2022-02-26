@@ -30,7 +30,7 @@ depends:
   ben_data_areas:
     id: latest
     use:
-      depends/ben_areas_spectrum_national.geojson: ben_areas_spectrum_national.geojson
+      depends/ben_areas.geojson: ben_areas_spectrum_national.geojson
   bdi_data_areas:
     id: latest
     use:
@@ -91,14 +91,14 @@ depends:
     id: latest
     use:
       depends/gnq_areas.geojson: gnq_areas.geojson
-  hti_data_areas:
-    id: latest
-    use:
-      depends/hti_areas.geojson: hti_areas.geojson
+  # hti_data_areas:
+  #   id: latest
+  #   use:
+  #     depends/hti_areas.geojson: hti_areas.geojson
   ken_data_areas_subcounty:
     id: latest
     use:
-      depends/ken_areas_subcounty.geojson: ken_areas_subcounty.geojson
+      depends/ken_areas.geojson: ken_areas_subcounty.geojson
   lbr_data_areas:
     id: latest
     use:
@@ -158,7 +158,7 @@ depends:
   tgo_data_areas:
     id: latest
     use:
-      depends/tgo_areas_spectrum_national.geojson: tgo_areas_spectrum_national.geojson
+      depends/tgo_areas.geojson: tgo_areas_spectrum_national.geojson
   tza_data_areas:
     id: latest
     use:
@@ -174,7 +174,7 @@ depends:
   zmb_data_areas:
     id: latest
     use:
-      depends/zmb_areas_spectrum_national.geojson: zmb_areas_spectrum_national.geojson
+      depends/zmb_areas.geojson: zmb_areas_spectrum_national.geojson
   zwe_data_areas:
     id: latest
     use:
