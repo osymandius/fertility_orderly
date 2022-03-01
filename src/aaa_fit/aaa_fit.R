@@ -36,9 +36,9 @@ mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
 
 validate_model_frame(mf, areas)
 
-# TMB::compile("src/aaa_fit/phia.cpp", flags = "-w")               # Compile the C++ file
-# TMB::compile("phia.cpp", flags = "-w")               # Compile the C++ file
-# dyn.load(dynlib("phia"))
+# TMB::compile("src/aaa_fit/no_tips.cpp", flags = "-w")               # Compile the C++ file
+# TMB::compile("no_tips.cpp", flags = "-w")               # Compile the C++ file
+dyn.load(dynlib("no_tips"))
 
 tmb_int <- list()
 
@@ -122,8 +122,8 @@ tmb_int$par <- list(
 
   beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
   # beta_urban_dummy = rep(0, ncol(mf$Z$X_urban_dummy)),
-  u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
-  log_prec_rw_tips = 0,
+  # u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
+  # log_prec_rw_tips = 0,
 
   u_age = rep(0, ncol(mf$Z$Z_age)),
   log_prec_rw_age = 0,
@@ -180,7 +180,7 @@ tmb_int$random <- c("beta_0",
                     "beta_period",
                     "beta_tips_dummy",
                     # "beta_urban_dummy",
-                    "u_tips",
+                    # "u_tips",
                     "beta_spike_2000",
                     "beta_spike_1999",
                     "beta_spike_2001",
@@ -213,7 +213,7 @@ if(mf$mics_toggle) {
 
 f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
                                parameters = tmb_int$par,
-                               DLL = "dfertility",
+                               DLL = "no_tips",
                                silent=0,
                                checkParameterOrder=FALSE)
 })
@@ -224,7 +224,7 @@ if(is.null(parallel::mccollect(f)[[1]])) {
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                        parameters = tmb_int$par,
-                       DLL = "dfertility",
+                       DLL = "no_tips",
                        random = tmb_int$random,
                        hessian = FALSE)
 
