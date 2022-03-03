@@ -1,0 +1,30 @@
+script: bwa_areas.R
+
+artefacts:
+  - data:
+      description: area hierarchy dataset
+      filenames:
+        - bwa_areas.geojson
+  - staticgraph:
+      description: Summarise boundaries
+      filenames:
+        - check/bwa_area_hierarchy.png
+  - staticgraph:
+      description: Compare Moshupa boundary sources
+      filenames:
+        - check/moshupa-boundaries.pdf
+
+displayname: Make area hierarchy dataset
+
+packages:
+  - dplyr
+  - ggplot2
+  - gridExtra
+  - naomi
+  - naomi.utils
+  - pryr
+  - readr
+  - rmapshaper
+  - sf
+  - spud
+  - lwgeom

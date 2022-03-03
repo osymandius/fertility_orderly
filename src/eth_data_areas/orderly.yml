@@ -1,0 +1,45 @@
+script: eth_areas.R
+
+artefacts:
+  - data:
+      description: area hierarchy dataset
+      filenames:
+        - eth_areas.geojson
+  - data:
+      description: Datim area ID mapping
+      filenames:
+        - eth_area_map_datim_2022.csv
+  - staticgraph:
+      description: Ethiopia area hiearchy summary figure
+      filenames:
+      - eth_area_hierarchy.png
+  - staticgraph:
+      description: Comparisons of 2020 and 2021 zones
+      filenames:
+      - check/zone-2021-non-nested-overlap.pdf
+  - staticgraph:
+      description: Check boundaries
+      filenames:
+        - check/eth-clean-shapefile-comparison.pdf
+  - staticgraph:
+      description: Summary of 2021 to 2022 boundary changes
+      filenames:
+        - check/eth-2022-boundary-changes.pdf
+
+displayname: Make area hierarchy dataset
+
+packages:
+  - dplyr
+  - forcats
+  - ggplot2
+  - gridExtra
+  - naomi
+  - naomi.utils
+  - pryr
+  - readr
+  - rmapshaper
+  - sf
+  - spud
+  - stringr
+  - naomi.utils
+  - cowplot

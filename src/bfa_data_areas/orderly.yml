@@ -1,0 +1,28 @@
+script: bfa_areas.R
+
+artefacts:
+  - data:
+      description: area hierarchy dataset
+      filenames:
+        - bfa_areas.geojson
+  - staticgraph:
+      description: area hierarchy summary map
+      filenames:
+        - bfa_area_hierarchy.png
+  - staticgraph:
+      description: Check simplified boundaries
+      filenames:
+        - check/check-simplified-boundaries.png
+
+displayname: Make area hierarchy dataset
+
+packages:
+  - dplyr
+  - ggplot2
+  - naomi
+  - pryr
+  - rmapshaper
+  - sf
+  - spud
+  - stringr
+  - naomi.utils

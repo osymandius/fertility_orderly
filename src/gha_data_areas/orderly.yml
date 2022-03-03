@@ -1,0 +1,29 @@
+script: gha_areas.R
+
+artefacts:
+  - data:
+      description: Area hierarchy dataset
+      filenames:
+        - gha_areas.geojson
+  - staticgraph:
+      description: Area hierarchy summary
+      filenames:
+        - gha_area_hierarchy.png
+  - staticgraph:
+      description: Simplified boundary checks
+      filenames:
+        - check/ghana-district-boundaries-reduced.png
+        - check/greater-accra-district-boundaries-reduced.png
+
+displayname: Ghana area hierarchy dataset
+
+
+packages:
+  - dplyr
+  - forcats
+  - ggplot2
+  - pryr
+  - rmapshaper
+  - sf
+  - spud
+  - naomi.utils

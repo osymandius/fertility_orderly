@@ -1,0 +1,26 @@
+script: caf_areas.R
+
+artefacts:
+  - data:
+      description: area hierarchy dataset
+      filenames:
+        - caf_areas.geojson
+
+  - staticgraph:
+      description: Check boundaries
+      filenames:
+        - caf_area_hierarchy.png
+
+displayname: Make area hierarchy dataset
+
+packages:
+  - dplyr
+  - forcats
+  - ggplot2
+  - naomi.utils
+  - naomi
+  - pryr
+  - readr
+  - sf
+  - spud
+  - stringr

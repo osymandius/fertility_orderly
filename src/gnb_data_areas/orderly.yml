@@ -1,0 +1,26 @@
+script: gnb_areas.R
+
+artefacts:
+  - data:
+      description: area hierarchy dataset
+      filenames:
+        - gnb_areas.geojson
+
+
+  - staticgraph:
+      description: Check boundaries
+      filenames:
+        - check/gnb-hierarchy-plot.png
+
+displayname: Make area hierarchy dataset
+
+packages:
+  - spud
+  - dplyr
+  - sf
+  - pryr
+  - naomi.utils
+  - naomi
+  - readr
+  - ggplot2
+

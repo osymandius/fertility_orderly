@@ -1,0 +1,27 @@
+script: ben_areas.R
+
+artefacts:
+  - data:
+      description: area hierarchy dataset
+      filenames:
+        - ben_areas.geojson
+        - ben_areas_spectrum_national.geojson
+
+
+  - staticgraph:
+      description: Area hierarchy summary
+      filenames:
+        - ben_area_hierarchy.png
+
+displayname: Make area hierarchy dataset
+
+packages:
+  - spud
+  - dplyr
+  - sf
+  - pryr
+  - naomi.utils
+  - naomi
+  - readr
+  - ggplot2
+

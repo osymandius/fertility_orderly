@@ -1,0 +1,28 @@
+script: lbr_areas.R
+
+artefacts:
+  - data:
+      description: area hierarchy dataset
+      filenames:
+        - lbr_areas.geojson
+
+
+  - staticgraph:
+      description: Check boundaries
+      filenames:
+        - check/lbr-district-boundaries-reduced.png
+        - check/lbr-hierarchy-plot.png
+
+displayname: Make area hierarchy dataset
+
+packages:
+  - spud
+  - dplyr
+  - sf
+  - pryr
+  - naomi.utils
+  - naomi
+  - readr
+  - ggplot2
+  - rmapshaper
+

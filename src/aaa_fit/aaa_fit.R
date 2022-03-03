@@ -37,8 +37,8 @@ mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
 validate_model_frame(mf, areas)
 
 # TMB::compile("src/aaa_fit/no_tips.cpp", flags = "-w")               # Compile the C++ file
-# TMB::compile("no_tips.cpp", flags = "-w")               # Compile the C++ file
-dyn.load(dynlib("no_tips"))
+TMB::compile("phia.cpp", flags = "-w")               # Compile the C++ file
+dyn.load(dynlib("phia"))
 
 tmb_int <- list()
 
@@ -122,8 +122,8 @@ tmb_int$par <- list(
 
   beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
   # beta_urban_dummy = rep(0, ncol(mf$Z$X_urban_dummy)),
-  # u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
-  # log_prec_rw_tips = 0,
+  u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
+  log_prec_rw_tips = 0,
 
   u_age = rep(0, ncol(mf$Z$Z_age)),
   log_prec_rw_age = 0,
@@ -180,7 +180,7 @@ tmb_int$random <- c("beta_0",
                     "beta_period",
                     "beta_tips_dummy",
                     # "beta_urban_dummy",
-                    # "u_tips",
+                    "u_tips",
                     "beta_spike_2000",
                     "beta_spike_1999",
                     "beta_spike_2001",
@@ -213,7 +213,7 @@ if(mf$mics_toggle) {
 
 f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
                                parameters = tmb_int$par,
-                               DLL = "no_tips",
+                               DLL = "phia",
                                silent=0,
                                checkParameterOrder=FALSE)
 })
@@ -224,7 +224,7 @@ if(is.null(parallel::mccollect(f)[[1]])) {
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                        parameters = tmb_int$par,
-                       DLL = "no_tips",
+                       DLL = "phia",
                        random = tmb_int$random,
                        hessian = FALSE)
 
@@ -249,10 +249,10 @@ fit <- naomi::sample_tmb(fit, random_only=TRUE)
 tmb_results <- dfertility::tmb_outputs(fit, mf, areas)
 write_csv(tmb_results, "fr.csv")
  
-# fit <- naomi::sample_tmb(fit, random_only=FALSE)
-# hyper <- fit$sample %>%
-#   list_modify("lambda_out" = zap(), "tfr_out" = zap())
-# saveRDS(hyper, "hyper.rds")
+fit <- naomi::sample_tmb(fit, random_only=FALSE)
+hyper <- fit$sample %>%
+  list_modify("lambda_out" = zap(), "tfr_out" = zap())
+saveRDS(hyper, "hyper.rds")
 
 fr_plot <- read.csv("depends/fertility_fr_plot.csv")
 

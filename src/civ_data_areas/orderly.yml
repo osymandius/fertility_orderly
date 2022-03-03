@@ -1,0 +1,30 @@
+script: civ_areas.R
+
+artefacts:
+  - data:
+      description: area hierarchy dataset
+      filenames:
+        - civ_areas.geojson
+        - civ_area_hierarchy.csv
+  - staticgraph:
+      description: Area hierarchy summary map
+      filenames:
+       - civ_area_hierarchy.png
+  - staticgraph:
+      description: Simplfied and cleaned boundary checks
+      filenames:
+        - check/check-simplified-boundaries.png
+        - check/check-simplified-boundaries_abidjan.png
+
+displayname: Cote d'Ivoire area hierarchy dataset
+
+packages:
+  - dplyr
+  - ggplot2
+  - naomi
+  - naomi.utils
+  - pryr
+  - readr
+  - rmapshaper
+  - sf
+  - spud  

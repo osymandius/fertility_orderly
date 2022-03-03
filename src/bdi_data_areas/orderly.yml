@@ -1,0 +1,30 @@
+script: bdi_areas.R
+
+artefacts:
+  - data:
+      description: area hierarchy dataset
+      filenames:
+        - bdi_areas.geojson
+  - staticgraph:
+      description: area hierarchy summary map
+      filenames:
+        - bdi_area_hierarchy.png
+  - staticgraph:
+      description: summary of boundary changes
+      filenames:
+        - check/bdi-2022-boundary-changes.pdf
+
+displayname: Make area hierarchy dataset
+
+packages:
+  - dplyr
+  - forcats
+  - ggplot2
+  - naomi
+  - naomi.utils
+  - spud
+  - pryr
+  - readr
+  - rmapshaper
+  - sf
+  - stringr

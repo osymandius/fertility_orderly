@@ -1,0 +1,28 @@
+script: cod_areas.R
+
+artefacts:
+  - data:
+      description: area hierarchy dataset
+      filenames:
+        - cod_areas.geojson
+
+  - staticgraph:
+      description: Check boundaries
+      filenames:
+        - check/hierarchy-plot.png
+        - check/cod-check-simplified-boundaries.png
+
+displayname: Make area hierarchy dataset
+
+packages:
+  - dplyr
+  - forcats
+  - ggplot2
+  - naomi
+  - spud
+  - pryr
+  - readr
+  - rmapshaper
+  - sf
+  - naomi.utils
+

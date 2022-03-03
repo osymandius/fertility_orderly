@@ -1,0 +1,34 @@
+script: zwe_areas.R
+
+artefacts:
+  - data:
+      description: area hierarchy dataset
+      filenames:
+        - zwe_areas.geojson
+        - zwe_area_boundaries.geojson
+        - zwe_area_hierarchy.csv
+        - zwe_area_levels.csv
+  - staticgraph:
+      description: Check boundaries
+      filenames:
+        - check/kadoma-urban-hole_5-november-dhis2-boundaries.png
+        - check/harare_5-november-dhis2-boundaries.png
+        - check/isaac_uscb_shapefile_compare.png
+        - check/isaac_uscb_shapefile_fragmented_districts_compare.png
+        - check/zwe-hierarchy-plot.png
+
+displayname: Make area hierarchy dataset
+
+packages:
+  - dplyr
+  - forcats
+  - ggplot2
+  - naomi
+  - spud
+  - pryr
+  - readr
+  - rmapshaper
+  - sf
+  - tidyr
+  - gridExtra
+  - naomi.utils
