@@ -36,7 +36,7 @@ mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
 
 validate_model_frame(mf, areas)
 
-# TMB::compile("src/aaa_fit/no_tips.cpp", flags = "-w")               # Compile the C++ file
+TMB::compile("src/aaa_fit/no_tips.cpp", flags = "-w")               # Compile the C++ file
 TMB::compile("phia.cpp", flags = "-w")               # Compile the C++ file
 dyn.load(dynlib("phia"))
 
