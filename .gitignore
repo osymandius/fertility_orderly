@@ -10,6 +10,7 @@ archive
 draft
 depends
 backup
+runner
 metadata
 
 # Orderly will store data in a sqlite database, by default orderly.sqlite
