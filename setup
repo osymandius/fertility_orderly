@@ -1,0 +1,53 @@
+#!/usr/bin/env Rscript
+local({
+  packages <- c("orderly")
+  msg <- setdiff(packages, .packages(TRUE))
+  if (length(msg) > 0L) {
+    stop("Please install required packages: ", paste(msg, collapse = ", "))
+  }
+
+  'I need your github personal access token.  If you do not have one, then
+you need to go to
+
+1. Go to https://github.com/settings/tokens
+2. Click "**Generate new token**"
+3. Enter a "**Token description**" (e.g., orderly web access)
+4. Select "**user** Update all user data"
+5. Click **Generate token**
+6. Copy the resulting token"
+7. Paste below at the prompt
+' -> msg
+
+  filename <- "orderly_envir.yml"
+  if (file.exists(filename)) {
+    message(sprintf("'%s' already exists: remove before rerunning", filename))
+    return(invisible())
+  }
+
+  read_line <- function(prompt) {
+    if (interactive()) {
+      readline(prompt)
+    } else {
+      message(prompt, appendLF = FALSE)
+      con <- file("stdin", "r")
+      on.exit(close(con))
+      readLines(con, n = 1)
+    }
+  }
+
+  token <- Sys.getenv("ORDERLYWEB_GITHUB_TOKEN", NA_character_)
+  if (is.na(token)) {
+    cat(msg)
+
+    token <- read_line("Your github token: ")
+    re <- "(^\\s*[\"']?|[\"']?\\s*$)"
+    token <- gsub(re, "", token, perl = TRUE)
+  }
+
+  env <- list(
+    "ORDERLYWEB_GITHUB_TOKEN" = token
+  )
+
+  message(sprintf("Writing '%s'", filename))
+  yaml::write_yaml(env, filename)
+})
