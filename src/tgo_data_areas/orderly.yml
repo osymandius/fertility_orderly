@@ -24,3 +24,4 @@ packages:
   - ggplot2
   - naomi.utils
   - pryr
+  - rmapshaper
