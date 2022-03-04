@@ -1,0 +1,36 @@
+script: script.R
+
+artefacts:
+  - staticgraph:
+      description: Check boundaries are clean
+      filenames:
+        - check/check-simplified-boundaries.png
+        - check/check-cleaned-boundaries.png	
+  - data:
+      description: Traditional Authority level area hierarchy
+      filenames:
+        - mwi_areas_ta.geojson
+  - data:
+      description: Health district level area hierarchy
+      filenames:
+        - mwi_areas.geojson
+        - mwi_area_boundaries.geojson
+        - mwi_area_hierarchy.csv
+        - mwi_area_levels.csv
+        - mwi_areas_wide.zip
+  - staticgraph:
+      description: area hierarchy summary map
+      filenames:
+        - mwi_area_hierarchy.png
+
+packages:
+  - dplyr
+  - forcats
+  - ggplot2
+  - spud 
+  - pryr
+  - naomi
+  - readr
+  - rmapshaper
+  - sf
+  - withr

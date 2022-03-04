@@ -1,0 +1,38 @@
+script: areas.R
+
+artefacts:
+  - data:
+      description: Area hierarchy datasets
+      filenames:
+        - zaf_areas.geojson
+        - zaf_area_boundaries.geojson
+        - zaf_area_hierarchy.csv
+        - zaf_area_levels.csv
+        - zaf_area_map_dhis2.csv
+  - data:
+      description: Coarse version of area boundaries
+      filenames: 
+        - zaf_area_boundaries_coarse.geojson
+  - staticgraph:
+      description: Area hierarchy boundaries at each level
+      filenames:
+        - zaf_area_hierarchy.png
+    
+displayname: South Africa area hierarchy dataset
+
+packages:
+  - dplyr
+  - forcats
+  - ggplot2  
+  - naomi
+  - naomi.utils
+  - readr
+  - rmapshaper  
+  - sf
+  - tidyr
+
+global_resources:
+  raw/mdb/2016-Boundaries-District.zip: municipal-demarcation-board/2016-Boundaries-District.zip
+  raw/mdb/2016-Boundaries-Local.zip: municipal-demarcation-board/2016-Boundaries-Local.zip  
+  raw/r2c/ZA_HSD.zip: r2c/ZA_HSD.zip
+  raw/dhis2/vwOrgunitStructureOU4.csv: dhis2/meta/vwOrgunitStructureOU4.csv
