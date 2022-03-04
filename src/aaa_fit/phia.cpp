@@ -86,16 +86,16 @@ Type objective_function<Type>::operator() ()
 
   // nll -= dnorm(beta_tips_dummy, Type(0), Type(sqrt(1/0.001)), true).sum();
   // nll -= dnorm(beta_tips_dummy, Type(0.05), Type(0.1), true).sum();
-  nll -= dnorm(beta_tips_dummy, Type(0.1), Type(0.1), true).sum();
+  nll -= dnorm(beta_tips_dummy, Type(0.12), Type(0.08), true).sum();
 
 
   // nll -= dlgamma(log_prec_rw_tips, Type(1), Type(20000), true);
   // nll -= dlgamma(log_prec_rw_tips, Type(31), Type(1/3.922), true);
 
   Type prec_rw_tips = exp(log_prec_rw_tips);
-  nll -= dgamma(prec_rw_tips, Type(1), Type(2000), true);
-  // nll -= dnorm(prec_rw_tips, Type(5), Type(2.73));
-
+  // nll -= dgamma(prec_rw_tips, Type(1), Type(2000), true);
+  nll -= dnorm(prec_rw_tips, Type(5.5), Type(1.46));
+  
   nll -= Type(-0.5) * (u_tips * (R_tips * u_tips)).sum();
   nll -= dnorm(u_tips.sum(), Type(0), Type(0.01) * u_tips.size(), true);
 
@@ -170,8 +170,8 @@ Type objective_function<Type>::operator() ()
 
 
   // // RW
-  nll -= Type(-0.5) * (u_period * (R_period * u_period)).sum();
-  nll -= dnorm(u_period.sum(), Type(0), Type(0.01) * u_period.size(), true);
+  // nll -= Type(-0.5) * (u_period * (R_period * u_period)).sum();
+  // nll -= dnorm(u_period.sum(), Type(0), Type(0.01) * u_period.size(), true);
 
   // // AR1
   // PARAMETER(lag_logit_phi_period);
@@ -354,25 +354,22 @@ Type objective_function<Type>::operator() ()
                      + Z_interaction3 * eta3_v * sqrt(1/prec_eta3)
                      );
 
+  
+  DATA_MATRIX(X_spike_2000);
+  DATA_MATRIX(X_spike_1999);
+  DATA_MATRIX(X_spike_2001);
+  
   PARAMETER_VECTOR(beta_spike_2000);
   PARAMETER_VECTOR(beta_spike_1999);
   PARAMETER_VECTOR(beta_spike_2001);
 
-  // DATA_MATRIX(X_spike_2000_dhs);
-  // DATA_MATRIX(X_spike_1999_dhs);
-  // DATA_MATRIX(X_spike_2001_dhs);
-
-  // DATA_MATRIX(X_spike_2000_ais);
-  // DATA_MATRIX(X_spike_1999_ais);
-  // DATA_MATRIX(X_spike_2001_ais);
-
-  DATA_MATRIX(X_spike_2000);
-  DATA_MATRIX(X_spike_1999);
-  DATA_MATRIX(X_spike_2001);
-
   nll -= dnorm(beta_spike_2000, Type(0), Type(2.5), true).sum();
   nll -= dnorm(beta_spike_1999, Type(0), Type(2.5), true).sum();
   nll -= dnorm(beta_spike_2001, Type(0), Type(2.5), true).sum();
+
+  vector<Type> spike_1999_lh(X_spike_1999 * beta_spike_1999);
+  vector<Type> spike_2000_lh(X_spike_2000 * beta_spike_2000);
+  vector<Type> spike_2001_lh(X_spike_2001 * beta_spike_2001);
 
   vector<Type> mu_obs_pred_naomi(M_naomi_obs * log_lambda
                           + log_offset_naomi
@@ -387,10 +384,7 @@ Type objective_function<Type>::operator() ()
 
   // vector<Type> u_smooth_lh(Z_smooth_iid * u_smooth_iid * sqrt(1/prec_smooth_iid));
   vector<Type> tips_lh(Z_tips * u_tips_constr * sqrt(1/prec_rw_tips));
-  vector<Type> spike_1999_lh(X_spike_1999 * beta_spike_1999);
-  vector<Type> spike_2000_lh(X_spike_2000 * beta_spike_2000);
-  vector<Type> spike_2001_lh(X_spike_2001 * beta_spike_2001);
-
+  
   vector<Type> mu_obs_pred_dhs(X_extract_dhs * (M_full_obs * log(lambda_out))
                                 + X_extract_dhs * tips_lh
                                 + X_tips_dummy * beta_tips_dummy          // TIPS fixed effect
