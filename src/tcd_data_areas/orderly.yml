@@ -22,4 +22,5 @@ packages:
   - naomi
   - readr
   - ggplot2
+  - stringr
 
