@@ -121,3 +121,5 @@ sf::st_write(tgo_areas_spectrum_national, "tgo_areas_spectrum_national.geojson",
 hierarchy_plot <- plot_area_hierarchy_summary(tgo_areas)
 
 ggsave("check/tgo-hierarchy-plot.png", hierarchy_plot, h = 6, w = 12)
+
+while (!is.null(dev.list())) dev.off()
