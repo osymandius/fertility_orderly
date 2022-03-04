@@ -174,3 +174,5 @@ sf::write_sf(bdi_areas, "bdi_areas.geojson", delete_dsn = TRUE)
 p_bdi_areas <- plot_area_hierarchy_summary(bdi_areas)
 
 ggsave("bdi_area_hierarchy.png", p_bdi_areas, h = 6, w = 12)
+
+while (!is.null(dev.list())) dev.off()
