@@ -27,3 +27,4 @@ packages:
   - sf
   - spud
   - naomi.utils
+  - readr
