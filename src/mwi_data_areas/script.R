@@ -164,3 +164,5 @@ p_mwi_areas <- mwi_areas %>%
 ggsave("mwi_area_hierarchy.png", p_mwi_areas, h = 6, w = 12)
 
 dev.off()
+
+while (!is.null(dev.list())) dev.off()
