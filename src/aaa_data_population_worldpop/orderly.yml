@@ -115,10 +115,10 @@ depends:
     id: latest
     use:
       depends/moz_areas.geojson: moz_areas.geojson
-  # mwi_data_areas:
-  #   id: latest
-  #   use:
-  #     depends/mwi_areas.geojson: mwi_areas.geojson
+  mwi_data_areas:
+    id: latest
+    use:
+      depends/mwi_areas.geojson: mwi_areas.geojson
   nam_data_areas:
     id: latest
     use:
