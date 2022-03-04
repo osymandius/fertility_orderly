@@ -115,10 +115,10 @@ depends:
     id: latest
     use:
       depends/moz_areas.geojson: moz_areas.geojson
-  mwi_data_areas:
-    id: latest
-    use:
-      depends/mwi_areas.geojson: mwi_areas.geojson
+  # mwi_data_areas:
+  #   id: latest
+  #   use:
+  #     depends/mwi_areas.geojson: mwi_areas.geojson
   nam_data_areas:
     id: latest
     use:
@@ -167,10 +167,10 @@ depends:
     id: latest
     use:
       depends/uga_areas.geojson: uga_areas.geojson
-  zaf_data_areas:
-    id: latest
-    use:
-      depends/zaf_areas.geojson: zaf_areas.geojson
+  # zaf_data_areas:
+  #   id: latest
+  #   use:
+  #     depends/zaf_areas.geojson: zaf_areas.geojson
   zmb_data_areas:
     id: latest
     use:
