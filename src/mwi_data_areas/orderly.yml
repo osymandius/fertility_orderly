@@ -34,3 +34,4 @@ packages:
   - rmapshaper
   - sf
   - withr
+  - naomi.utils
