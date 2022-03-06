@@ -346,6 +346,11 @@ depends:
     use:
       depends/gmb_asfr.csv: gmb_asfr.csv
       depends/gmb_fr_plot.csv: gmb_fr_plot.csv
+  gnb_asfr:
+    id: latest
+    use:
+      depends/gnb_asfr.csv: gnb_asfr.csv
+      depends/gnb_fr_plot.csv: gnb_fr_plot.csv
   ken_asfr:
     id: latest
     use:

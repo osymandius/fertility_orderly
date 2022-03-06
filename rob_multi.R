@@ -15,8 +15,8 @@ iso <- c("KEN", "LSO", "MWI", "SWZ", "ZWE", "AGO", "NAM", "RWA", "SEN", "TZA", "
 # "GIN",
 
 lapply(iso, function(x){
-  orderly_pull_archive("aaa_scale_pop", id = paste0('latest(parameter:iso3 == "', x, '")'), remote = "fertility", recursive=FALSE)
-  orderly_pull_archive("aaa_inputs_orderly_pull", id = paste0('latest(parameter:iso3 == "', x, '")'), remote = "fertility", recursive=FALSE)
+  orderly_pull_archive("aaa_scale_pop", id = paste0('latest(parameter:iso3 == "', x, '")'), remote = "real", recursive=FALSE)
+  orderly_pull_archive("aaa_inputs_orderly_pull", id = paste0('latest(parameter:iso3 == "', x, '")'), remote = "real", recursive=FALSE)
 })
 
 latest_orderly_pulls <- lapply(iso, function(x){
@@ -34,7 +34,8 @@ population <- lapply(latest_population_pulls, function(x) {
 })
 
 areas <- lapply(latest_orderly_pulls, function(x) {
-  read_sf(paste0("archive/aaa_inputs_orderly_pull/", x, "/naomi_areas.geojson"))
+  read_sf(paste0("archive/aaa_inputs_orderly_pull/", x, "/naomi_areas.geojson")) %>%
+    st_make_valid()
 })
 
 asfr <- lapply(latest_orderly_pulls, function(x) {
@@ -68,7 +69,7 @@ dyn.load(dynlib("multi_country"))
 
 mf$observations$full_obs <- mf$observations$full_obs %>%
   mutate(id.zeta1 = factor(group_indices(., tips, survey_id)),
-         id.zeta1 = fct_expand(id.zeta1, as.character(1:(length(unique(mf$observations$full_obs$survey_id))*15))))
+         id.zeta1 = forcats::fct_expand(id.zeta1, as.character(1:(length(unique(mf$observations$full_obs$survey_id))*15))))
 
 tmb_int <- list()
 

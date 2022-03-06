@@ -9,18 +9,20 @@ areas <- read_sf("depends/naomi_areas.geojson") %>%
   mutate(iso3 = iso3) %>%
   st_make_valid()
 
-asfr <- read.csv("depends/fertility_asfr.csv") %>%
-  filter(survtype != "MICS")
+asfr <- read.csv("depends/fertility_asfr.csv")
+  # filter(survtype != "MICS")
 
-mics_asfr <- read.csv("resources/mics_asfr.csv") %>%
-  filter(iso3 == iso3_c)
+# mics_asfr <- read.csv("resources/mics_asfr.csv") %>%
+#   filter(iso3 == iso3_c)
 
 phia_asfr <- read.csv("resources/phia_asfr.csv") %>%
   separate(area_id, into=c("iso3", NA), sep = 3, remove = FALSE) %>%
   filter(iso3 == iso3_c) %>%
   mutate(survtype = "PHIA")
 
-asfr <- asfr %>% bind_rows(mics_asfr, phia_asfr)
+asfr <- asfr %>% bind_rows(
+  # mics_asfr, 
+  phia_asfr)
 
 lvl_map <- read.csv("resources/iso_mapping_fit.csv")
 lvl <- lvl_map$fertility_fit_level[lvl_map$iso3 == iso3]

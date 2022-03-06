@@ -4,13 +4,13 @@ artefacts:
   - data:
       description: survey indicator dataset
       filenames:
-        - gnb_dhs_clusters.csv
-        # - gnb_mics_women.csv
-        # - gnb_mics_births_to_women.csv
-  - staticgraph:
-      description: Check DHS region cluster assignment
-      filenames:
-        - check/gnb_dhs-cluster-check.pdf
+        # - gnb_dhs_clusters.csv
+        - gnb_mics_women.csv
+        - gnb_mics_births_to_women.csv
+  # - staticgraph:
+  #     description: Check DHS region cluster assignment
+  #     filenames:
+  #       - check/gnb_dhs-cluster-check.pdf
 
 
 packages:

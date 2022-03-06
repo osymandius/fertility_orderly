@@ -4,8 +4,8 @@ artefacts:
   - data:
       description: gnb ASFR dataset
       filenames:
-        - gnb_dhs_asfr.csv
-        # - gnb_mics_asfr.csv
+        # - gnb_dhs_asfr.csv
+        - gnb_mics_asfr.csv
         - gnb_asfr.csv
         - gnb_fr_plot.csv
   - staticgraph:
@@ -34,9 +34,9 @@ depends:
   gnb_survey:
     id: latest
     use:
-      depends/gnb_dhs_clusters.csv: gnb_dhs_clusters.csv
-      # depends/gnb_mics_women.csv: gnb_mics_women.csv
-      # depends/gnb_mics_births_to_women.csv: gnb_mics_births_to_women.csv
+      # depends/gnb_dhs_clusters.csv: gnb_dhs_clusters.csv
+      depends/gnb_mics_women.csv: gnb_mics_women.csv
+      depends/gnb_mics_births_to_women.csv: gnb_mics_births_to_women.csv
   gnb_data_areas:
     id: latest
     use:
