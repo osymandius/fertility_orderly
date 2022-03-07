@@ -456,7 +456,7 @@ Type objective_function<Type>::operator() ()
 
     nll -= dpois(births_obs_mics, exp(mu_obs_pred_mics), true).sum(); 
 
-    // REPORT(mu_obs_pred_mics);
+    REPORT(mu_obs_pred_mics);
 
   }
 
@@ -512,9 +512,10 @@ Type objective_function<Type>::operator() ()
 
   // REPORT(beta_0);
 
-  // Posterior predictive checks
-  // REPORT(mu_obs_pred_ais);
-  // REPORT(mu_obs_pred_dhs);
+  Posterior predictive checks
+  REPORT(mu_obs_pred_ais);
+  REPORT(mu_obs_pred_dhs);
+  REPORT(mu_obs_pred_phia);
 
 
   return nll;
