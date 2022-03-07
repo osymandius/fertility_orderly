@@ -32,7 +32,7 @@ areas_wide <- spread_areas(areas)
 #' 
 #' #' # Survey clusters dataset
 #' 
-#' survey_clusters <- create_survey_clusters_dhs(surveys)
+#' survey_clusters <- create_survey_clusters_dhs(surveys, clear_rdhs_cache = TRUE)
 #' 
 #' #' Snap survey clusters to areas
 #' 
