@@ -43,7 +43,7 @@ mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
 validate_model_frame(mf, areas)
 
 # TMB::compile("src/aaa_fit/tmb_all_level_poisson.cpp", flags = "-w")               # Compile the C++ file
-TMB::compile("rw.cpp", flags = "-w")               # Compile the C++ file
+# TMB::compile("rw.cpp", flags = "-w")               # Compile the C++ file
 dyn.load(dynlib("rw"))
 
 tmb_int <- list()
@@ -372,7 +372,7 @@ tmb_results <- tmb_results %>%
 
 ######### RW1 + trend
 
-TMB::compile("rw1_trend.cpp", flags = "-w")               # Compile the C++ file
+# TMB::compile("rw1_trend.cpp", flags = "-w")               # Compile the C++ file
 dyn.load(dynlib("rw1_trend"))
 
 tmb_int$data <- list(
@@ -558,7 +558,7 @@ tmb_results <- tmb_results %>%
 
 ########### ARIMA (1,1,0)
 
-TMB::compile("arima.cpp", flags = "-w")               # Compile the C++ file
+# TMB::compile("arima.cpp", flags = "-w")               # Compile the C++ file
 dyn.load(dynlib("arima"))
 
 tmb_int$par <- list(
@@ -659,7 +659,7 @@ tmb_results <- tmb_results %>%
 
 ########### ARIMA with trend
 
-TMB::compile("arima_trend.cpp", flags = "-w")               # Compile the C++ file
+# TMB::compile("arima_trend.cpp", flags = "-w")               # Compile the C++ file
 dyn.load(dynlib("arima_trend"))
 
 tmb_int$par <- list(
@@ -759,7 +759,7 @@ tmb_results <- tmb_results %>%
 
 ########### AR1
 
-TMB::compile("ar1.cpp", flags = "-w")               # Compile the C++ file
+# TMB::compile("ar1.cpp", flags = "-w")               # Compile the C++ file
 dyn.load(dynlib("ar1"))
 
 
@@ -861,7 +861,7 @@ tmb_results <- tmb_results %>%
 
 ########## AR1 + trend
 
-TMB::compile("ar1_trend.cpp", flags = "-w")               # Compile the C++ file
+# TMB::compile("ar1_trend.cpp", flags = "-w")               # Compile the C++ file
 dyn.load(dynlib("ar1_trend"))
 
 
