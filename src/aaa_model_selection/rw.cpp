@@ -512,7 +512,7 @@ Type objective_function<Type>::operator() ()
 
   // REPORT(beta_0);
 
-  Posterior predictive checks
+  // Posterior predictive checks
   REPORT(mu_obs_pred_ais);
   REPORT(mu_obs_pred_dhs);
   REPORT(mu_obs_pred_phia);

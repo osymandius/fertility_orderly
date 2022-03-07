@@ -5,12 +5,17 @@ artefacts:
       description: fertility indicator dataset
       filenames:
         - fr.csv
+  - data:
+      description: posterior predictions
+      filenames:
+        - pred.csv
 
 
 global_resources:
   resources/iso_mapping_fit.csv: iso_mapping_fit.csv
   resources/mics_asfr.csv: mics_asfr.csv
   resources/moz_areas_maputo.geojson: moz_areas_maputo.geojson
+  resources/phia_asfr.csv: phia_asfr.csv
 
 resources:
   - ar1_trend.cpp

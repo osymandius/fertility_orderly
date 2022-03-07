@@ -26,7 +26,7 @@ asfr <- asfr %>% bind_rows(
 end_year <- 2016
 
 asfr <- asfr %>%
-  filter(survyear < endyear)
+  filter(survyear < end_year)
 
 lvl_map <- read.csv("resources/iso_mapping_fit.csv")
 lvl <- lvl_map$fertility_fit_level[lvl_map$iso3 == iso3]
@@ -43,7 +43,7 @@ mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
 validate_model_frame(mf, areas)
 
 # TMB::compile("src/aaa_fit/tmb_all_level_poisson.cpp", flags = "-w")               # Compile the C++ file
-# TMB::compile("rw.cpp", flags = "-w")               # Compile the C++ file
+TMB::compile("rw.cpp", flags = "-w")               # Compile the C++ file
 dyn.load(dynlib("rw"))
 
 tmb_int <- list()
@@ -57,6 +57,7 @@ tmb_int$data <- list(
   X_extract_dhs = mf$X_extract$X_extract_dhs,
   X_extract_ais = mf$X_extract$X_extract_ais,
   X_extract_mics = mf$X_extract$X_extract_mics,
+  X_extract_phia = mf$X_extract$X_extract_phia,
   # Z_tips = mf$Z$Z_tips,
   Z_tips_dhs = mf$Z$Z_tips_dhs,
   Z_tips_ais = mf$Z$Z_tips_ais,
@@ -92,6 +93,9 @@ tmb_int$data <- list(
 
   log_offset_ais = log(filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS"))$pys),
   births_obs_ais = filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS"))$births,
+  
+  log_offset_phia = log(filter(mf$observations$full_obs, survtype == "PHIA")$pys),
+  births_obs_phia = filter(mf$observations$full_obs, survtype == "PHIA")$births,
 
   pop = mf$mf_model$population,
   # A_asfr_out = mf$out$A_asfr_out,
@@ -238,6 +242,19 @@ fit <- naomi::sample_tmb(fit, random_only=TRUE)
 tmb_results <- dfertility::tmb_outputs(fit, mf, areas) %>%
   mutate(source = "rw")
 
+dhs_pred <- filter(mf$observations$full_obs, survtype == "DHS") %>%
+  mutate(source = "rw") %>%
+  cbind(data.frame(fit$sample$mu_obs_pred_dhs))
+
+ais_pred <- filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
+  mutate(source = "rw") %>%
+  cbind(data.frame(fit$sample$mu_obs_pred_ais))
+
+phia_pred <- filter(mf$observations$full_obs, survtype == "PHIA") %>%
+  mutate(source = "rw") %>%
+  cbind(data.frame(fit$sample$mu_obs_pred_phia))
+
+
 ################ RW2
 
 tmb_int$data <- list(
@@ -368,6 +385,27 @@ tmb_results <- tmb_results %>%
   bind_rows(
     dfertility::tmb_outputs(fit, mf, areas) %>%
       mutate(source = "rw2")
+  )
+
+dhs_pred <- dhs_pred %>%
+  bind_rows(
+    filter(mf$observations$full_obs, survtype == "DHS") %>%
+      mutate(source = "rw2") %>%
+      cbind(data.frame(fit$sample$mu_obs_pred_dhs))
+  )
+
+ais_pred <- ais_pred %>%
+  bind_rows(
+    filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
+      mutate(source = "rw2") %>%
+      cbind(data.frame(fit$sample$mu_obs_pred_ais))
+  )
+
+phia_pred <- phia_pred %>%
+  bind_rows(
+    filter(mf$observations$full_obs, survtype == "PHIA") %>%
+      mutate(source = "rw2") %>%
+      cbind(data.frame(fit$sample$mu_obs_pred_phia))
   )
 
 ######### RW1 + trend
@@ -556,6 +594,28 @@ tmb_results <- tmb_results %>%
       mutate(source = "rw + trend")
   )
 
+dhs_pred <- dhs_pred %>%
+  bind_rows(
+    filter(mf$observations$full_obs, survtype == "DHS") %>%
+      mutate(source = "rw + trend") %>%
+      cbind(data.frame(fit$sample$mu_obs_pred_dhs))
+  )
+
+ais_pred <- ais_pred %>%
+  bind_rows(
+    filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
+      mutate(source = "rw + trend") %>%
+      cbind(data.frame(fit$sample$mu_obs_pred_ais))
+  )
+
+phia_pred <- phia_pred %>%
+  bind_rows(
+    filter(mf$observations$full_obs, survtype == "PHIA") %>%
+      mutate(source = "rw + trend") %>%
+      cbind(data.frame(fit$sample$mu_obs_pred_phia))
+  )
+
+
 ########### ARIMA (1,1,0)
 
 # TMB::compile("arima.cpp", flags = "-w")               # Compile the C++ file
@@ -657,6 +717,28 @@ tmb_results <- tmb_results %>%
       mutate(source = "ARIMA(1,1,0)")
   )
 
+dhs_pred <- dhs_pred %>%
+  bind_rows(
+    filter(mf$observations$full_obs, survtype == "DHS") %>%
+      mutate(source = "ARIMA(1,1,0)") %>%
+      cbind(data.frame(fit$sample$mu_obs_pred_dhs))
+  )
+
+ais_pred <- ais_pred %>%
+  bind_rows(
+    filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
+      mutate(source = "ARIMA(1,1,0)") %>%
+      cbind(data.frame(fit$sample$mu_obs_pred_ais))
+  )
+
+phia_pred <- phia_pred %>%
+  bind_rows(
+    filter(mf$observations$full_obs, survtype == "PHIA") %>%
+      mutate(source = "ARIMA(1,1,0)") %>%
+      cbind(data.frame(fit$sample$mu_obs_pred_phia))
+  )
+
+
 ########### ARIMA with trend
 
 # TMB::compile("arima_trend.cpp", flags = "-w")               # Compile the C++ file
@@ -756,6 +838,28 @@ tmb_results <- tmb_results %>%
     dfertility::tmb_outputs(fit, mf, areas) %>%
       mutate(source = "ARIMA(1,1,0) + trend")
   )
+
+dhs_pred <- dhs_pred %>%
+  bind_rows(
+    filter(mf$observations$full_obs, survtype == "DHS") %>%
+      mutate(source = "ARIMA(1,1,0) + trend") %>%
+      cbind(data.frame(fit$sample$mu_obs_pred_dhs))
+  )
+
+ais_pred <- ais_pred %>%
+  bind_rows(
+    filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
+      mutate(source = "ARIMA(1,1,0) + trend") %>%
+      cbind(data.frame(fit$sample$mu_obs_pred_ais))
+  )
+
+phia_pred <- phia_pred %>%
+  bind_rows(
+    filter(mf$observations$full_obs, survtype == "PHIA") %>%
+      mutate(source = "ARIMA(1,1,0) + trend") %>%
+      cbind(data.frame(fit$sample$mu_obs_pred_phia))
+  )
+
 
 ########### AR1
 
@@ -859,6 +963,28 @@ tmb_results <- tmb_results %>%
       mutate(source = "AR1")
   )
 
+dhs_pred <- dhs_pred %>%
+  bind_rows(
+    filter(mf$observations$full_obs, survtype == "DHS") %>%
+      mutate(source = "AR1") %>%
+      cbind(data.frame(fit$sample$mu_obs_pred_dhs))
+  )
+
+ais_pred <- ais_pred %>%
+  bind_rows(
+    filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
+      mutate(source = "AR1") %>%
+      cbind(data.frame(fit$sample$mu_obs_pred_ais))
+  )
+
+phia_pred <- phia_pred %>%
+  bind_rows(
+    filter(mf$observations$full_obs, survtype == "PHIA") %>%
+      mutate(source = "AR1") %>%
+      cbind(data.frame(fit$sample$mu_obs_pred_phia))
+  )
+
+
 ########## AR1 + trend
 
 # TMB::compile("ar1_trend.cpp", flags = "-w")               # Compile the C++ file
@@ -961,4 +1087,28 @@ tmb_results <- tmb_results %>%
       mutate(source = "AR1 + trend")
   )
 
+dhs_pred <- dhs_pred %>%
+  bind_rows(
+    filter(mf$observations$full_obs, survtype == "DHS") %>%
+      mutate(source = "AR1 + trend") %>%
+      cbind(data.frame(fit$sample$mu_obs_pred_dhs))
+  )
+
+ais_pred <- ais_pred %>%
+  bind_rows(
+    filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
+      mutate(source = "AR1 + trend") %>%
+      cbind(data.frame(fit$sample$mu_obs_pred_ais))
+  )
+
+phia_pred <- phia_pred %>%
+  bind_rows(
+    filter(mf$observations$full_obs, survtype == "PHIA") %>%
+      mutate(source = "AR1 + trend") %>%
+      cbind(data.frame(fit$sample$mu_obs_pred_phia))
+  )
+
+pred <- bind_rows(dhs_pred, ais_pred, phia_pred)
+
 write_csv(tmb_results, "fr.csv")
+write_csv(pred, "pred.csv")
