@@ -26,6 +26,7 @@ Type objective_function<Type>::operator() ()
   DATA_SPARSE_MATRIX(X_extract_dhs);
   DATA_SPARSE_MATRIX(X_extract_ais);
   DATA_SPARSE_MATRIX(X_extract_mics);
+  DATA_SPARSE_MATRIX(X_extract_phia);
 
   DATA_SPARSE_MATRIX(R_country);
   // DATA_SPARSE_MATRIX(Z_country);
@@ -61,6 +62,9 @@ Type objective_function<Type>::operator() ()
 
   DATA_VECTOR(log_offset_ais);
   DATA_VECTOR(births_obs_ais);
+
+  DATA_VECTOR(log_offset_phia);
+  DATA_VECTOR(births_obs_phia);
 
   DATA_VECTOR(pop);
   DATA_INTEGER(mics_toggle);
@@ -397,6 +401,11 @@ Type objective_function<Type>::operator() ()
 
                 );
 
+  vector<Type> mu_obs_pred_phia(X_extract_phia * (M_full_obs * log(lambda_out))
+                                 + log_offset_phia
+
+  );
+
   // PARAMETER(log_overdispersion);
   // nll -= dnorm(log_overdispersion, Type(0), Type(2.5), true);
   // Type overdispersion = exp(log_overdispersion); 
@@ -408,7 +417,8 @@ Type objective_function<Type>::operator() ()
   // nll -= dnbinom2(births_obs_ais, exp(mu_obs_pred_ais), var_nbinom_ais, true).sum();
 
   nll -= dpois(births_obs_dhs, exp(mu_obs_pred_dhs), true).sum();  
-  nll -= dpois(births_obs_ais, exp(mu_obs_pred_ais), true).sum();  
+  nll -= dpois(births_obs_ais, exp(mu_obs_pred_ais), true).sum();
+  nll -= dpois(births_obs_phia, exp(mu_obs_pred_phia), true).sum();  
 
 
   if(mics_toggle) {

@@ -8,18 +8,25 @@ population <- read.csv("depends/interpolated_population.csv") %>%
 areas <- read_sf("depends/naomi_areas.geojson") %>%
   mutate(iso3 = iso3)
 
-asfr <- read.csv("depends/fertility_asfr.csv") %>%
-  filter(survtype != "MICS")
+asfr <- read.csv("depends/fertility_asfr.csv")
+# filter(survtype != "MICS")
 
-mics_asfr <- read.csv("resources/mics_asfr.csv") %>%
-  filter(iso3 == iso3_c)
+# mics_asfr <- read.csv("resources/mics_asfr.csv") %>%
+#   filter(iso3 == iso3_c)
 
-asfr <- asfr %>% bind_rows(mics_asfr)
+phia_asfr <- read.csv("resources/phia_asfr.csv") %>%
+  separate(area_id, into=c("iso3", NA), sep = 3, remove = FALSE) %>%
+  filter(iso3 == iso3_c) %>%
+  mutate(survtype = "PHIA")
 
-end_year <- max(asfr$period) - 5
+asfr <- asfr %>% bind_rows(
+  # mics_asfr, 
+  phia_asfr)
+
+end_year <- 2016
 
 asfr <- asfr %>%
-  filter(period <= end_year)
+  filter(survyear < endyear)
 
 lvl_map <- read.csv("resources/iso_mapping_fit.csv")
 lvl <- lvl_map$fertility_fit_level[lvl_map$iso3 == iso3]
@@ -242,6 +249,7 @@ tmb_int$data <- list(
   X_extract_dhs = mf$X_extract$X_extract_dhs,
   X_extract_ais = mf$X_extract$X_extract_ais,
   X_extract_mics = mf$X_extract$X_extract_mics,
+  X_extract_phia = mf$X_extract$X_extract_phia,
   # Z_tips = mf$Z$Z_tips,
   Z_tips_dhs = mf$Z$Z_tips_dhs,
   Z_tips_ais = mf$Z$Z_tips_ais,
@@ -277,6 +285,9 @@ tmb_int$data <- list(
   
   log_offset_ais = log(filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS"))$pys),
   births_obs_ais = filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS"))$births,
+  
+  log_offset_phia = log(filter(mf$observations$full_obs, survtype == "PHIA")$pys),
+  births_obs_phia = filter(mf$observations$full_obs, survtype == "PHIA")$births,
   
   pop = mf$mf_model$population,
   # A_asfr_out = mf$out$A_asfr_out,
