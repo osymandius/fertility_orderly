@@ -12,6 +12,8 @@ artefacts:
 
 packages:
   - demogsurv
+  - ggplot2
+  - moz.utils
   - tidyr
   - haven
   - readr

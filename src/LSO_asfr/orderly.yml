@@ -19,6 +19,8 @@ global_resources:
 
 packages:
   - demogsurv
+  - ggplot2
+  - moz.utils
   - tidyr
   - haven
   - readr

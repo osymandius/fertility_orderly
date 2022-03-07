@@ -83,58 +83,39 @@ mics_asfr_plot <- Map(calc_asfr, mics_wm_asfr,
   left_join(get_age_groups() %>% select(age_group, age_group_label), by=c("agegr" = "age_group_label")) %>%
   select(-agegr)
 
-mics_wm_tfr <- mics_wm_asfr %>%
-  lapply(aggregate_mics_admin1, areas, areas_wide, admin1_lvl) %>%
-  bind_rows() %>%
-  arrange(survey_id, area_id) %>%
-  mutate(survey_id = factor(survey_id),
-         area_id = factor(area_id)) %>%
-  group_split(survey_id, area_id)
-
-mics_births_tfr <- mics_births_asfr %>%
-  lapply(aggregate_mics_admin1, areas, areas_wide, admin1_lvl) %>%
-  bind_rows() %>%
-  arrange(survey_id, area_id) %>%
-  group_split(survey_id, area_id)
-
-mics_tfr <- Map(calc_tfr, mics_wm_tfr,
-                by = list(~area_id + survey_id),
-                tips = list(c(0,15)),
-                period = list(1995:2019),
-                clusters = list(~cluster),
-                strata = list(NULL),
-                id = list("unique_id"),
-                dob = list("wdob"),
-                intv = list("doi"),
-                weight = list("weight"),
-                bhdata = mics_births_tfr,
-                bvars = list("cdob")) %>%
-  bind_rows %>%
-  type.convert %>%
-  mutate(iso3 = iso3,
-         survtype = "MICS",
-         variable = "tfr")
-
-
-write_csv(mics_asfr %>%
-            filter(!(survey_id == "GNB2018MICS" & period == 2003)), paste0(tolower(iso3), "_mics_asfr.csv"))
+write_csv(mics_asfr, paste0(tolower(iso3), "_mics_asfr.csv"))
 
 asfr <- mics_asfr
 
 write_csv(asfr %>%
             filter(!(survey_id == "GNB2018MICS" & period == 2003)), paste0(tolower(iso3), "_asfr.csv"))
 
-plot_dat <- mics_asfr_plot %>%
-  select(-c(births, pys)) %>%
-  rename(value = asfr) %>%
+if(!exists("mics_asfr_plot"))
+  mics_asfr_plot <- data.frame()
+
+if(!exists("asfr_plot_raw"))
+  asfr_plot_raw <- data.frame()
+
+asfr_plot_raw <- asfr_plot_raw %>% bind_rows(mics_asfr_plot)
+
+asfr_plot <- asfr_plot_raw %>%
+  aggregate_to_admin(c("survey_id", "survyear", "period", "survtype", "iso3", "age_group"), c("births", "pys"), 1, areas) %>%
   bind_rows(
-    bind_rows(mics_tfr) %>%
-      select(-se_tfr) %>%
-      rename(value = tfr)
-  )
+    asfr_plot_raw %>% 
+      aggregate_to_admin(c("survey_id", "survyear", "period", "survtype", "iso3", "age_group"), c("births", "pys"), 0, areas)
+  ) %>%
+  mutate(value = births/pys,
+         variable = "asfr")
+
+tfr_plot <- asfr_plot %>%
+  group_by(iso3, survey_id, area_id, area_name, period, survtype) %>%
+  summarise(value = 5*sum(value)) %>%
+  mutate(variable = "tfr")
+
+plot_dat <- bind_rows(asfr_plot, tfr_plot)
 
 plot <- plot_dat %>%
-  filter(variable == "tfr", value <10) %>%
+  filter(variable == "tfr", value<15) %>%
   ggplot(aes(x=period, y=value, color=survey_id)) +
   geom_point() +
   facet_wrap(~area_id, ncol=5) +

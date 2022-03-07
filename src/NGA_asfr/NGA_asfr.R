@@ -47,52 +47,29 @@ asfr <- Map(calc_asfr, dat$ir,
 
 write_csv(asfr, paste0(tolower(iso3), "_dhs_asfr.csv"))
 
-### ADMIN-1 ASFR FOR PLOTTING
+convert_to_aggregate_tips <- function(tips_list) {
+  c(first(tips_list), last(tips_list))
+}
 
-cluster_list_admin1 <- clusters %>%
-  left_join(areas_wide %>% st_drop_geometry, by=c("geoloc_area_id" = "area_id")) %>%
-  rename(area_id = area_id1) %>%
-  select(survey_id, cluster_id, area_id) %>%
-  group_by(survey_id) %>%
-  group_split
+tips_surv_aggregate <- lapply(dat$tips_surv, convert_to_aggregate_tips)
 
-names(cluster_list_admin1) <- surveys$survey_id
-
-dat_admin1 <- map_ir_to_areas(ir, cluster_list_admin1, single_tips = FALSE)
-dat_admin1$ir <- lapply(dat_admin1$ir, zap_labels)
-
-asfr_admin1 <- Map(calc_asfr, dat_admin1$ir,
-                   by = list(~survey_id + survtype + survyear + area_id),
-                   tips = dat_admin1$tips_surv,
-                   agegr= list(3:10*5),
-                   period = list(1995:2020),
-                   strata = list(NULL),
-                   varmethod = list("none"),
-                   counts = TRUE) %>%
+asfr_plot_raw <- Map(calc_asfr, dat$ir,
+            by = list(~survey_id + survtype + survyear + area_id),
+            tips = tips_surv_aggregate,
+            agegr= list(3:10*5),
+            period = list(1995:2020),
+            strata = list(NULL),
+            varmethod = list("none"),
+            counts = TRUE) %>%
   bind_rows %>%
   type.convert %>%
   filter(period<=survyear) %>%
-    # rename(age_group = agegr) %>%
-  mutate(iso3 = iso3,
-         variable = "asfr") %>%
+  # rename(age_group = agegr) %>%
+  mutate(iso3 = iso3) %>%
   left_join(get_age_groups() %>% select(age_group, age_group_label), by=c("agegr" = "age_group_label")) %>%
   select(-agegr)
 
-tfr_admin1 <- Map(calc_tfr, dat_admin1$ir,
-                  by = list(~survey_id + survtype + survyear + area_id),
-                  tips = dat_admin1$tips_surv,
-                  agegr= list(3:10*5),
-                  period = list(1995:2020)) %>%
-  bind_rows %>%
-  type.convert %>%
-  filter(period<=survyear) %>%
-  mutate(iso3 = iso3,
-         variable = "tfr")
-
-write_csv(asfr_admin1, "nga_asfr_admin1.csv")
-write_csv(tfr_admin1, "nga_tfr_admin1.csv")
-
-#' ### MICS DATA
+### MICS DATA
 #' 
 #' mics_births_to_women <- read.csv(paste0("depends/", tolower(iso3), "_mics_births_to_women.csv"))
 #' mics_wm <- read.csv(paste0("depends/", tolower(iso3), "_mics_women.csv"))
@@ -159,34 +136,6 @@ write_csv(tfr_admin1, "nga_tfr_admin1.csv")
 #'          iso3 = iso3,
 #'          variable = "asfr"
 #'   )
-#' 
-#' mics_wm_tfr <- mics_wm_asfr %>%
-#'   bind_rows %>%
-#'   arrange(survey_id, area_id) %>%
-#'   group_split(survey_id, area_id)
-#' 
-#' mics_births_tfr <- mics_births_asfr %>%
-#'   bind_rows %>%
-#'   arrange(survey_id, area_id) %>%
-#'   group_split(survey_id, area_id)
-#' 
-#' mics_tfr <- Map(calc_tfr, mics_wm_tfr,
-#'                 by = list(~area_id + survey_id),
-#'                 tips = list(c(0,15)),
-#'                 period = list(1995:2019),
-#'                 clusters = list(~cluster),
-#'                 strata = list(NULL),
-#'                 id = list("unique_id"),
-#'                 dob = list("wdob"),
-#'                 intv = list("doi"),
-#'                 weight = list("weight"),
-#'                 bhdata = mics_births_tfr,
-#'                 bvars = list("cdob")) %>%
-#'   bind_rows %>%
-#'   type.convert %>%
-#'   mutate(iso3 = iso3,
-#'          survtype = "MICS",
-#'          variable = "tfr")
 #' 
 #' write_csv(mics_asfr, paste0(tolower(iso3), "_mics_asfr.csv"))
 #' 
