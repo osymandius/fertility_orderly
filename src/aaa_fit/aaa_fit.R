@@ -22,7 +22,8 @@ phia_asfr <- read.csv("resources/phia_asfr.csv") %>%
 
 asfr <- asfr %>% bind_rows(
   # mics_asfr, 
-  phia_asfr)
+  phia_asfr) %>%
+  filter(!survey_id %in% c("BDI2005MICS", "BEN2014MICS", "BFA2006MICS", "CAF2006MICS", "CAF2010MICS", "CAF2018MICS", "CIV2006MICS", "CMR2000MICS", "CMR2006MICS", "COG2014MICS", "GMB2005MICS", "GMB2010MICS", "GMB2018MICS", "MLI2009MICS", "MLI2015MICS", "SLE2010MICS", "SLE2017MICS", "SWZ2000MICS", "TCD2010MICS", "TCD2019MICS", "TGO2006MICS", "TGO2010MICS", "TGO2017MICS"))
 
 lvl_map <- read.csv("resources/iso_mapping_fit.csv")
 lvl <- lvl_map$fertility_fit_level[lvl_map$iso3 == iso3]
@@ -276,7 +277,7 @@ fr_plot <- fr_plot %>%
 
 
 tfr_plot <- tmb_results %>%
-  filter(area_level == admin1_lvl, variable == "tfr") %>%
+  filter(area_level %in% c(0, admin1_lvl), variable == "tfr") %>%
   ggplot(aes(x=period, y=median)) +
   geom_line(size=1) +
   geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
