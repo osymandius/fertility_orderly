@@ -1,9 +1,8 @@
-orderly_pull_archive("bdi_data_areas")
-
 #' ISO3 country code
 iso3 <- "BDI"
 
-areas <- read_sf("depends/bdi_areas.geojson")
+areas <- read_sf("depends/bdi_areas.geojson") %>%
+  mutate(area_name = str_trim(area_name))
 areas_wide <- spread_areas(areas)
 
 surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%
@@ -59,8 +58,9 @@ fertility_mics_data <- transform_mics(mics_survey_data, mics_indicators)
 fertility_mics_data$hh <- fertility_mics_data$hh %>%
   mutate(
     mics_area_name_label = case_when(
-      mics_area_name_label == "Karusi" ~ "Karuzi",
+      mics_area_name_label == "Karuzi" ~ "Karusi",
       mics_area_name_label == "Bururi Rural" ~ "Bururi",
+      mics_area_name_label == "Bujumbura Rural" ~ "Bujumbura",
       TRUE ~ mics_area_name_label
     )
   ) 
