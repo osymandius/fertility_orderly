@@ -20,7 +20,7 @@ validate_survey_region_areas(survey_region_areas, survey_region_boundaries)
 survey_regions <- create_survey_regions_dhs(survey_region_areas)
 
 #' # Survey clusters dataset
-survey_clusters <- create_survey_clusters_dhs(surveys)
+survey_clusters <- create_survey_clusters_dhs(surveys, clear_rdhs_cache = TRUE)
 
 #' Snap survey clusters to areas
 

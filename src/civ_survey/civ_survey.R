@@ -44,7 +44,7 @@ survey_regions <- create_survey_regions_dhs(survey_region_areas)
 
 #' # Survey clusters dataset
 
-survey_clusters <- create_survey_clusters_dhs(surveys)
+survey_clusters <- create_survey_clusters_dhs(surveys, clear_rdhs_cache = TRUE)
 
 #' For 1998 DHS: Collapse urban/rural rest of country into single category (1), recode Abidjan to survey_region_id = 2
 survey_clusters <- survey_clusters %>%
