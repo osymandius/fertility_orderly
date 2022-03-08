@@ -19,6 +19,7 @@ Type objective_function<Type>::operator() ()
 
   DATA_MATRIX(X_tips_dummy);
   DATA_MATRIX(X_tips_dummy_10);
+  DATA_MATRIX(X_tips_dummy_9_11);
 
   DATA_SPARSE_MATRIX(Z_tips);
   // DATA_SPARSE_MATRIX(Z_tips_dhs);
@@ -91,6 +92,9 @@ Type objective_function<Type>::operator() ()
 
   PARAMETER_VECTOR(beta_tips_dummy_10);
   nll -= dnorm(beta_tips_dummy_10, Type(0.05), Type(0.1), true).sum();
+  
+  PARAMETER_VECTOR(beta_tips_dummy_9_11);
+  nll -= dnorm(beta_tips_dummy_9_11, Type(-0.05), Type(0.1), true).sum();
 
   nll -= dlgamma(log_prec_rw_tips, Type(1), Type(20000), true);
   // nll -= dlgamma(log_prec_rw_tips, Type(31), Type(1/3.922), true);
@@ -397,6 +401,7 @@ Type objective_function<Type>::operator() ()
                                 + X_extract_dhs * tips_lh
                                 + X_tips_dummy * beta_tips_dummy          // TIPS fixed effect
                                 + X_tips_dummy_10 * beta_tips_dummy_10          // TIPS fixed effect
+                                + X_tips_dummy_9_11 * beta_tips_dummy_9_11          // TIPS fixed effect
                                 + X_extract_dhs * spike_1999_lh
                                 + X_extract_dhs * spike_2000_lh
                                 + X_extract_dhs * spike_2001_lh
@@ -513,6 +518,7 @@ Type objective_function<Type>::operator() ()
 
   REPORT(beta_tips_dummy);
   REPORT(beta_tips_dummy_10);
+  REPORT(beta_tips_dummy_9_11);
   // // REPORT(beta_urban_dummy);
 
   // REPORT(u_period);

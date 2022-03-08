@@ -43,8 +43,8 @@ mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
 validate_model_frame(mf, areas)
 
 # TMB::compile("src/aaa_fit/tmb_all_level_poisson.cpp", flags = "-w")               # Compile the C++ file
-TMB::compile("rw.cpp", flags = "-w")               # Compile the C++ file
-dyn.load(dynlib("rw"))
+# TMB::compile("rw.cpp", flags = "-w")               # Compile the C++ file
+# dyn.load(dynlib("rw"))
 
 tmb_int <- list()
 
@@ -212,6 +212,8 @@ if(mf$mics_toggle) {
   # tmb_int$random <- c(tmb_int$random, "u_tips_mics")
 }
 
+dyn.load(dynlib("rw"))
+
 
 f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
                                parameters = tmb_int$par,
@@ -242,17 +244,21 @@ fit <- naomi::sample_tmb(fit, random_only=TRUE)
 tmb_results <- dfertility::tmb_outputs(fit, mf, areas) %>%
   mutate(source = "rw")
 
+dhs_qtls <- exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))
+ais_qtls <- exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))
+phia_qtls <- exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))
+
 dhs_pred <- filter(mf$observations$full_obs, survtype == "DHS") %>%
   mutate(source = "rw") %>%
-  cbind(data.frame(fit$sample$mu_obs_pred_dhs))
+  cbind(data.frame(t(dhs_qtls)))
 
 ais_pred <- filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
   mutate(source = "rw") %>%
-  cbind(data.frame(fit$sample$mu_obs_pred_ais))
+  cbind(data.frame(t(ais_qtls)))
 
 phia_pred <- filter(mf$observations$full_obs, survtype == "PHIA") %>%
   mutate(source = "rw") %>%
-  cbind(data.frame(fit$sample$mu_obs_pred_phia))
+  cbind(data.frame(t(phia_qtls)))
 
 
 ################ RW2
@@ -387,31 +393,35 @@ tmb_results <- tmb_results %>%
       mutate(source = "rw2")
   )
 
+dhs_qtls <- exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))
+ais_qtls <- exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))
+phia_qtls <- exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))
+
 dhs_pred <- dhs_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype == "DHS") %>%
       mutate(source = "rw2") %>%
-      cbind(data.frame(fit$sample$mu_obs_pred_dhs))
+      cbind(data.frame(t(dhs_qtls)))
   )
 
 ais_pred <- ais_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
       mutate(source = "rw2") %>%
-      cbind(data.frame(fit$sample$mu_obs_pred_ais))
+      cbind(data.frame(t(ais_qtls)))
   )
 
 phia_pred <- phia_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype == "PHIA") %>%
       mutate(source = "rw2") %>%
-      cbind(data.frame(fit$sample$mu_obs_pred_phia))
+      cbind(data.frame(t(phia_qtls)))
   )
 
 ######### RW1 + trend
 
 # TMB::compile("rw1_trend.cpp", flags = "-w")               # Compile the C++ file
-dyn.load(dynlib("rw1_trend"))
+# dyn.load(dynlib("rw1_trend"))
 
 tmb_int$data <- list(
   M_naomi_obs = mf$M_naomi_obs,
@@ -598,32 +608,36 @@ tmb_results <- tmb_results %>%
       mutate(source = "rw + trend")
   )
 
+dhs_qtls <- exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))
+ais_qtls <- exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))
+phia_qtls <- exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))
+
 dhs_pred <- dhs_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype == "DHS") %>%
       mutate(source = "rw + trend") %>%
-      cbind(data.frame(fit$sample$mu_obs_pred_dhs))
+      cbind(data.frame(t(dhs_qtls)))
   )
 
 ais_pred <- ais_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
       mutate(source = "rw + trend") %>%
-      cbind(data.frame(fit$sample$mu_obs_pred_ais))
+      cbind(data.frame(t(ais_qtls)))
   )
 
 phia_pred <- phia_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype == "PHIA") %>%
       mutate(source = "rw + trend") %>%
-      cbind(data.frame(fit$sample$mu_obs_pred_phia))
+      cbind(data.frame(t(phia_qtls)))
   )
 
 
 ########### ARIMA (1,1,0)
 
 # TMB::compile("arima.cpp", flags = "-w")               # Compile the C++ file
-dyn.load(dynlib("arima"))
+# dyn.load(dynlib("arima"))
 
 tmb_int$par <- list(
   beta_0 = 0,
@@ -721,32 +735,36 @@ tmb_results <- tmb_results %>%
       mutate(source = "ARIMA(1,1,0)")
   )
 
+dhs_qtls <- exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))
+ais_qtls <- exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))
+phia_qtls <- exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))
+
 dhs_pred <- dhs_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype == "DHS") %>%
       mutate(source = "ARIMA(1,1,0)") %>%
-      cbind(data.frame(fit$sample$mu_obs_pred_dhs))
+      cbind(data.frame(t(dhs_qtls)))
   )
 
 ais_pred <- ais_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
       mutate(source = "ARIMA(1,1,0)") %>%
-      cbind(data.frame(fit$sample$mu_obs_pred_ais))
+      cbind(data.frame(t(ais_qtls)))
   )
 
 phia_pred <- phia_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype == "PHIA") %>%
       mutate(source = "ARIMA(1,1,0)") %>%
-      cbind(data.frame(fit$sample$mu_obs_pred_phia))
+      cbind(data.frame(t(phia_qtls)))
   )
 
 
 ########### ARIMA with trend
 
 # TMB::compile("arima_trend.cpp", flags = "-w")               # Compile the C++ file
-dyn.load(dynlib("arima_trend"))
+# dyn.load(dynlib("arima_trend"))
 
 tmb_int$par <- list(
   beta_0 = 0,
@@ -843,32 +861,36 @@ tmb_results <- tmb_results %>%
       mutate(source = "ARIMA(1,1,0) + trend")
   )
 
+dhs_qtls <- exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))
+ais_qtls <- exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))
+phia_qtls <- exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))
+
 dhs_pred <- dhs_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype == "DHS") %>%
       mutate(source = "ARIMA(1,1,0) + trend") %>%
-      cbind(data.frame(fit$sample$mu_obs_pred_dhs))
+      cbind(data.frame(t(dhs_qtls)))
   )
 
 ais_pred <- ais_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
       mutate(source = "ARIMA(1,1,0) + trend") %>%
-      cbind(data.frame(fit$sample$mu_obs_pred_ais))
+      cbind(data.frame(t(ais_qtls)))
   )
 
 phia_pred <- phia_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype == "PHIA") %>%
       mutate(source = "ARIMA(1,1,0) + trend") %>%
-      cbind(data.frame(fit$sample$mu_obs_pred_phia))
+      cbind(data.frame(t(phia_qtls)))
   )
 
 
 ########### AR1
 
 # TMB::compile("ar1.cpp", flags = "-w")               # Compile the C++ file
-dyn.load(dynlib("ar1"))
+# dyn.load(dynlib("ar1"))
 
 
 tmb_int$par <- list(
@@ -967,32 +989,36 @@ tmb_results <- tmb_results %>%
       mutate(source = "AR1")
   )
 
+dhs_qtls <- exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))
+ais_qtls <- exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))
+phia_qtls <- exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))
+
 dhs_pred <- dhs_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype == "DHS") %>%
       mutate(source = "AR1") %>%
-      cbind(data.frame(fit$sample$mu_obs_pred_dhs))
+      cbind(data.frame(t(dhs_qtls)))
   )
 
 ais_pred <- ais_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
       mutate(source = "AR1") %>%
-      cbind(data.frame(fit$sample$mu_obs_pred_ais))
+      cbind(data.frame(t(ais_qtls)))
   )
 
 phia_pred <- phia_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype == "PHIA") %>%
       mutate(source = "AR1") %>%
-      cbind(data.frame(fit$sample$mu_obs_pred_phia))
+      cbind(data.frame(t(phia_qtls)))
   )
 
 
 ########## AR1 + trend
 
 # TMB::compile("ar1_trend.cpp", flags = "-w")               # Compile the C++ file
-dyn.load(dynlib("ar1_trend"))
+# dyn.load(dynlib("ar1_trend"))
 
 
 tmb_int$par <- list(
@@ -1091,25 +1117,29 @@ tmb_results <- tmb_results %>%
       mutate(source = "AR1 + trend")
   )
 
+dhs_qtls <- exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))
+ais_qtls <- exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))
+phia_qtls <- exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))
+
 dhs_pred <- dhs_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype == "DHS") %>%
       mutate(source = "AR1 + trend") %>%
-      cbind(data.frame(fit$sample$mu_obs_pred_dhs))
+      cbind(data.frame(t(dhs_qtls)))
   )
 
 ais_pred <- ais_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
       mutate(source = "AR1 + trend") %>%
-      cbind(data.frame(fit$sample$mu_obs_pred_ais))
+      cbind(data.frame(t(ais_qtls)))
   )
 
 phia_pred <- phia_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype == "PHIA") %>%
       mutate(source = "AR1 + trend") %>%
-      cbind(data.frame(fit$sample$mu_obs_pred_phia))
+      cbind(data.frame(t(phia_qtls)))
   )
 
 pred <- bind_rows(dhs_pred, ais_pred, phia_pred)
