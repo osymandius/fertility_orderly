@@ -6,7 +6,9 @@ population <- read.csv("depends/interpolated_population.csv") %>%
   filter(sex == "female")
 
 areas <- read_sf("depends/naomi_areas.geojson") %>%
-  mutate(iso3 = iso3)
+  mutate(iso3 = iso3) %>%
+  st_make_valid() %>%
+  st_collection_extract("POLYGON")
 
 asfr <- read.csv("depends/fertility_asfr.csv")
 # filter(survtype != "MICS")
@@ -393,7 +395,7 @@ dyn.load(dynlib("rw2"))
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                        parameters = tmb_int$par,
-                       DLL = "rw2",
+                       DLL = "rw",
                        random = tmb_int$random,
                        hessian = FALSE)
 
