@@ -243,21 +243,39 @@ fit <- naomi::sample_tmb(fit, random_only=TRUE)
 tmb_results <- dfertility::tmb_outputs(fit, mf, areas) %>%
   mutate(source = "rw")
 
-dhs_qtls <- exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))
-ais_qtls <- exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))
-phia_qtls <- exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))
+dhs_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))))
+ais_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))))
+phia_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))))
 
 dhs_pred <- filter(mf$observations$full_obs, survtype == "DHS") %>%
-  mutate(source = "rw") %>%
-  cbind(data.frame(t(dhs_qtls)))
+  mutate(source = "rw") 
+
+if(nrow(dhs_pred)) {
+  dhs_pred <- dhs_pred %>%
+    bind_cols(dhs_qtls)
+} else {
+  dhs_pred <- data.frame()
+}
 
 ais_pred <- filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
-  mutate(source = "rw") %>%
-  cbind(data.frame(t(ais_qtls)))
+  mutate(source = "rw") 
+
+if(nrow(ais_pred)) {
+  ais_pred <- ais_pred %>%
+    bind_cols(ais_qtls)
+} else {
+  ais_pred <- data.frame()
+}
 
 phia_pred <- filter(mf$observations$full_obs, survtype == "PHIA") %>%
-  mutate(source = "rw") %>%
-  cbind(data.frame(t(phia_qtls)))
+  mutate(source = "rw") 
+
+if(nrow(phia_pred)) {
+  phia_pred <- phi_pred %>%
+    bind_cols(phia_qtls)
+} else {
+  phia_pred <- data.frame()
+}
 
 
 ################ RW2
@@ -394,29 +412,29 @@ tmb_results <- tmb_results %>%
       mutate(source = "rw2")
   )
 
-dhs_qtls <- exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))
-ais_qtls <- exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))
-phia_qtls <- exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))
+dhs_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))))
+ais_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))))
+phia_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))))
 
 dhs_pred <- dhs_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype == "DHS") %>%
       mutate(source = "rw2") %>%
-      cbind(data.frame(t(dhs_qtls)))
+      bind_cols(dhs_qtls)
   )
 
 ais_pred <- ais_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
       mutate(source = "rw2") %>%
-      cbind(data.frame(t(ais_qtls)))
+      bind_cols(ais_qtls)
   )
 
 phia_pred <- phia_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype == "PHIA") %>%
       mutate(source = "rw2") %>%
-      cbind(data.frame(t(phia_qtls)))
+      bind_cols(phia_qtls)
   )
 
 ######### RW1 + trend
@@ -611,29 +629,29 @@ tmb_results <- tmb_results %>%
       mutate(source = "rw + trend")
   )
 
-dhs_qtls <- exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))
-ais_qtls <- exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))
-phia_qtls <- exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))
+dhs_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))))
+ais_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))))
+phia_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))))
 
 dhs_pred <- dhs_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype == "DHS") %>%
       mutate(source = "rw + trend") %>%
-      cbind(data.frame(t(dhs_qtls)))
+      bind_cols(dhs_qtls)
   )
 
 ais_pred <- ais_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
       mutate(source = "rw + trend") %>%
-      cbind(data.frame(t(ais_qtls)))
+      bind_cols(ais_qtls)
   )
 
 phia_pred <- phia_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype == "PHIA") %>%
       mutate(source = "rw + trend") %>%
-      cbind(data.frame(t(phia_qtls)))
+      bind_cols(phia_qtls)
   )
 
 
@@ -739,29 +757,29 @@ tmb_results <- tmb_results %>%
       mutate(source = "ARIMA(1,1,0)")
   )
 
-dhs_qtls <- exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))
-ais_qtls <- exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))
-phia_qtls <- exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))
+dhs_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))))
+ais_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))))
+phia_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))))
 
 dhs_pred <- dhs_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype == "DHS") %>%
       mutate(source = "ARIMA(1,1,0)") %>%
-      cbind(data.frame(t(dhs_qtls)))
+      bind_cols(dhs_qtls)
   )
 
 ais_pred <- ais_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
       mutate(source = "ARIMA(1,1,0)") %>%
-      cbind(data.frame(t(ais_qtls)))
+      bind_cols(ais_qtls)
   )
 
 phia_pred <- phia_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype == "PHIA") %>%
       mutate(source = "ARIMA(1,1,0)") %>%
-      cbind(data.frame(t(phia_qtls)))
+      bind_cols(phia_qtls)
   )
 
 
@@ -867,29 +885,29 @@ tmb_results <- tmb_results %>%
       mutate(source = "ARIMA(1,1,0) + trend")
   )
 
-dhs_qtls <- exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))
-ais_qtls <- exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))
-phia_qtls <- exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))
+dhs_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))))
+ais_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))))
+phia_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))))
 
 dhs_pred <- dhs_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype == "DHS") %>%
       mutate(source = "ARIMA(1,1,0) + trend") %>%
-      cbind(data.frame(t(dhs_qtls)))
+      bind_cols(dhs_qtls)
   )
 
 ais_pred <- ais_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
       mutate(source = "ARIMA(1,1,0) + trend") %>%
-      cbind(data.frame(t(ais_qtls)))
+      bind_cols(ais_qtls)
   )
 
 phia_pred <- phia_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype == "PHIA") %>%
       mutate(source = "ARIMA(1,1,0) + trend") %>%
-      cbind(data.frame(t(phia_qtls)))
+      bind_cols(phia_qtls)
   )
 
 
@@ -996,29 +1014,29 @@ tmb_results <- tmb_results %>%
       mutate(source = "AR1")
   )
 
-dhs_qtls <- exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))
-ais_qtls <- exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))
-phia_qtls <- exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))
+dhs_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))))
+ais_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))))
+phia_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))))
 
 dhs_pred <- dhs_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype == "DHS") %>%
       mutate(source = "AR1") %>%
-      cbind(data.frame(t(dhs_qtls)))
+      bind_cols(dhs_qtls)
   )
 
 ais_pred <- ais_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
       mutate(source = "AR1") %>%
-      cbind(data.frame(t(ais_qtls)))
+      bind_cols(ais_qtls)
   )
 
 phia_pred <- phia_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype == "PHIA") %>%
       mutate(source = "AR1") %>%
-      cbind(data.frame(t(phia_qtls)))
+      bind_cols(phia_qtls)
   )
 
 
@@ -1125,29 +1143,29 @@ tmb_results <- tmb_results %>%
       mutate(source = "AR1 + trend")
   )
 
-dhs_qtls <- exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))
-ais_qtls <- exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))
-phia_qtls <- exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))
+dhs_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))))
+ais_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))))
+phia_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))))
 
 dhs_pred <- dhs_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype == "DHS") %>%
       mutate(source = "AR1 + trend") %>%
-      cbind(data.frame(t(dhs_qtls)))
+      bind_cols(dhs_qtls)
   )
 
 ais_pred <- ais_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
       mutate(source = "AR1 + trend") %>%
-      cbind(data.frame(t(ais_qtls)))
+      bind_cols(ais_qtls)
   )
 
 phia_pred <- phia_pred %>%
   bind_rows(
     filter(mf$observations$full_obs, survtype == "PHIA") %>%
       mutate(source = "AR1 + trend") %>%
-      cbind(data.frame(t(phia_qtls)))
+      bind_cols(phia_qtls)
   )
 
 pred <- bind_rows(dhs_pred, ais_pred, phia_pred)
