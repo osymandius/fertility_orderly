@@ -40,9 +40,9 @@ mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
 
 validate_model_frame(mf, areas)
 
-# TMB::compile("src/aaa_fit/phia.cpp", flags = "-w")               # Compile the C++ file
+# TMB::compile("src/aaa_fit/no_tips.cpp", flags = "-w")               # Compile the C++ file
 # TMB::compile("phia.cpp", flags = "-w")               # Compile the C++ file
-dyn.load(dynlib("phia"))
+dyn.load(dynlib("no_tips"))
 
 tmb_int <- list()
 
@@ -50,6 +50,7 @@ tmb_int$data <- list(
   M_naomi_obs = mf$M_naomi_obs,
   M_full_obs = mf$M_full_obs,
   X_tips_dummy = mf$Z$X_tips_dummy,
+  X_tips_dummy_10 = mf$Z$X_tips_dummy_10,
   X_period = mf$Z$X_period,
   X_urban_dummy = mf$Z$X_urban_dummy,
   X_extract_dhs = mf$X_extract$X_extract_dhs,
@@ -105,7 +106,7 @@ tmb_int$data <- list(
   
   X_spike_2000 = model.matrix(~0 + spike_2000, mf$observations$full_obs),
   X_spike_1999 = model.matrix(~0 + spike_1999, mf$observations$full_obs),
-  X_spike_2001 = model.matrix(~0 + spike_2001, mf$observations$full_obs),
+  X_spike_2001 = model.matrix(~0 + spike_2001, mf$observations$full_obs)
 
   # X_spike_2000_dhs = model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype == "DHS")),
   # X_spike_1999_dhs = model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype == "DHS")),
@@ -115,7 +116,7 @@ tmb_int$data <- list(
   # X_spike_1999_ais = model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
   # X_spike_2001_ais = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
 
-  n_threads = parallel::detectCores()
+  # n_threads = parallel::detectCores()
 
   # out_toggle = mf$out_toggle
   # A_obs = mf$observations$A_obs,
@@ -125,6 +126,7 @@ tmb_int$par <- list(
   beta_0 = 0,
 
   beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
+  beta_tips_dummy_10 = rep(0, ncol(mf$Z$X_tips_dummy_10)),
   # beta_urban_dummy = rep(0, ncol(mf$Z$X_urban_dummy)),
   u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
   log_prec_rw_tips = 0,
@@ -183,6 +185,7 @@ tmb_int$random <- c("beta_0",
                     # "u_smooth_iid",
                     "beta_period",
                     "beta_tips_dummy",
+                    "beta_tips_dummy_10",
                     # "beta_urban_dummy",
                     "u_tips",
                     "beta_spike_2000",
@@ -217,7 +220,7 @@ if(mf$mics_toggle) {
 
 f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
                                parameters = tmb_int$par,
-                               DLL = "phia",
+                               DLL = "no_tips",
                                silent=0,
                                checkParameterOrder=FALSE)
 })
@@ -228,7 +231,7 @@ if(is.null(parallel::mccollect(f)[[1]])) {
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                        parameters = tmb_int$par,
-                       DLL = "phia",
+                       DLL = "no_tips",
                        random = tmb_int$random,
                        hessian = FALSE)
 
@@ -253,10 +256,10 @@ fit <- naomi::sample_tmb(fit, random_only=TRUE)
 tmb_results <- dfertility::tmb_outputs(fit, mf, areas)
 write_csv(tmb_results, "fr.csv")
  
-fit <- naomi::sample_tmb(fit, random_only=FALSE)
-hyper <- fit$sample %>%
-  list_modify("lambda_out" = zap(), "tfr_out" = zap())
-saveRDS(hyper, "hyper.rds")
+# fit <- naomi::sample_tmb(fit, random_only=FALSE)
+# hyper <- fit$sample %>%
+#   list_modify("lambda_out" = zap(), "tfr_out" = zap())
+# saveRDS(hyper, "hyper.rds")
 
 fr_plot <- read.csv("depends/fertility_fr_plot.csv")
 

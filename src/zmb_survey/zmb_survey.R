@@ -1,4 +1,4 @@
-orderly_pull_archive("zmb_data_areas")
+#orderly_pull_archive("zmb_data_areas")
 
 iso3 <- "ZMB"
 

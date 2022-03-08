@@ -1,4 +1,4 @@
-orderly::orderly_pull_archive("zwe_data_areas")
+#orderly::orderly_pull_archive("zwe_data_areas")
 
 iso3 <- "ZWE"
 

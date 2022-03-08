@@ -1,4 +1,4 @@
-orderly_pull_archive("uga_data_areas")
+#orderly_pull_archive("uga_data_areas")
 
 #' ISO3 country code
 iso3 <- "UGA"
