@@ -214,7 +214,6 @@ if(mf$mics_toggle) {
 
 dyn.load(dynlib("rw"))
 
-
 f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
                                parameters = tmb_int$par,
                                DLL = "rw",
@@ -372,9 +371,11 @@ tmb_int$random <- c("beta_0",
                     # "omega2"
 )
 
+dyn.load(dynlib("rw2"))
+
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                        parameters = tmb_int$par,
-                       DLL = "rw",
+                       DLL = "rw2",
                        random = tmb_int$random,
                        hessian = FALSE)
 
@@ -587,6 +588,8 @@ tmb_int$random <- c("beta_0",
                     # "omega2"
 )
 
+dyn.load(dynlib("rw1_trend"))
+
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                        parameters = tmb_int$par,
                        DLL = "rw1_trend",
@@ -713,6 +716,7 @@ tmb_int$random <- c("beta_0",
                     # "omega2"
 )
 
+dyn.load(dynlib("arima"))
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                        parameters = tmb_int$par,
@@ -839,6 +843,8 @@ tmb_int$random <- c("beta_0",
                     # "omega1",
                     # "omega2"
 )
+
+dyn.load(dynlib("arima_trend"))
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                        parameters = tmb_int$par,
@@ -967,6 +973,7 @@ tmb_int$random <- c("beta_0",
                     # "omega2"
 )
 
+dyn.load(dynlib("ar1"))
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                        parameters = tmb_int$par,
@@ -1095,6 +1102,7 @@ tmb_int$random <- c("beta_0",
                     # "omega2"
 )
 
+dyn.load(dynlib("ar1_trend"))
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                        parameters = tmb_int$par,
