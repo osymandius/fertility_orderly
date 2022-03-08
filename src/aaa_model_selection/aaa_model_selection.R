@@ -391,8 +391,6 @@ tmb_int$random <- c("beta_0",
                     # "omega2"
 )
 
-dyn.load(dynlib("rw2"))
-
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                        parameters = tmb_int$par,
                        DLL = "rw",
