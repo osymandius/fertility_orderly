@@ -93,8 +93,8 @@ Type objective_function<Type>::operator() ()
   PARAMETER_VECTOR(beta_tips_dummy_10);
   nll -= dnorm(beta_tips_dummy_10, Type(0.05), Type(0.1), true).sum();
   
-  PARAMETER_VECTOR(beta_tips_dummy_9_11);
-  nll -= dnorm(beta_tips_dummy_9_11, Type(-0.05), Type(0.1), true).sum();
+  // PARAMETER_VECTOR(beta_tips_dummy_9_11);
+  // nll -= dnorm(beta_tips_dummy_9_11, Type(-0.05), Type(0.1), true).sum();
 
   nll -= dlgamma(log_prec_rw_tips, Type(1), Type(20000), true);
   // nll -= dlgamma(log_prec_rw_tips, Type(31), Type(1/3.922), true);
@@ -171,8 +171,8 @@ Type objective_function<Type>::operator() ()
   // nll -= dlgamma(log_prec_rw_period, Type(1), Type(20000), true);
   // Type log_prec_rw_period = 4.11;
   Type prec_rw_period = exp(log_prec_rw_period);
-  // nll -= dgamma(prec_rw_period, Type(1), Type(2000), true);
-  nll -= dnorm(prec_rw_period, Type(3.6), Type(2.499), true);
+  nll -= dgamma(prec_rw_period, Type(1), Type(2000), true);
+  // nll -= dnorm(prec_rw_period, Type(3.6), Type(2.499), true);
 
 
   // // RW
@@ -401,7 +401,7 @@ Type objective_function<Type>::operator() ()
                                 + X_extract_dhs * tips_lh
                                 + X_tips_dummy * beta_tips_dummy          // TIPS fixed effect
                                 + X_tips_dummy_10 * beta_tips_dummy_10          // TIPS fixed effect
-                                + X_tips_dummy_9_11 * beta_tips_dummy_9_11          // TIPS fixed effect
+                                // + X_tips_dummy_9_11 * beta_tips_dummy_9_11          // TIPS fixed effect
                                 + X_extract_dhs * spike_1999_lh
                                 + X_extract_dhs * spike_2000_lh
                                 + X_extract_dhs * spike_2001_lh
@@ -518,7 +518,7 @@ Type objective_function<Type>::operator() ()
 
   REPORT(beta_tips_dummy);
   REPORT(beta_tips_dummy_10);
-  REPORT(beta_tips_dummy_9_11);
+  // REPORT(beta_tips_dummy_9_11);
   // // REPORT(beta_urban_dummy);
 
   // REPORT(u_period);

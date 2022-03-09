@@ -4,8 +4,6 @@ artefacts:
   - data:
       description: mli ASFR dataset
       filenames:
-        - mli_dhs_asfr.csv
-        - mli_mics_asfr.csv
         - mli_asfr.csv
         - mli_fr_plot.csv
   - staticgraph:
@@ -19,6 +17,7 @@ global_resources:
 
 packages:
   - demogsurv
+  - purrr
   - ggplot2
   - moz.utils
   - tidyr

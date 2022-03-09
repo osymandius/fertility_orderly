@@ -4,8 +4,6 @@ artefacts:
   - data:
       description: bdi ASFR dataset
       filenames:
-        - bdi_dhs_asfr.csv
-        - bdi_mics_asfr.csv
         - bdi_asfr.csv
         - bdi_fr_plot.csv
   - staticgraph:
@@ -19,6 +17,7 @@ global_resources:
 
 packages:
   - demogsurv
+  - purrr
   - ggplot2
   - moz.utils
   - tidyr

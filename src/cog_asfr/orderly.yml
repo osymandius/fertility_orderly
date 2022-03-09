@@ -4,8 +4,6 @@ artefacts:
   - data:
       description: cog ASFR dataset
       filenames:
-        - cog_dhs_asfr.csv
-        - cog_mics_asfr.csv
         - cog_asfr.csv
         - cog_fr_plot.csv
   - staticgraph:
@@ -19,6 +17,7 @@ global_resources:
 
 packages:
   - demogsurv
+  - purrr
   - ggplot2
   - moz.utils
   - tidyr

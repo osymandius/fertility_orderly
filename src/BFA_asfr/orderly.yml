@@ -4,8 +4,6 @@ artefacts:
   - data:
       description: bfa ASFR dataset
       filenames:
-        - bfa_dhs_asfr.csv
-        - bfa_mics_asfr.csv
         - bfa_asfr.csv
         - bfa_fr_plot.csv
   - staticgraph:
@@ -19,6 +17,7 @@ global_resources:
 
 packages:
   - demogsurv
+  - purrr
   - ggplot2
   - moz.utils
   - tidyr

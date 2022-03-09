@@ -5,7 +5,6 @@ artefacts:
       description: zmb ASFR dataset
       filenames:
         - zmb_asfr.csv
-        - zmb_dhs_asfr.csv
         - zmb_fr_plot.csv
   - staticgraph:
       description: Validate admin-1 TFRs
@@ -18,6 +17,7 @@ global_resources:
 
 packages:
   - demogsurv
+  - purrr
   - ggplot2
   - moz.utils
   - tidyr

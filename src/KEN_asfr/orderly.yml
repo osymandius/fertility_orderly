@@ -4,8 +4,6 @@ artefacts:
   - data:
       description: ken ASFR dataset
       filenames:
-        - ken_dhs_asfr.csv
-        - ken_mics_asfr.csv
         - ken_asfr.csv
         - ken_fr_plot.csv
   - staticgraph:
@@ -19,6 +17,7 @@ global_resources:
 
 packages:
   - demogsurv
+  - purrr
   - ggplot2
   - moz.utils
   - tidyr

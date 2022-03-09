@@ -42,7 +42,7 @@ validate_model_frame(mf, areas)
 
 # TMB::compile("src/aaa_fit/no_tips.cpp", flags = "-w")               # Compile the C++ file
 # TMB::compile("phia.cpp", flags = "-w")               # Compile the C++ file
-dyn.load(dynlib("no_tips"))
+# dyn.load(dynlib("no_tips"))
 
 tmb_int <- list()
 
@@ -128,7 +128,7 @@ tmb_int$par <- list(
 
   beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
   beta_tips_dummy_10 = rep(0, ncol(mf$Z$X_tips_dummy_10)),
-  beta_tips_dummy_9_11 = rep(0, ncol(mf$Z$X_tips_dummy_9_11)),
+  # beta_tips_dummy_9_11 = rep(0, ncol(mf$Z$X_tips_dummy_9_11)),
   # beta_urban_dummy = rep(0, ncol(mf$Z$X_urban_dummy)),
   u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
   log_prec_rw_tips = 0,
@@ -188,7 +188,7 @@ tmb_int$random <- c("beta_0",
                     "beta_period",
                     "beta_tips_dummy",
                     "beta_tips_dummy_10",
-                    "beta_tips_dummy_9_11",
+                    # "beta_tips_dummy_9_11",
                     # "beta_urban_dummy",
                     "u_tips",
                     "beta_spike_2000",

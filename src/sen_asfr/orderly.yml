@@ -4,8 +4,6 @@ artefacts:
   - data:
       description: sen ASFR dataset
       filenames:
-        - sen_dhs_asfr.csv
-        # - sen_mics_asfr.csv
         - sen_asfr.csv
         - sen_fr_plot.csv
   - staticgraph:
@@ -19,6 +17,7 @@ global_resources:
 
 packages:
   - demogsurv
+  - purrr
   - ggplot2
   - moz.utils
   - tidyr

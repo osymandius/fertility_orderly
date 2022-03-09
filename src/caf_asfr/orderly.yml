@@ -4,7 +4,6 @@ artefacts:
   - data:
       description: caf ASFR dataset
       filenames:
-        - caf_mics_asfr.csv
         - caf_asfr.csv
         - caf_fr_plot.csv
   - staticgraph:
@@ -18,6 +17,7 @@ global_resources:
 
 packages:
   - demogsurv
+  - purrr
   - ggplot2
   - moz.utils
   - tidyr

@@ -4,8 +4,6 @@ artefacts:
   - data:
       description: Zimbabwe ASFR dataset
       filenames:
-        - zwe_dhs_asfr.csv
-        - zwe_mics_asfr.csv
         - zwe_asfr.csv
         - zwe_fr_plot.csv
   - staticgraph:
@@ -19,6 +17,7 @@ global_resources:
 
 packages:
   - demogsurv
+  - purrr
   - ggplot2
   - moz.utils
   - tidyr

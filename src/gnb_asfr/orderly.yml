@@ -4,8 +4,6 @@ artefacts:
   - data:
       description: gnb ASFR dataset
       filenames:
-        # - gnb_dhs_asfr.csv
-        - gnb_mics_asfr.csv
         - gnb_asfr.csv
         - gnb_fr_plot.csv
   - staticgraph:
@@ -19,6 +17,7 @@ global_resources:
 
 packages:
   - demogsurv
+  - purrr
   - ggplot2
   - moz.utils
   - tidyr

@@ -4,8 +4,6 @@ artefacts:
   - data:
       description: moz ASFR dataset
       filenames:
-        - moz_dhs_asfr.csv
-        - moz_mics_asfr.csv
         - moz_asfr.csv
         - moz_fr_plot.csv
   - staticgraph:
@@ -19,6 +17,7 @@ global_resources:
 
 packages:
   - demogsurv
+  - purrr
   - ggplot2
   - moz.utils
   - tidyr

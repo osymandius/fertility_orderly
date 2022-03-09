@@ -4,14 +4,12 @@ artefacts:
   - data:
       description: nga ASFR dataset
       filenames:
-        - nga_dhs_asfr.csv
-        # - nga_mics_asfr.csv
         - nga_asfr_admin1.csv
         - nga_tfr_admin1.csv
-        # - nga_fr_plot.csv
 
 packages:
   - demogsurv
+  - purrr
   - ggplot2
   - moz.utils
   - tidyr

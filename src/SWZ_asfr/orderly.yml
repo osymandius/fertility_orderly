@@ -4,8 +4,6 @@ artefacts:
   - data:
       description: swz ASFR dataset
       filenames:
-        - swz_dhs_asfr.csv
-        - swz_mics_asfr.csv
         - swz_asfr.csv
         - swz_fr_plot.csv
   - staticgraph:
@@ -19,6 +17,7 @@ global_resources:
 
 packages:
   - demogsurv
+  - purrr
   - ggplot2
   - moz.utils
   - tidyr

@@ -4,8 +4,6 @@ artefacts:
   - data:
       description: tcd ASFR dataset
       filenames:
-        - tcd_dhs_asfr.csv
-        - tcd_mics_asfr.csv
         - tcd_asfr.csv
         - tcd_fr_plot.csv
   - staticgraph:
@@ -19,6 +17,7 @@ global_resources:
 
 packages:
   - demogsurv
+  - purrr
   - ggplot2
   - moz.utils
   - tidyr

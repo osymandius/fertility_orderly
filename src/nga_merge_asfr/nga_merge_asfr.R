@@ -35,10 +35,32 @@ asfr_plot <- asfr_plot_raw %>%
   mutate(value = births/pys,
          variable = "asfr")
 
-tfr_plot <- asfr_plot %>%
-  group_by(iso3, survey_id, area_id, area_name, period, survtype) %>%
-  summarise(value = 5*sum(value)) %>%
-  mutate(variable = "tfr")
+tfr_plot_admin1 <- Map(calc_tfr, dat_admin1$ir,
+                by = list(~survey_id + survtype + survyear + area_id),
+                tips = list(c(0,15)),
+                agegr= list(3:10*5),
+                period = list(1995:2020),
+                strata = list(NULL)) %>%
+            bind_rows() %>%
+  type.convert %>%
+  filter(period<=survyear) %>%
+  mutate(iso3 = iso3,
+      variable = "tfr") %>%
+  rename(value = "tfr")
+
+ntl_tfr_plot <- Map(calc_tfr, ir,
+                # by = list(~survey_id + survtype + survyear + area_id),
+                tips = list(c(0,15)),
+                agegr= list(3:10*5),
+                period = list(1995:2020),
+                strata = list(NULL)) %>%
+            bind_rows(.id = "survey_id") %>%
+  type.convert %>%
+  mutate(iso3 = iso3,
+  		variable = "tfr") %>%
+  rename(value = "tfr")
+
+tfr_plot <- bind_rows(tfr_plot_admin1, ntl_tfr_plot)
 
 plot_dat <- bind_rows(asfr_plot, tfr_plot)
 

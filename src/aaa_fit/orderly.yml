@@ -35,12 +35,12 @@ resources:
   # - parallel.cpp
   # - parallel.o
   # - parallel.so
-  - phia.cpp
-  - phia.o
-  - phia.so
-  - no_tips.cpp
-  - no_tips.o
-  - no_tips.so
+  # - phia.cpp
+  # - phia.o
+  # - phia.so
+  # - no_tips.cpp
+  # - no_tips.o
+  # - no_tips.so
 
 
 

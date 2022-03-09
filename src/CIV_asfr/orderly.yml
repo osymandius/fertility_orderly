@@ -4,8 +4,6 @@ artefacts:
   - data:
       description: civ ASFR dataset
       filenames:
-        - civ_dhs_asfr.csv
-        - civ_mics_asfr.csv
         - civ_asfr.csv
         - civ_fr_plot.csv
   - staticgraph:
@@ -19,6 +17,7 @@ global_resources:
 
 packages:
   - demogsurv
+  - purrr
   - ggplot2
   - moz.utils
   - tidyr

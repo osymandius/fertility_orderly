@@ -4,8 +4,6 @@ artefacts:
   - data:
       description: gin ASFR dataset
       filenames:
-        - gin_dhs_asfr.csv
-        # - gin_mics_asfr.csv
         - gin_asfr.csv
         - gin_fr_plot.csv
   - staticgraph:
@@ -19,6 +17,7 @@ global_resources:
 
 packages:
   - demogsurv
+  - purrr
   - ggplot2
   - moz.utils
   - tidyr

@@ -4,8 +4,6 @@ artefacts:
   - data:
       description: ben ASFR dataset
       filenames:
-        - ben_dhs_asfr.csv
-        - ben_mics_asfr.csv
         - ben_asfr.csv
         - ben_fr_plot.csv
   - staticgraph:
@@ -19,6 +17,7 @@ global_resources:
 
 packages:
   - demogsurv
+  - purrr
   - ggplot2
   - moz.utils
   - tidyr

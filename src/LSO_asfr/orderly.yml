@@ -4,8 +4,6 @@ artefacts:
   - data:
       description: lso ASFR dataset
       filenames:
-        - lso_dhs_asfr.csv
-        - lso_mics_asfr.csv
         - lso_asfr.csv
         - lso_fr_plot.csv
   - staticgraph:
@@ -19,6 +17,7 @@ global_resources:
 
 packages:
   - demogsurv
+  - purrr
   - ggplot2
   - moz.utils
   - tidyr

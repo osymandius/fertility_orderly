@@ -4,8 +4,6 @@ artefacts:
   - data:
       description: gha ASFR dataset
       filenames:
-        - gha_dhs_asfr.csv
-        # - gha_mics_asfr.csv
         - gha_asfr.csv
         - gha_fr_plot.csv
   - staticgraph:
@@ -19,6 +17,7 @@ global_resources:
 
 packages:
   - demogsurv
+  - purrr
   - ggplot2
   - moz.utils
   - tidyr

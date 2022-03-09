@@ -4,8 +4,6 @@ artefacts:
   - data:
       description: cmr ASFR dataset
       filenames:
-        - cmr_dhs_asfr.csv
-        - cmr_mics_asfr.csv
         - cmr_asfr.csv
         - cmr_fr_plot.csv
   - staticgraph:
@@ -19,6 +17,7 @@ global_resources:
 
 packages:
   - demogsurv
+  - purrr
   - ggplot2
   - moz.utils
   - tidyr
