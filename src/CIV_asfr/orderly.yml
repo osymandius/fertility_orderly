@@ -17,6 +17,7 @@ global_resources:
 
 packages:
   - demogsurv
+  - parallel
   - purrr
   - ggplot2
   - moz.utils
