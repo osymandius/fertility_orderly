@@ -36,7 +36,7 @@ if(exists("mics_fr")) {
     bind_rows(mics_fr$mics_asfr)
   
   plot_dat <- dhs_fr$plot %>%
-    bind_rows(mics_fr$plot)
+    bind_rows(mics_fr$mics_plot)
   
 } else {
   asfr <- dhs_fr$asfr
