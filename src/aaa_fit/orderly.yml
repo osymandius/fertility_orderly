@@ -26,10 +26,10 @@ artefacts:
 
 global_resources:
   resources/iso_mapping_fit.csv: iso_mapping_fit.csv
-  resources/mics_asfr.csv: mics_asfr.csv
+  # resources/mics_asfr.csv: mics_asfr.csv
   resources/phia_asfr.csv: phia_asfr.csv
   resources/phia_asfr_admin1.csv: phia_asfr_admin1.csv
-  resources/moz_areas_maputo.geojson: moz_areas_maputo.geojson
+  # resources/moz_areas_maputo.geojson: moz_areas_maputo.geojson
 
 resources:
   # - parallel.cpp
@@ -38,9 +38,9 @@ resources:
   # - phia.cpp
   # - phia.o
   # - phia.so
-  # - no_tips.cpp
-  # - no_tips.o
-  # - no_tips.so
+  - no_tips.cpp
+  - no_tips.o
+  - no_tips.so
 
 
 
@@ -61,6 +61,7 @@ packages:
   - stringr
   - TMB
   - Matrix
+  - forcats
   # - parallel
   - purrr
   - rlang

@@ -5,6 +5,8 @@ population <- read.csv("depends/interpolated_population.csv") %>%
   mutate(iso3 = iso3) %>%
   filter(sex == "female")
 
+# cod_pop <- read.csv("../../archive/cod_data_population-local/20210526-082659-4cc83e7f/cod_population_local.csv")
+
 areas <- read_sf("depends/naomi_areas.geojson") %>%
   mutate(iso3 = iso3) %>%
   st_make_valid() %>%
@@ -21,20 +23,29 @@ phia_asfr <- read.csv("resources/phia_asfr.csv") %>%
   filter(iso3 == iso3_c) %>%
   mutate(survtype = "PHIA")
 
+remove_survey <- c("CIV2005AIS", "COG2014MICS", "MLI2009MICS", "MLI2015MICS", "SLE2010MICS", "TGO2006MICS", "BEN1996DHS", "KEN2009MICS")
+subnational_surveys <- c("KEN2009MICS", "KEN2011MICS")
+
 asfr <- asfr %>% bind_rows(
   # mics_asfr, 
   phia_asfr) %>%
-  filter(!survey_id %in% c("CIV2005AIS", "COG2014MICS", "MLI2009MICS", "MLI2015MICS", "SLE2010MICS", "TGO2006MICS", "BEN1996DHS"))
+  filter(!survey_id %in% remove_survey)
   # filter(!survey_id %in% c("BDI2005MICS", "BEN2014MICS", "BFA2006MICS", "CAF2006MICS", "CAF2010MICS", "CAF2018MICS", "CIV2006MICS", "CMR2000MICS", "CMR2006MICS", "COG2014MICS", "GMB2005MICS", "GMB2010MICS", "GMB2018MICS", "MLI2009MICS", "MLI2015MICS", "SLE2010MICS", "SLE2017MICS", "SWZ2000MICS", "TCD2010MICS", "TCD2019MICS", "TGO2006MICS", "TGO2010MICS", "TGO2017MICS", "CIV2005AIS"))
 
 lvl_map <- read.csv("resources/iso_mapping_fit.csv")
 lvl <- lvl_map$fertility_fit_level[lvl_map$iso3 == iso3]
 admin1_lvl <- lvl_map$admin1_level[lvl_map$iso3 == iso3]
 
+# debugonce(make_model_frames_dev)
 mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level = lvl, project=2020)
 
-spline_mat <- splines::bs(1:26, knots = seq(1, 25, 3))
-class(spline_mat) <- "matrix"
+# spline_mat <- splines::bs(1:26, df =10)
+# class(spline_mat) <- "matrix"
+# spline_mat <- as(spline_mat, "sparseMatrix")
+
+x <- 0:25
+k <- seq(-15, 40, by = 5)
+spline_mat <- splines::splineDesign(k, x, ord = 4)
 spline_mat <- as(spline_mat, "sparseMatrix")
 
 mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
@@ -42,8 +53,8 @@ mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
 validate_model_frame(mf, areas)
 
 # TMB::compile("src/aaa_fit/no_tips.cpp", flags = "-w")               # Compile the C++ file
-# TMB::compile("phia.cpp", flags = "-w")               # Compile the C++ file
-# dyn.load(dynlib("no_tips"))
+# TMB::compile("no_tips.cpp", flags = "-w")               # Compile the C++ file
+dyn.load(dynlib("no_tips"))
 
 tmb_int <- list()
 
@@ -83,6 +94,7 @@ tmb_int$data <- list(
   R_period = make_rw_structure_matrix(ncol(spline_mat), 1, adjust_diagonal = TRUE),
   # R_spline_mat = spline_mat,
   R_spatial = mf$R$R_spatial,
+  R_spatial_iid = mf$R$R_spatial_iid,
   R_country = mf$R$R_country,
   rankdef_R_spatial = 1,
 
@@ -171,7 +183,7 @@ tmb_int$par <- list(
   log_prec_eta1 = 0,
   logit_eta1_phi_age = 0,
   logit_eta1_phi_period = 0,
-  
+
   eta2 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_period))),
   log_prec_eta2 = 0,
   logit_eta2_phi_period = 0,
@@ -281,16 +293,21 @@ fr_plot <- fr_plot %>%
       rename(area_id = area_id1) %>%
       left_join(areas %>% st_drop_geometry() %>% select(area_id, area_name)) %>%
       mutate(variable = "tfr")
-  )
+  ) %>%
+  filter(!(area_id == iso3 & survey_id %in% subnational_surveys))
 
+cntry_name <- countrycode::countrycode(iso3, "iso3c", "country.name")
 
-tfr_plot <- tmb_results %>%
-  filter(area_level %in% c(0, admin1_lvl), variable == "tfr") %>%
+plot_prep <- tmb_results %>%
+  filter(area_level %in% c(0, admin1_lvl), variable == "tfr")
+
+tfr_plot <- plot_prep %>%
   ggplot(aes(x=period, y=median)) +
   geom_line(size=1) +
   geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
-  geom_point(data = fr_plot %>% filter(variable == "tfr", value <10), aes(y=value, color=survey_id)) +
-  facet_wrap(~area_name, ncol=5) +
+  geom_point(data = fr_plot %>% filter(variable == "tfr", value <10, !survey_id %in% remove_survey), aes(y=value, color=survey_id)) +
+  geom_point(data = fr_plot %>% filter(variable == "tfr", value <10, survey_id %in% remove_survey), aes(y=value, color=survey_id), shape=22, fill=NA) +
+  facet_wrap(~fct_relevel(area_name, levels=c(cntry_name, unique(plot_prep$area_name)[!unique(plot_prep$area_name) == cntry_name])), ncol=5) +
   labs(y="TFR", x=element_blank(), color="Survey ID", title=paste(iso3, "| Provincial TFR")) +
   theme_minimal() +
   theme(
