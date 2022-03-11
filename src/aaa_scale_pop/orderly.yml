@@ -192,3 +192,8 @@ depends:
     id: latest(parameter:iso3 == iso3)
     use:
       depends/population_worldpop_naomi.csv: population_worldpop_naomi.csv
+  
+  cod_data_population-local:
+    id: latest
+    use:
+      depends/cod_population_local.csv: cod_population_local.csv

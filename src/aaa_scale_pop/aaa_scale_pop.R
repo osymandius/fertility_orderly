@@ -16,11 +16,48 @@ areas <- read_area_merged(area_file) %>%
 worldpop <- read_csv("depends/population_worldpop_naomi.csv") %>%
   separate(calendar_quarter, into=c(NA, "year", NA), sep = c(2, 6), convert=TRUE)
 
-# orderly_id <- orderly::orderly_search(query = paste0("latest(parameter:iso3 == '", iso3_c, "')"), "aaa_data_population_worldpop", draft = FALSE)
-# 
-# worldpop <- read_csv(paste0("archive/aaa_data_population_worldpop/", orderly_id, "/population_worldpop_naomi.csv")) %>%
-#   filter(str_detect(area_id, "_5_")) %>%
-#   separate(calendar_quarter, into=c(NA, "year", NA), sep = c(2, 6), convert=TRUE)
+if(iso3 == "COD") {
+  
+  cod_pop <- read.csv("depends/cod_population_local.csv")
+  
+  interpolated_worldpop_2019 <- crossing(area_id = areas$area_id,
+                                         year = 2015:2020,
+                                         sex = c("male", "female"),
+                                         age_group = unique(worldpop$age_group)) %>%
+    left_join(worldpop) %>%
+    group_by(area_id, sex, age_group) %>%
+    mutate(population = log(population),
+           population = zoo::na.approx(population, na.rm=FALSE),
+           worldpop_population = exp(population)) %>%
+    filter(year == 2019) %>%
+    select(area_id, sex, age_group, year, worldpop_population)
+  
+  missing_dist <- worldpop %>% filter(is.na(population) | population == 0) %>% distinct(area_id, year)
+  
+  district_prop <- cod_pop %>%
+    filter(area_id %in% unique(missing_dist$area_id)) %>%
+    left_join(spread_areas(areas) %>% select(area_id, area_id1) %>% st_drop_geometry()) %>%
+    left_join(cod_pop %>% filter(str_detect(area_id, "_1_")) %>% rename(area_id1 = area_id, area_id1_population = population) %>% select(area_id1, area_id1_population, sex, age_group)) %>%
+    mutate(district_proportion_of_admin1 = population/area_id1_population)
+  
+  parent_missing <- unique(filter(spread_areas(areas), area_id %in% missing_dist$area_id)$area_id1)
+  
+  imputed_pop <- worldpop %>%
+    filter(area_id %in% missing_dist$area_id) %>%
+    left_join(district_prop %>% select(area_id, sex, age_group, area_id1, district_proportion_of_admin1)) %>%
+    left_join(worldpop %>% 
+                filter(area_id %in% parent_missing) %>% 
+                rename(area_id1_population = population) %>% 
+                select(-c(source, asfr, area_name)), by=c("area_id1" = "area_id", "year", "sex", "age_group")) %>%
+    mutate(population = district_proportion_of_admin1 * area_id1_population)
+  
+  worldpop <- worldpop %>%
+    filter(!area_id %in% missing_dist$area_id) %>%
+    bind_rows(imputed_pop %>% select(colnames(worldpop)))
+  
+}
+
+
 
 sharepoint <- spud::sharepoint$new(Sys.getenv("SHAREPOINT_URL"))
 
