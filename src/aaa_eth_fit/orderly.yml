@@ -39,8 +39,8 @@ resources:
   # - phia.o
   # - phia.so
   - no_tips_eth.cpp
-  # - no_tips_eth.o
-  # - no_tips_eth.so
+  - no_tips_eth.o
+  - no_tips_eth.so
 
 
 

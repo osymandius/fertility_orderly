@@ -39,8 +39,8 @@ resources:
   # - phia.o
   # - phia.so
   - no_tips_mwi_rwa.cpp
-  # - no_tips_mwi_rwa.o
-  # - no_tips_mwi_rwa.so
+  - no_tips_mwi_rwa.o
+  - no_tips_mwi_rwa.so
 
 
 
