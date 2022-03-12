@@ -5,17 +5,12 @@ population <- read.csv("depends/interpolated_population.csv") %>%
   mutate(iso3 = iso3) %>%
   filter(sex == "female")
 
-# cod_pop <- read.csv("../../archive/cod_data_population-local/20210526-082659-4cc83e7f/cod_population_local.csv")
-
 areas <- read_sf("depends/naomi_areas.geojson") %>%
   mutate(iso3 = iso3) %>%
   st_make_valid() %>%
   st_collection_extract("POLYGON")
 
 asfr <- read.csv("depends/asfr.csv")
-
-# mics_asfr <- read.csv("resources/mics_asfr.csv") %>%
-#   filter(iso3 == iso3_c)
 
 phia_asfr <- read.csv("resources/phia_asfr.csv") %>%
   separate(area_id, into=c("iso3", NA), sep = 3, remove = FALSE) %>%
@@ -25,32 +20,21 @@ phia_asfr <- read.csv("resources/phia_asfr.csv") %>%
 remove_survey <- c("CIV2005AIS", "COG2014MICS", "MLI2009MICS", "MLI2015MICS", "SLE2010MICS", "TGO2006MICS", "BEN1996DHS", "KEN2009MICS", "COD2017MICS")
 subnational_surveys <- c("KEN2009MICS", "KEN2011MICS")
 
-asfr <- asfr %>% bind_rows(
-  # mics_asfr, 
-  phia_asfr) %>%
+asfr <- asfr %>% 
+  bind_rows(phia_asfr) %>%
   filter(!survey_id %in% remove_survey)
-  # filter(!survey_id %in% c("BDI2005MICS", "BEN2014MICS", "BFA2006MICS", "CAF2006MICS", "CAF2010MICS", "CAF2018MICS", "CIV2006MICS", "CMR2000MICS", "CMR2006MICS", "COG2014MICS", "GMB2005MICS", "GMB2010MICS", "GMB2018MICS", "MLI2009MICS", "MLI2015MICS", "SLE2010MICS", "SLE2017MICS", "SWZ2000MICS", "TCD2010MICS", "TCD2019MICS", "TGO2006MICS", "TGO2010MICS", "TGO2017MICS", "CIV2005AIS"))
 
 lvl_map <- read.csv("resources/iso_mapping_fit.csv")
 lvl <- lvl_map$fertility_fit_level[lvl_map$iso3 == iso3]
 admin1_lvl <- lvl_map$admin1_level[lvl_map$iso3 == iso3]
 
-# debugonce(make_model_frames_dev)
 mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level = lvl, project=2020)
 
 mf$observations$full_obs <- mf$observations$full_obs %>%
   ungroup() %>%
-  # group_by(survey_id) %>%
-  # mutate(id.smooth = factor(cur_group_id())) %>%
-  # ungroup()
   mutate(id.smooth = factor(row_number()))
 
 R_smooth_iid <- as(diag(nrow = nrow(mf$observations$full_obs)), "sparseMatrix")
-# R_smooth_iid <- as(diag(nrow = length(unique(mf$observations$full_obs$survey_id))), "sparseMatrix")
-# 
-# spline_mat <- splines::bs(1:26, df =10)
-# class(spline_mat) <- "matrix"
-# spline_mat <- as(spline_mat, "sparseMatrix")
 
 x <- 0:25
 k <- seq(-15, 40, by = 5)
@@ -61,9 +45,9 @@ mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
 
 validate_model_frame(mf, areas)
 
-# TMB::compile("src/aaa_fit/dev.cpp", flags = "-w")               # Compile the C++ file
-# TMB::compile("dev.cpp", flags = "-w")               # Compile the C++ file
-# dyn.load(dynlib("dev"))
+# TMB::compile("src/aaa_fit/no_tips.cpp", flags = "-w")               # Compile the C++ file
+# TMB::compile("no_tips.cpp", flags = "-w")               # Compile the C++ file
+# dyn.load(dynlib("no_tips"))
 
 tmb_int <- list()
 
@@ -245,7 +229,7 @@ if(mf$mics_toggle) {
 
 f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
                                parameters = tmb_int$par,
-                               DLL = "dev",
+                               DLL = "no_tips",
                                silent=0,
                                checkParameterOrder=FALSE)
 })
@@ -256,7 +240,7 @@ if(is.null(parallel::mccollect(f)[[1]])) {
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                        parameters = tmb_int$par,
-                       DLL = "dev",
+                       DLL = "no_tips",
                        random = tmb_int$random,
                        hessian = FALSE)
 
