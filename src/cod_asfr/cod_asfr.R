@@ -23,7 +23,7 @@ mics_wm <- read.csv(paste0("depends/", tolower(iso3), "_mics_women.csv"))
 lvl_map <- read.csv("resources/iso_mapping_fit.csv")
 lvl <- lvl_map$fertility_fit_level[lvl_map$iso3 == iso3]
 admin1_lvl <- lvl_map$admin1_level[lvl_map$iso3 == iso3]
-
+ 
 mics_fr <- calculate_mics_fertility(iso3, mics_wm, mics_births_to_women)
 
 if(exists("mics_fr")){
