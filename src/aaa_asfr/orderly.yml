@@ -36,6 +36,7 @@ packages:
   - stringr
   - TMB
   - Matrix
+  - rdhs
   - forcats
   # - parallel
   - purrr
@@ -89,6 +90,10 @@ depends:
     id: latest
     use:
       depends/rwa_dhs_clusters.csv: rwa_dhs_clusters.csv
+  sen_survey:
+    id: latest
+    use:
+      depends/sen_dhs_clusters.csv: sen_dhs_clusters.csv
   tza_survey:
     id: latest
     use:
@@ -152,18 +157,6 @@ depends:
       depends/gmb_dhs_clusters.csv: gmb_dhs_clusters.csv
       depends/gmb_mics_women.csv: gmb_mics_women.csv
       depends/gmb_mics_births_to_women.csv: gmb_mics_births_to_women.csv
-  gnq_survey:
-    id: latest
-    use:
-      depends/gnq_dhs_clusters.csv: gnq_dhs_clusters.csv
-      depends/gnq_mics_women.csv: gnq_mics_women.csv
-      depends/gnq_mics_births_to_women.csv: gnq_mics_births_to_women.csv
-  hti_survey:
-    id: latest
-    use:
-      depends/hti_dhs_clusters.csv: hti_dhs_clusters.csv
-      depends/hti_mics_women.csv: hti_mics_women.csv
-      depends/hti_mics_births_to_women.csv: hti_mics_births_to_women.csv
   ken_survey:
     id: latest
     use:
@@ -200,12 +193,6 @@ depends:
       depends/nga_dhs_clusters.csv: nga_dhs_clusters.csv
       depends/nga_mics_women.csv: nga_mics_women.csv
       depends/nga_mics_births_to_women.csv: nga_mics_births_to_women.csv
-  sen_survey:
-    id: latest
-    use:
-      depends/sen_dhs_clusters.csv: sen_dhs_clusters.csv
-      depends/sen_mics_women.csv: sen_mics_women.csv
-      depends/sen_mics_births_to_women.csv: sen_mics_births_to_women.csv
   sle_survey:
     id: latest
     use:
