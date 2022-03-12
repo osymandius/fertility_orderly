@@ -39,7 +39,6 @@ packages:
   - forcats
   - haven
   - demogsurv
-  # - parallel
   - purrr
   - rlang
   - mgcv

@@ -12,8 +12,7 @@ areas <- read_sf("depends/naomi_areas.geojson") %>%
   st_make_valid() %>%
   st_collection_extract("POLYGON")
 
-asfr <- read.csv("depends/fertility_asfr.csv")
-  # filter(survtype != "MICS")
+asfr <- read.csv("depends/asfr.csv")
 
 # mics_asfr <- read.csv("resources/mics_asfr.csv") %>%
 #   filter(iso3 == iso3_c)
@@ -41,14 +40,14 @@ mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level = lvl, p
 
 mf$observations$full_obs <- mf$observations$full_obs %>%
   ungroup() %>%
-  group_by(survey_id) %>%
-  mutate(id.smooth = factor(cur_group_id())) %>%
-  ungroup()
-  # mutate(id.smooth = factor(row_number()))
+  # group_by(survey_id) %>%
+  # mutate(id.smooth = factor(cur_group_id())) %>%
+  # ungroup()
+  mutate(id.smooth = factor(row_number()))
 
-# R_smooth_iid <- as(diag(nrow = nrow(mf$observations$full_obs)), "sparseMatrix")
-R_smooth_iid <- as(diag(nrow = length(unique(mf$observations$full_obs$survey_id))), "sparseMatrix")
-
+R_smooth_iid <- as(diag(nrow = nrow(mf$observations$full_obs)), "sparseMatrix")
+# R_smooth_iid <- as(diag(nrow = length(unique(mf$observations$full_obs$survey_id))), "sparseMatrix")
+# 
 # spline_mat <- splines::bs(1:26, df =10)
 # class(spline_mat) <- "matrix"
 # spline_mat <- as(spline_mat, "sparseMatrix")
@@ -64,7 +63,7 @@ validate_model_frame(mf, areas)
 
 # TMB::compile("src/aaa_fit/dev.cpp", flags = "-w")               # Compile the C++ file
 # TMB::compile("dev.cpp", flags = "-w")               # Compile the C++ file
-dyn.load(dynlib("dev"))
+# dyn.load(dynlib("dev"))
 
 tmb_int <- list()
 
@@ -287,7 +286,7 @@ write_csv(tmb_results, "fr.csv")
 #   list_modify("lambda_out" = zap(), "tfr_out" = zap())
 # saveRDS(hyper, "hyper.rds")
 
-fr_plot <- read.csv("depends/fertility_fr_plot.csv")
+fr_plot <- read.csv("depends/fr_plot.csv")
 
 fr_plot <- fr_plot %>%
   left_join(areas %>% st_drop_geometry() %>% select(area_id, area_name))
