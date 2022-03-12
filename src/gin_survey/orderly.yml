@@ -17,6 +17,7 @@ packages:
   - haven
   - naomi
   - naomi.utils
+  - readr
   - rdhs
   - sf
 

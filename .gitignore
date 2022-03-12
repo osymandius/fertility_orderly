@@ -12,6 +12,7 @@ depends
 backup
 runner
 metadata
+resources
 
 # Orderly will store data in a sqlite database, by default orderly.sqlite
 *.sqlite
