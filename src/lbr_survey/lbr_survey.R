@@ -74,3 +74,5 @@ p_coord_check
 dev.off()
 
 write_csv(survey_clusters, paste0(tolower(iso3), "_dhs_clusters.csv"))
+
+while (!is.null(dev.list())) dev.off()
