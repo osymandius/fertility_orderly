@@ -19,6 +19,7 @@ packages:
   - naomi.utils
   - tidyverse
   - dfertility
+  - spud
   - rdhs
   - sf
 
