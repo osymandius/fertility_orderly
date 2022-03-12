@@ -86,6 +86,7 @@ fertility_mics_data$hh <- fertility_mics_data$hh %>%
     mics_area_name_label = case_when(
       mics_area_name_label == "Sã©Gou" ~ "Ségou",
       mics_area_name_label == "Segou" ~ "Ségou",
+      mics_area_name_label == "Tombouctou" ~ "Timbuktu",
       TRUE ~ mics_area_name_label
     )
   ) 
