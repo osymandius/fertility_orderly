@@ -21,6 +21,9 @@ packages:
   - rdhs
   - sf
 
+global_resources:
+  resources/MICS_indicators.csv: MICS_indicators.csv
+
 depends:
   gin_data_areas:
     id: latest
