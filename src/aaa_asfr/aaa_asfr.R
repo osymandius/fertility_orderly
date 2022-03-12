@@ -1,11 +1,12 @@
+iso3_c <- iso3
 areas <- read_sf("depends/naomi_areas.geojson")
 
 areas_wide <- spread_areas(areas)
 areas_long <- areas %>% st_drop_geometry
 
 mapping <- read_csv("resources/iso_mapping_fit.csv")
-dhs_flag <- filter(mapping, iso3 == iso3)$dhs
-mics_flag <- filter(mapping, iso3 == iso3)$mics
+dhs_flag <- filter(mapping, iso3 == iso3_c)$dhs
+mics_flag <- filter(mapping, iso3 == iso3_c)$mics
 
 if(dhs_flag == 1) {
   clusters <- read.csv(paste0("depends/", tolower(iso3), "_dhs_clusters.csv"))
