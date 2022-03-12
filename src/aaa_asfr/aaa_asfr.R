@@ -48,8 +48,8 @@ if(dhs_flag == 1 & mics_flag == 1){
   asfr <- dhs_fr$asfr
   plot_dat <- dhs_fr$plot
 } else {
-  asfr <- mics_fr$asfr
-  plot_dat <- mics_fr$plot
+  asfr <- mics_fr$mics_asfr
+  plot_dat <- mics_fr$mics_plot
 }
 
 write_csv(asfr, "asfr.csv")
