@@ -19,7 +19,7 @@ surveys <- surveys_add_dhs_regvar(surveys, survey_region_boundaries)
 
 survey_region_areas <- allocate_areas_survey_regions(areas_wide, survey_region_boundaries %>% st_make_valid())
 
-validate_survey_region_areas(survey_region_areas, survey_region_boundaries)
+validate_survey_region_areas(survey_region_areas, survey_region_boundaries, warn=TRUE)
 
 # Survey regions contained no areas:
 #   survey_id survey_region_id     survey_region_name
