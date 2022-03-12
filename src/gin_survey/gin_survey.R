@@ -1,7 +1,8 @@
 #' ISO3 country code
 iso3 <- "GIN"
 
-areas <- read_sf("depends/gin_areas.geojson")
+areas <- read_sf("depends/gin_areas.geojson") %>%
+  st_make_valid()
 # areas <- read_sf("archive/gin_data_areas/20201215-073620-ffcc488c/gin_areas.geojson")
 areas_wide <- spread_areas(areas)
 
