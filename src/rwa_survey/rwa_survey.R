@@ -41,7 +41,7 @@ survey_region_boundaries <-
 #' From reviewing the HR dataset, shdistrict is included with 30 regions
 
 hrd <- dhs_datasets(surveyIds = "RW2017MIS", fileType = "HR", fileFormat = "FL")
-rw2015hr <- readRDS(get_datasets(hrd)[[1]])
+rw2015hr <- readRDS(get_datasets(hrd, clear_cache = TRUE)[[1]],)
 
 as_factor(rw2015hr[c("hv024", "shdistrict")]) %>% distinct()
 filter(survey_region_boundaries, survey_id == "RWA2015DHS") %>%
