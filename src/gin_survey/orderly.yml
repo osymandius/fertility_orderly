@@ -18,6 +18,7 @@ packages:
   - naomi
   - naomi.utils
   - tidyverse
+  - dfertility
   - rdhs
   - sf
 
