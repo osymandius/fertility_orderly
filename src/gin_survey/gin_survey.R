@@ -45,7 +45,7 @@ write_csv(survey_clusters, paste0(tolower(iso3), "_dhs_clusters.csv"))
 
 ####### MICS
 
-mics_indicators <- read_csv("../../global/MICS_indicators.csv") %>%
+mics_indicators <- read_csv("resources/MICS_indicators.csv") %>%
   pivot_longer(-c(label, id, filetype), names_to = "survey_id")
 
 mics_survey_data <- create_surveys_mics(iso3, mics_indicators)
