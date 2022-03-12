@@ -34,7 +34,7 @@ survey_region_boundaries <- survey_region_boundaries %>%
 #' ACTION: Replace regions coded 9999 from the 2007 AIS with regions 51:55 from the 2010 DHS.
 
 hrd <- dhs_datasets(surveyIds = "TZ2007AIS", fileType = "HR", fileFormat = "FL")
-tz2007hr <- readRDS(get_datasets(hrd)[[1]])
+tz2007hr <- readRDS(get_datasets(hrd, clear_cache = TRUE)[[1]])
 
 count(tz2007hr, hv024)
 
