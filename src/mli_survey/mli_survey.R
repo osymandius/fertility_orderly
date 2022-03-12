@@ -18,23 +18,27 @@ survey_region_boundaries <- survey_region_boundaries %>%
       survey_id = rep("MLI1996DHS", 2),
       survey_region_id = c(6,7),
       survey_region_name = c("Tombouctou", "Gao"),
-      REGVAR = rep("hv024", 2),
-      geometry = filter(areas, area_level == 1, area_name %in% c("Tombouctou", "Gao"))$geometry
-    ),
+      REGVAR = rep("hv024", 2)
+    ) %>%
+      left_join(
+        filter(areas, area_level == 1) %>%
+          mutate(area_name = recode(area_name, "Timbuktu" = "Tombouctou")) %>%
+          select(area_name),
+        by=c("survey_region_name" = "area_name")
+      )
+    ,
     data.frame(
       survey_id = rep("MLI2001DHS", 3),
       survey_region_id = c(6,7,8),
       survey_region_name = c("Tombouctou", "Gao", "Kidal"),
-      REGVAR = rep("hv024", 3),
-      geometry = filter(areas, area_level == 1, area_name %in% c("Tombouctou", "Gao", "Kidal"))$geometry
-    )
-    # data.frame(
-    #   survey_id = c("MLI2012DHS", "MLI2015MIS"),
-    #   survey_region_id = c(9, 9),
-    #   survey_region_name = rep("Bamako", 2),
-    #   REGVAR = rep("hv024", 2),
-    #   geometry = rep(filter(areas, area_level == 1, area_name %in% c("Bamako"))$geometry, 2)
-    # )
+      REGVAR = rep("hv024", 3)
+    ) %>%
+      left_join(
+        filter(areas, area_level == 1) %>%
+          mutate(area_name = recode(area_name, "Timbuktu" = "Tombouctou")) %>%
+          select(area_name),
+        by=c("survey_region_name" = "area_name")
+      )
   ) %>%
   filter(!is.na(survey_region_name))
 
