@@ -38,6 +38,8 @@ packages:
   - Matrix
   - rdhs
   - forcats
+  - haven
+  - demogsurv
   # - parallel
   - purrr
   - rlang
