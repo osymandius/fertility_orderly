@@ -65,7 +65,7 @@ gin_areas <- raw_long %>%
          spectrum_region_code, display, area_sort_order,
          center_x, center_y, geometry)
 
-gin_areas <- sf::st_make_valid(areas)
+gin_areas <- sf::st_make_valid(gin_areas)
 
 #' Save boundaries
 sf::st_write(gin_areas, "gin_areas.geojson", delete_dsn = TRUE)

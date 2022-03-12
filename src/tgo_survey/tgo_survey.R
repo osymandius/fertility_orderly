@@ -18,8 +18,37 @@ surveys <- surveys_add_dhs_regvar(surveys, survey_region_boundaries)
 
 survey_region_areas <- allocate_areas_survey_regions(areas_wide, survey_region_boundaries)
 
-validate_survey_region_areas(survey_region_areas, survey_region_boundaries)
+# survey_id survey_region_id    survey_region_name
+# TGO1998DHS                1                  lome
+# TGO2017MIS                1 Agglomération de Lomé
 
+survey_region_boundaries %>%
+  filter(survey_id == "TGO2017MIS",
+         survey_region_name == "Agglomération de Lomé") %>%
+  ggplot() +
+    geom_sf() +
+    geom_sf(data = areas %>% filter(parent_area_id == "TGO_1_3"), aes(fill=area_name, geometry = geometry), alpha=0.3)
+
+survey_region_boundaries %>%
+  filter(survey_id == "TGO1998DHS",
+         survey_region_name == "lome") %>%
+  ggplot() +
+  geom_sf() +
+  geom_sf(data = areas %>% filter(parent_area_id == "TGO_1_3"), aes(fill=area_name, geometry = geometry), alpha=0.3)
+
+survey_region_areas <- survey_region_areas %>%
+  bind_rows(
+    data.frame(
+      survey_id = c("TGO1998DHS", "TGO2017MIS"),
+      survey_region_id = c(1,1),
+      survey_region_name = c("lome", "Agglomération de Lomé"),
+      REGVAR = rep("hv024",2),
+      area_id = rep("TGO_1_3",2),
+      area_id2 = rep("TGO_2_20sk",2),
+      geometry = rep(filter(areas, area_id == "TGO_2_20sk")$geometry,2)
+    ))
+
+validate_survey_region_areas(survey_region_areas, survey_region_boundaries)
 
 survey_regions <- create_survey_regions_dhs(survey_region_areas)
 
