@@ -56,7 +56,7 @@ areas <- areas_wide %>%
          name2 = fct_inorder(name2)) %>%
   gather_areas()
 
-areas <- st_collection_extract(areas, "POLYGON")
+areas <- st_collection_extract(st_make_valid(areas), "POLYGON")
 
 #' Create boundaries file
 gmb_areas <- areas %>%
