@@ -1,0 +1,176 @@
+script: script.R
+
+artefacts:
+  - data:
+      description: boundaries file formatted for naomi
+      filenames:
+        - naomi_areas.geojson
+
+
+displayname: Get areas for parameterised tasks
+
+packages:
+  - tidyverse
+  - naomi
+  - sf
+
+parameters:
+  iso3:
+    default: ~
+
+global_resources:
+  resources/iso_mapping_fit.csv: iso_mapping_fit.csv
+
+## To add a new country to this task, add it to the dependency below and
+## ensure the imported file is named 'depends/<iso3>_areas.geojson'
+## Ideally, keep this list alphabetised for convenience
+
+depends:
+  ago_data_areas:
+    id: latest
+    use:
+      depends/ago_areas.geojson: ago_areas.geojson
+  ben_data_areas:
+    id: latest
+    use:
+      depends/ben_areas_spectrum_national.geojson: ben_areas_spectrum_national.geojson
+  bdi_data_areas:
+    id: latest
+    use:
+      depends/bdi_areas.geojson: bdi_areas.geojson
+  bfa_data_areas:
+    id: latest
+    use:
+      depends/bfa_areas.geojson: bfa_areas.geojson
+  # bwa_data_areas:
+  #   id: latest
+  #   use:
+  #     depends/bwa_areas.geojson: bwa_areas.geojson
+  caf_data_areas:
+    id: latest
+    use:
+      depends/caf_areas.geojson: caf_areas.geojson
+  civ_data_areas:
+    id: latest
+    use:
+      depends/civ_areas.geojson: civ_areas.geojson
+  cmr_data_areas:
+    id: latest
+    use:
+      depends/cmr_areas.geojson: cmr_areas.geojson
+  cog_data_areas:
+    id: latest
+    use:
+      depends/cog_areas.geojson: cog_areas.geojson
+  cod_data_areas:
+    id: latest
+    use:
+      depends/cod_areas.geojson: cod_areas.geojson
+  eth_data_areas:
+    id: latest
+    use:
+      depends/eth_areas.geojson: eth_areas.geojson
+  gab_data_areas:
+    id: latest
+    use:
+      depends/gab_areas.geojson: gab_areas.geojson
+  gha_data_areas:
+    id: latest
+    use:
+      depends/gha_areas.geojson: gha_areas.geojson
+  gin_data_areas:
+    id: latest
+    use:
+      depends/gin_areas.geojson: gin_areas.geojson
+  gmb_data_areas:
+    id: latest
+    use:
+      depends/gmb_areas.geojson: gmb_areas.geojson
+  gnb_data_areas:
+    id: latest
+    use:
+      depends/gnb_areas.geojson: gnb_areas.geojson
+  gnq_data_areas:
+    id: latest
+    use:
+      depends/gnq_areas.geojson: gnq_areas.geojson
+  hti_data_areas:
+    id: latest
+    use:
+      depends/hti_areas.geojson: hti_areas.geojson
+  ken_data_areas_subcounty:
+    id: latest
+    use:
+      depends/ken_areas_subcounty.geojson: ken_areas_subcounty.geojson
+  lbr_data_areas:
+    id: latest
+    use:
+      depends/lbr_areas.geojson: lbr_areas.geojson
+  lso_data_areas:
+    id: latest
+    use:
+      depends/lso_areas.geojson: lso_areas.geojson
+  mli_data_areas:
+    id: latest
+    use:
+      depends/mli_areas.geojson: mli_areas.geojson
+  moz_data_areas:
+    id: latest
+    use:
+      depends/moz_areas.geojson: moz_areas.geojson
+  mwi_data_areas:
+    id: latest
+    use:
+      depends/mwi_areas.geojson: mwi_areas.geojson
+  nam_data_areas:
+    id: latest
+    use:
+      depends/nam_areas.geojson: nam_areas.geojson
+  ner_data_areas:
+    id: latest
+    use:
+      depends/ner_areas.geojson: ner_areas.geojson
+  nga_data_areas:
+    id: latest
+    use:
+      depends/nga_areas.geojson: nga_areas.geojson
+  rwa_data_areas:
+    id: latest
+    use:
+      depends/rwa_areas.geojson: rwa_areas.geojson
+  sen_data_areas:
+    id: latest
+    use:
+      depends/sen_areas.geojson: sen_areas.geojson
+  sle_data_areas:
+    id: latest
+    use:
+      depends/sle_areas.geojson: sle_areas.geojson
+  swz_data_areas:
+    id: latest
+    use:
+      depends/swz_areas.geojson: swz_areas.geojson
+  tcd_data_areas:
+    id: latest
+    use:
+      depends/tcd_areas.geojson: tcd_areas.geojson
+  tgo_data_areas:
+    id: latest
+    use:
+      depends/tgo_areas_spectrum_national.geojson: tgo_areas_spectrum_national.geojson
+  tza_data_areas:
+    id: latest
+    use:
+      depends/tza_areas.geojson: tza_areas.geojson
+  uga_data_areas:
+    id: latest
+    use:
+      depends/uga_areas.geojson: uga_areas.geojson
+  zmb_data_areas:
+    id: latest
+    use:
+      depends/zmb_areas_spectrum_national.geojson: zmb_areas_spectrum_national.geojson
+  zwe_data_areas:
+    id: latest
+    use:
+      depends/zwe_areas.geojson: zwe_areas.geojson
