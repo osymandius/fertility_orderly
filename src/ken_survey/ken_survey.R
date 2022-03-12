@@ -1,7 +1,8 @@
 #' ISO3 country code
 iso3 <- "KEN"
 
-areas <- read_sf("depends/ken_areas.geojson")
+areas <- read_sf("depends/ken_areas.geojson") %>%
+  st_make_valid()
 areas_wide <- spread_areas(areas)
 
 surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%
@@ -33,11 +34,27 @@ survey_region_boundaries <- survey_region_boundaries %>%
       )
   )
 
+# hrd <- dhs_datasets(surveyIds = "KE2020MIS", fileType = "HR", fileFormat = "FL")
+# ke2020hr <- readRDS(get_datasets(hrd, clear_cache = TRUE)[[1]])
+# ke2020hr <- read_sf("~/Downloads/KEGE81FL/KEGE81FL.shp")
+
+temp <- tempdir()
+unzip("KEN2020MIS_boundaries.zip", exdir = temp)
+ken2020mis_geo <- read_sf(file.path(temp, "shps", "sdr_subnational_boundaries.shp"))
+
+survey_region_boundaries <- survey_region_boundaries %>%
+  bind_rows(
+    ken2020mis_geo %>% 
+      select(survey_region_id = REGCODE, survey_region_name = DHSREGEN, REGVAR) %>%
+      mutate(survey_id = "KEN2020MIS")
+  )
+
+
 surveys <- surveys_add_dhs_regvar(surveys, survey_region_boundaries)
 
 #' Allocate each area to survey region
 
-survey_region_areas <- allocate_areas_survey_regions(areas_wide, survey_region_boundaries)
+survey_region_areas <- allocate_areas_survey_regions(areas_wide, survey_region_boundaries %>% st_make_valid())
 
 validate_survey_region_areas(survey_region_areas, survey_region_boundaries)
 

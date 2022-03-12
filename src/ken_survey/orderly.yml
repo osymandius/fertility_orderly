@@ -27,6 +27,9 @@ packages:
   - spud
   - stringr
 
+resources:
+  - KEN2020MIS_boundaries.zip
+
 global_resources:
   resources/MICS_indicators.csv: MICS_indicators.csv
 
