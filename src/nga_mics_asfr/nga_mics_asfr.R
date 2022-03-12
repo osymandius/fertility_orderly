@@ -17,12 +17,5 @@ admin1_lvl <- lvl_map$admin1_level[lvl_map$iso3 == iso3]
 
 mics_fr <- calculate_mics_fertility(mics_wm, mics_births_to_women)
 
-if(exists("mics_fr")) {
-  write_csv(mics_fr$mics_asfr, paste0(tolower(iso3), "_mics_asfr.csv"))
-  
-  asfr <- asfr %>%
-    bind_rows(mics_asfr)
-  
-}
-write_csv(mics_tfr, paste0(tolower(iso3), "_mics_tfr_admin1.csv"))
-write_csv(mics_asfr_plot, paste0(tolower(iso3), "_mics_asfr_admin1.csv"))
+write_csv(mics_fr$mics_plot, paste0(tolower(iso3), "_mics_plot.csv"))
+write_csv(mics_fr$mics_asfr, paste0(tolower(iso3), "_mics_asfr.csv"))

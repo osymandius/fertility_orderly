@@ -4,8 +4,8 @@ artefacts:
   - data:
       description: nga ASFR dataset
       filenames:
-        - nga_asfr_admin1.csv
-        - nga_tfr_admin1.csv
+        - nga_asfr.csv
+        - nga_plot.csv
 
 packages:
   - demogsurv

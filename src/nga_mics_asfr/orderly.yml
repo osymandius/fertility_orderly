@@ -5,8 +5,7 @@ artefacts:
       description: nga ASFR dataset
       filenames:
         - nga_mics_asfr.csv
-        - nga_mics_asfr_admin1.csv
-        - nga_mics_tfr_admin1.csv
+        - nga_mics_plot.csv
 
 global_resources:
   resources/iso_mapping_fit.csv: iso_mapping_fit.csv
