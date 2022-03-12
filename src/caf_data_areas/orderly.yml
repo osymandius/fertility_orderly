@@ -20,7 +20,7 @@ packages:
   - naomi.utils
   - naomi
   - pryr
-  - readr
+  - tidyverse
   - sf
   - spud
   - stringr
