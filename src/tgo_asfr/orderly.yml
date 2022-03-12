@@ -1,0 +1,45 @@
+script: tgo_asfr.R
+
+artefacts:
+  - data:
+      description: tgo ASFR dataset
+      filenames:
+        - tgo_asfr.csv
+        - tgo_fr_plot.csv
+  - staticgraph:
+      description: Validate admin-1 TFRs
+      filenames:
+        - check/tfr_admin1.pdf
+
+global_resources:
+  resources/iso_mapping_fit.csv: iso_mapping_fit.csv
+  resources/utility_funs.R: utility_funs.R
+
+packages:
+  - demogsurv
+  - parallel
+  - purrr
+  - ggplot2
+  - moz.utils
+  - tidyr
+  - haven
+  - tidyverse
+  - stringr
+  - naomi
+  - sf
+  - dplyr
+  - rdhs
+  - countrycode
+  - dfertility
+
+depends:
+  tgo_survey:
+    id: latest
+    use:
+      depends/tgo_dhs_clusters.csv: tgo_dhs_clusters.csv
+      depends/tgo_mics_women.csv: tgo_mics_women.csv
+      depends/tgo_mics_births_to_women.csv: tgo_mics_births_to_women.csv
+  tgo_data_areas:
+    id: latest
+    use:
+      depends/tgo_areas.geojson: tgo_areas.geojson

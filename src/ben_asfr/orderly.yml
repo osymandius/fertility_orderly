@@ -1,0 +1,45 @@
+script: ben_asfr.R
+
+artefacts:
+  - data:
+      description: ben ASFR dataset
+      filenames:
+        - ben_asfr.csv
+        - ben_fr_plot.csv
+  - staticgraph:
+      description: Validate admin-1 TFRs
+      filenames:
+        - check/tfr_admin1.pdf
+
+global_resources:
+  resources/iso_mapping_fit.csv: iso_mapping_fit.csv
+  resources/utility_funs.R: utility_funs.R
+
+packages:
+  - demogsurv
+  - parallel
+  - purrr
+  - ggplot2
+  - moz.utils
+  - tidyr
+  - haven
+  - tidyverse
+  - stringr
+  - naomi
+  - sf
+  - dplyr
+  - rdhs
+  - countrycode
+  - dfertility
+
+depends:
+  ben_survey:
+    id: latest
+    use:
+      depends/ben_dhs_clusters.csv: ben_dhs_clusters.csv
+      depends/ben_mics_women.csv: ben_mics_women.csv
+      depends/ben_mics_births_to_women.csv: ben_mics_births_to_women.csv
+  ben_data_areas:
+    id: latest
+    use:
+      depends/ben_areas.geojson: ben_areas.geojson

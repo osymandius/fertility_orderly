@@ -1,0 +1,44 @@
+script: nam_asfr.R
+
+artefacts:
+  - data:
+      description: nam ASFR dataset
+      filenames:
+        - nam_asfr.csv
+        - nam_fr_plot.csv
+  - staticgraph:
+      description: Validate admin-1 TFRs
+      filenames:
+        - check/tfr_admin1.pdf
+
+global_resources:
+  resources/iso_mapping_fit.csv: iso_mapping_fit.csv
+  resources/utility_funs.R: utility_funs.R
+
+packages:
+  - demogsurv
+  - parallel
+  - purrr
+  - ggplot2
+  - moz.utils
+  - tidyr
+  - haven
+  - tidyverse
+  - stringr
+  - naomi
+  - sf
+  - dplyr
+  - rdhs
+  - countrycode
+  - dfertility
+  - stringr
+
+depends:
+  nam_survey:
+    id: latest
+    use:
+      depends/nam_dhs_clusters.csv: nam_dhs_clusters.csv
+  nam_data_areas:
+    id: latest
+    use:
+      depends/nam_areas.geojson: nam_areas.geojson

@@ -1,0 +1,45 @@
+script: lso_asfr.R
+
+artefacts:
+  - data:
+      description: lso ASFR dataset
+      filenames:
+        - lso_asfr.csv
+        - lso_fr_plot.csv
+  - staticgraph:
+      description: Validate admin-1 TFRs
+      filenames:
+        - check/tfr_admin1.pdf
+
+global_resources:
+  resources/iso_mapping_fit.csv: iso_mapping_fit.csv
+  resources/utility_funs.R: utility_funs.R
+
+packages:
+  - demogsurv
+  - parallel
+  - purrr
+  - ggplot2
+  - moz.utils
+  - tidyr
+  - haven
+  - tidyverse
+  - stringr
+  - naomi
+  - sf
+  - dplyr
+  - rdhs
+  - countrycode
+  - dfertility
+
+depends:
+  lso_survey:
+    id: latest
+    use:
+      depends/lso_dhs_clusters.csv: lso_dhs_clusters.csv
+      depends/lso_mics_women.csv: lso_mics_women.csv
+      depends/lso_mics_births_to_women.csv: lso_mics_births_to_women.csv
+  lso_data_areas:
+    id: latest
+    use:
+      depends/lso_areas.geojson: lso_areas.geojson
