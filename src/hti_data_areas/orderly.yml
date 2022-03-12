@@ -22,7 +22,7 @@ packages:
   - sf
   - naomi
   - spud
-  - readr
+  - tidyverse
   - pryr
   - rmapshaper
   - ggplot2

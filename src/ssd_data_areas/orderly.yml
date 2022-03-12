@@ -8,7 +8,7 @@ artefacts:
 
 
 packages:
-  - readr
+  - tidyverse
   - naomi
   - sf
   - spud

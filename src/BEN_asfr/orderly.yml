@@ -23,7 +23,7 @@ packages:
   - moz.utils
   - tidyr
   - haven
-  - readr
+  - tidyverse
   - stringr
   - naomi
   - sf

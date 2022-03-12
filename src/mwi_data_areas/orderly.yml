@@ -30,7 +30,7 @@ packages:
   - spud 
   - pryr
   - naomi
-  - readr
+  - tidyverse
   - rmapshaper
   - sf
   - withr

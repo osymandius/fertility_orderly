@@ -22,7 +22,7 @@ packages:
   - naomi
   - spud
   - rdhs
-  - readr
+  - tidyverse
   - sf
 
 depends:

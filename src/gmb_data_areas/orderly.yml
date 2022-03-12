@@ -23,6 +23,6 @@ packages:
   - naomi
   - naomi.utils
   - pryr  
-  - readr
+  - tidyverse
   - sf
   - spud

@@ -22,7 +22,7 @@ artefacts:
 displayname: Consolidate area, ASFR, population data for fertility model fit
 
 packages:
-  - readr
+  - tidyverse
   - naomi
   - sf
 

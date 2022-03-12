@@ -17,9 +17,9 @@ packages:
   - haven
   - naomi
   - naomi.utils
-  - readr
+  - tidyverse
   - rdhs
-  - readr
+  - tidyverse
   - sf
 
 depends:

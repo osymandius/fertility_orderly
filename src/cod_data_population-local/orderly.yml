@@ -10,7 +10,7 @@ displayname: COD population inputs dataset from local district populations
 packages:
   - dplyr
   - naomi.utils
-  - readr
+  - tidyverse
   - sf
   - spud
 

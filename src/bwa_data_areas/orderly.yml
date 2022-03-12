@@ -23,7 +23,7 @@ packages:
   - naomi
   - naomi.utils
   - pryr
-  - readr
+  - tidyverse
   - rmapshaper
   - sf
   - spud

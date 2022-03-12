@@ -22,7 +22,7 @@ packages:
   - ggplot2
   - naomi
   - naomi.utils
-  - readr
+  - tidyverse
   - sf
   - spud
   - stringr

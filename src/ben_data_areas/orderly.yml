@@ -22,6 +22,6 @@ packages:
   - pryr
   - naomi.utils
   - naomi
-  - readr
+  - tidyverse
   - ggplot2
 

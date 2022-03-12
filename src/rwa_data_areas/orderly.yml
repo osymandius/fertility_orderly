@@ -23,5 +23,5 @@ packages:
   - naomi
   - ggplot2
   - forcats
-  - readr
+  - tidyverse
   - naomi.utils

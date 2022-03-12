@@ -56,7 +56,7 @@ packages:
   - dfertility
   - ggplot2
   - naomi
-  - readr
+  - tidyverse
   - sf
   - stringr
   - TMB

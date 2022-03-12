@@ -17,10 +17,10 @@ packages:
   - haven
   - naomi
   - naomi.utils
-  - readr
+  - tidyverse
   - rdhs
   - sf
-  - readr
+  - tidyverse
 
 depends:
   nam_data_areas:

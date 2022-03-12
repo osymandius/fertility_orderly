@@ -22,7 +22,7 @@ packages:
   - naomi
   - spud
   - pryr
-  - readr
+  - tidyverse
   - rmapshaper
   - sf
   - tidyr

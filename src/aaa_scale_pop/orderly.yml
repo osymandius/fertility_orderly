@@ -10,7 +10,7 @@ artefacts:
 displayname: WorldPop populations scaled to WPP2019 by age and sex 1995-2020
 
 packages:
-  - readr
+  - tidyverse
   - naomi
   - sf
   - spud

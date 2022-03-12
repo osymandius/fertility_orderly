@@ -12,7 +12,7 @@ displayname: Naomi population datasets sourced from WorldPop unconstriained rast
 packages:
   - naomi
   - naomi.utils
-  - readr
+  - tidyverse
 
 parameters:
   iso3:

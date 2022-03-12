@@ -21,7 +21,7 @@ packages:
   - pryr
   - naomi.utils
   - naomi
-  - readr
+  - tidyverse
   - ggplot2
   - rmapshaper
 
