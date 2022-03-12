@@ -45,7 +45,7 @@ write_csv(survey_clusters, paste0(tolower(iso3), "_dhs_clusters.csv"))
 
 ####### MICS
 
-mics_indicators <- read_csv("resources/MICS_indicators.csv") %>%
+mics_indicators <- read_csv("../../global/MICS_indicators.csv") %>%
   pivot_longer(-c(label, id, filetype), names_to = "survey_id")
 
 mics_survey_data <- create_surveys_mics(iso3, mics_indicators)
@@ -55,9 +55,12 @@ fertility_mics_data <- transform_mics(mics_survey_data, mics_indicators)
 fertility_mics_data$hh <- fertility_mics_data$hh %>%
   mutate(
     mics_area_name_label = case_when(
-      mics_area_name_label == "Bokã©" ~ "BokÃ©",
-      mics_area_name_label == "Labã©" ~ "LabÃ©",
-      mics_area_name_label == "N'zã©Rã©Korã©" ~ "NzÃ©rÃ©korÃ©",
+      mics_area_name_label == "Bokã©" ~ "Boké",
+      mics_area_name_label == "Labã©" ~ "Labé",
+      mics_area_name_label == "N'zã©Rã©Korã©" ~ "Nzérékoré",
+      mics_area_name_label == "BokÃ©" ~ "Boké",
+      mics_area_name_label == "LabÃ©" ~ "Labé",
+      mics_area_name_label == "NzÃ©rÃ©korÃ©" ~ "Nzérékoré",
       TRUE ~ mics_area_name_label
     )
   ) 
