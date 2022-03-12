@@ -99,3 +99,5 @@ asfr_input_data <- make_asfr_inputs(mics_survey_areas, mics_survey_data)
 
 write_csv(asfr_input_data$wm, paste0(tolower(iso3), "_mics_women.csv"))
 write_csv(asfr_input_data$births_to_women, paste0(tolower(iso3), "_mics_births_to_women.csv"))
+
+while (!is.null(dev.list())) dev.off()
