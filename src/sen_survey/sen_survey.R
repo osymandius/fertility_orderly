@@ -1,7 +1,8 @@
 #' ISO3 country code
 iso3 <- "SEN"
 
-areas <- read_sf("depends/sen_areas.geojson")
+areas <- read_sf("depends/sen_areas.geojson") %>%
+  st_make_valid()
 # areas <- read_sf("archive/sen_data_areas/20210210-182303-1e692476/sen_areas.geojson")
 areas_wide <- spread_areas(areas)
 
@@ -12,14 +13,6 @@ surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%
 survey_meta <- create_survey_meta_dhs(surveys)
 
 survey_region_boundaries <- create_survey_boundaries_dhs(surveys)
-
-# #Upper East and Upper West have the boundary codes swapped in 2014 DHS. Revert.
-# survey_region_boundaries <- survey_region_boundaries %>%
-#   mutate(survey_region_id = case_when(
-#     survey_region_name == "Upper East" & survey_id == "GHA2014DHS" ~ 9,
-#     survey_region_name == "Upper West" & survey_id == "GHA2014DHS" ~ 10,
-#     TRUE ~ survey_region_id
-#   ))
 
 surveys <- surveys_add_dhs_regvar(surveys, survey_region_boundaries)
 
