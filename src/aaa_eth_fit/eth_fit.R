@@ -12,7 +12,7 @@ areas <- read_sf("depends/naomi_areas.geojson") %>%
   st_make_valid() %>%
   st_collection_extract("POLYGON")
 
-asfr <- read.csv("depends/fertility_asfr.csv")
+asfr <- read.csv("depends/asfr.csv")
   # filter(survtype != "MICS")
 
 # mics_asfr <- read.csv("resources/mics_asfr.csv") %>%
@@ -36,12 +36,14 @@ lvl_map <- read.csv("resources/iso_mapping_fit.csv")
 lvl <- lvl_map$fertility_fit_level[lvl_map$iso3 == iso3]
 admin1_lvl <- lvl_map$admin1_level[lvl_map$iso3 == iso3]
 
-# debugonce(make_model_frames_dev)
 mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level = lvl, project=2020)
 
-# spline_mat <- splines::bs(1:26, df =10)
-# class(spline_mat) <- "matrix"
-# spline_mat <- as(spline_mat, "sparseMatrix")
+mf$observations$full_obs <- mf$observations$full_obs %>%
+  ungroup() %>%
+  mutate(id.smooth = factor(row_number()))
+
+# R_smooth_iid <- as(diag(nrow = nrow(mf$observations$full_obs)), "sparseMatrix")
+R_smooth_iid <- sparseMatrix(i = nrow(mf$observations$full_obs), j = nrow(mf$observations$full_obs), x = rep(1, nrow(mf$observations$full_obs)))
 
 x <- 0:25
 k <- seq(-15, 40, by = 5)
@@ -54,7 +56,7 @@ validate_model_frame(mf, areas)
 
 # TMB::compile("src/eth_fit/no_tips_eth.cpp", flags = "-w")               # Compile the C++ file
 # TMB::compile("no_tips_eth.cpp", flags = "-w")               # Compile the C++ file
-dyn.load(dynlib("no_tips_eth"))
+# dyn.load(dynlib("no_tips_eth"))
 
 tmb_int <- list()
 
@@ -85,9 +87,9 @@ tmb_int$data <- list(
   Z_country = mf$Z$Z_country,
   # Z_omega1 = sparse.model.matrix(~0 + id.omega1, mf$mf_model),
   # Z_omega2 = sparse.model.matrix(~0 + id.omega2, mf$mf_model),
-  # Z_smooth_iid = sparse.model.matrix(~0 + id.smooth, mf$observations$full_obs),
+  Z_smooth_iid = sparse.model.matrix(~0 + id.smooth, mf$observations$full_obs),
   # Z_smooth_iid_ais = sparse.model.matrix(~0 + id.smooth, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
-  # R_smooth_iid = R_smooth_iid,
+  R_smooth_iid = R_smooth_iid,
   R_tips = mf$R$R_tips,
   R_age = mf$R$R_age,
   # R_period = make_rw_structure_matrix(ncol(mf$Z$Z_period), 1, adjust_diagonal = TRUE),
@@ -168,8 +170,8 @@ tmb_int$par <- list(
   lag_logit_phi_arima_period = 0,
   beta_period = 0,
 
-  # log_prec_smooth_iid = 0,
-  # u_smooth_iid = rep(0, ncol(R_smooth_iid)),
+  log_prec_smooth_iid = 0,
+  u_smooth_iid = rep(0, ncol(R_smooth_iid)),
 
   u_spatial_str = rep(0, ncol(mf$Z$Z_spatial)),
   log_prec_spatial = 0,
@@ -197,7 +199,7 @@ tmb_int$random <- c("beta_0",
                     "u_spatial_str",
                     "u_age",
                     "u_period",
-                    # "u_smooth_iid",
+                    "u_smooth_iid",
                     "beta_period",
                     "beta_tips_dummy",
                     "beta_tips_dummy_10",
@@ -277,7 +279,7 @@ write_csv(tmb_results, "fr.csv")
 #   list_modify("lambda_out" = zap(), "tfr_out" = zap())
 # saveRDS(hyper, "hyper.rds")
 
-fr_plot <- read.csv("depends/fertility_fr_plot.csv")
+fr_plot <- read.csv("depends/fr_plot.csv")
 
 fr_plot <- fr_plot %>%
   left_join(areas %>% st_drop_geometry() %>% select(area_id, area_name))

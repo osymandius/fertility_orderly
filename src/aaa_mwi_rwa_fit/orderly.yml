@@ -38,9 +38,9 @@ resources:
   # - phia.cpp
   # - phia.o
   # - phia.so
-  - no_tips_mwi_rwa.cpp
-  - no_tips_mwi_rwa.o
-  - no_tips_mwi_rwa.so
+  # - no_tips_mwi_rwa.cpp
+  # - no_tips_mwi_rwa.o
+  # - no_tips_mwi_rwa.so
 
 
 
@@ -70,13 +70,15 @@ packages:
 
 
 depends:
-  aaa_inputs_orderly_pull:
+  aaa_areas_pull:
     id: latest(parameter:iso3 == iso3)
     use:
       depends/naomi_areas.geojson: naomi_areas.geojson
-      # depends/naomi_population.csv: naomi_population.csv
-      depends/fertility_asfr.csv: fertility_asfr.csv
-      depends/fertility_fr_plot.csv: fertility_fr_plot.csv
+  aaa_asfr:
+    id: latest(parameter:iso3 == iso3)
+    use:
+      depends/asfr.csv: asfr.csv
+      depends/fr_plot.csv: fr_plot.csv
   aaa_scale_pop:
     id: latest(parameter:iso3 == iso3)
     use:
