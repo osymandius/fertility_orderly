@@ -2,8 +2,9 @@
 iso3 <- "MLI"
 
 areas <- read_sf("depends/mli_areas.geojson") %>%
-  st_make_valid()
-# areas <- read_sf("archive/mli_data_areas/20210107-163124-750caa70/mli_areas.geojson")
+  st_make_valid() %>%
+  filter(area_level < 3) ## FIX THIS BODGE
+
 areas_wide <- spread_areas(areas)
 
 surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%

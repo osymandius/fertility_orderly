@@ -40,8 +40,7 @@ mf$observations$full_obs <- mf$observations$full_obs %>%
   ungroup() %>%
   mutate(id.smooth = factor(row_number()))
 
-# R_smooth_iid <- as(diag(nrow = nrow(mf$observations$full_obs)), "sparseMatrix")
-R_smooth_iid <- sparseMatrix(i = nrow(mf$observations$full_obs), j = nrow(mf$observations$full_obs), x = rep(1, nrow(mf$observations$full_obs)))
+R_smooth_iid <- sparseMatrix(i = 1:nrow(mf$observations$full_obs), j = 1:nrow(mf$observations$full_obs), x = 1)
 
 x <- 0:25
 k <- seq(-15, 40, by = 5)

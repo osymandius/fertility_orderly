@@ -35,7 +35,7 @@ mf$observations$full_obs <- mf$observations$full_obs %>%
   mutate(id.smooth = factor(row_number()))
 
 # R_smooth_iid <- as(diag(nrow = nrow(mf$observations$full_obs)), "sparseMatrix")
-R_smooth_iid <- sparseMatrix(i = nrow(mf$observations$full_obs), j = nrow(mf$observations$full_obs), x = rep(1, nrow(mf$observations$full_obs)))
+R_smooth_iid <- sparseMatrix(i = 1:nrow(mf$observations$full_obs), j = 1:nrow(mf$observations$full_obs), x = 1)
 
 x <- 0:25
 k <- seq(-15, 40, by = 5)
@@ -48,7 +48,7 @@ validate_model_frame(mf, areas)
 
 # TMB::compile("src/aaa_fit/no_tips.cpp", flags = "-w")               # Compile the C++ file
 # TMB::compile("no_tips.cpp", flags = "-w")               # Compile the C++ file
-# dyn.load(dynlib("no_tips"))
+dyn.load(dynlib("no_tips"))
 
 tmb_int <- list()
 
