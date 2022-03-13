@@ -13,6 +13,7 @@ packages:
   - naomi
   - naomi.utils
   - tidyverse
+  - sf
 
 parameters:
   iso3:
