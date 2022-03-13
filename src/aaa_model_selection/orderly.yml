@@ -13,29 +13,29 @@ artefacts:
 
 global_resources:
   resources/iso_mapping_fit.csv: iso_mapping_fit.csv
-  resources/mics_asfr.csv: mics_asfr.csv
-  resources/moz_areas_maputo.geojson: moz_areas_maputo.geojson
+  # resources/mics_asfr.csv: mics_asfr.csv
+  # resources/moz_areas_maputo.geojson: moz_areas_maputo.geojson
   resources/phia_asfr.csv: phia_asfr.csv
 
 resources:
-  - ar1_trend.cpp
-  - ar1_trend.so
-  - ar1_trend.o
-  - ar1.cpp
-  - ar1.so
-  - ar1.o
-  - arima_trend.cpp
-  - arima_trend.so
-  - arima_trend.o
-  - arima.cpp
-  - arima.so
-  - arima.o
-  - rw.cpp
-  - rw.so
-  - rw.o
-  - rw1_trend.cpp
-  - rw1_trend.so
-  - rw1_trend.o
+  # - ar1_trend.cpp
+  # - ar1_trend.so
+  # - ar1_trend.o
+  # - ar1.cpp
+  # - ar1.so
+  # - ar1.o
+  # - arima_trend.cpp
+  # - arima_trend.so
+  # - arima_trend.o
+  # - arima.cpp
+  # - arima.so
+  # - arima.o
+  # - rw.cpp
+  # - rw.so
+  # - rw.o
+  # - rw1_trend.cpp
+  # - rw1_trend.so
+  # - rw1_trend.o
 
 
 displayname: Fertility model fit
@@ -63,13 +63,15 @@ packages:
 
 
 depends:
-  aaa_inputs_orderly_pull:
+  aaa_areas_pull:
     id: latest(parameter:iso3 == iso3)
     use:
       depends/naomi_areas.geojson: naomi_areas.geojson
-      # depends/naomi_population.csv: naomi_population.csv
-      depends/fertility_asfr.csv: fertility_asfr.csv
-      depends/fertility_fr_plot.csv: fertility_fr_plot.csv
+  aaa_asfr:
+    id: latest(parameter:iso3 == iso3)
+    use:
+      depends/asfr.csv: asfr.csv
+      depends/fr_plot.csv: fr_plot.csv
   aaa_scale_pop:
     id: latest(parameter:iso3 == iso3)
     use:
