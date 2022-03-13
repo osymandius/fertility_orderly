@@ -240,3 +240,8 @@ depends:
       use:
         depends/gnb_mics_women.csv: gnb_mics_women.csv
         depends/gnb_mics_births_to_women.csv: gnb_mics_births_to_women.csv
+  ssd_survey:
+      id: latest
+      use:
+        depends/ssd_mics_women.csv: ssd_mics_women.csv
+        depends/ssd_mics_births_to_women.csv: ssd_mics_births_to_women.csv

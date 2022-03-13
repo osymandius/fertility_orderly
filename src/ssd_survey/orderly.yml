@@ -1,0 +1,32 @@
+script: ssd_survey.R
+
+artefacts:
+  - data:
+      description: survey indicator dataset
+      filenames:
+        - ssd_mics_women.csv
+        - ssd_mics_births_to_women.csv
+
+
+packages:
+  - dplyr
+  - dfertility
+  - haven
+  - tidyr
+  - rdhs
+  - ggplot2
+  - naomi
+  - naomi.utils
+  - tidyverse
+  - sf
+  - spud
+  - stringr
+
+global_resources:
+  resources/MICS_indicators.csv: MICS_indicators.csv
+
+depends:
+  ssd_data_areas:
+    id: latest
+    use:
+      depends/ssd_areas.geojson: ssd_areas.geojson
