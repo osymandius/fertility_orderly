@@ -102,6 +102,10 @@ depends:
     id: latest
     use:
       depends/uga_dhs_clusters.csv: uga_dhs_clusters.csv
+  zaf_survey:
+    id: latest
+    use:
+      depends/zaf_dhs_clusters.csv: zaf_dhs_clusters.csv
   zmb_survey:
     id: latest
     use:
