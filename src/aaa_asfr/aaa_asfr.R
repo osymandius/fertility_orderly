@@ -13,12 +13,12 @@ if(dhs_flag == 1) {
   
   # ' MOZ 2009 AIS has no complete birth history, only summary.
   clusters <- clusters %>%
-    filter(!survey_id %in% c("MOZ2009AIS", "COG2009AIS", "TZA2003AIS", "UGA2011DHS", "UGA2011AIS", "ETH2000DHS")) %>%
+    filter(!survey_id %in% c("MOZ2009AIS", "COG2009AIS", "TZA2003AIS", "UGA2011DHS", "UGA1995DHS", "UGA2011AIS", "ETH2000DHS")) %>%
     mutate(DHS_survey_id = str_replace(survey_id, iso3, dhs_countries()$DHS_CountryCode[dhs_countries()$ISO3_CountryCode == iso3]))
   
   surveys <- dhs_surveys(surveyIds = unique(clusters$DHS_survey_id)) %>%
     left_join(clusters %>% select(survey_id, DHS_survey_id) %>% distinct, by=c("SurveyId" = "DHS_survey_id")) %>%
-    filter(!survey_id %in% c("MOZ2009AIS", "COG2009AIS", "TZA2003AIS", "UGA2011DHS", "UGA2011AIS", "ETH2000DHS"))
+    filter(!survey_id %in% c("MOZ2009AIS", "COG2009AIS", "TZA2003AIS", "UGA2011DHS", "UGA1995DHS", "UGA2011AIS", "ETH2000DHS"))
   
   dhs_fr <- calculate_dhs_fertility(iso3, surveys, clusters, areas_wide)
   
