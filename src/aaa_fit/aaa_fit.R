@@ -48,7 +48,7 @@ validate_model_frame(mf, areas)
 
 # TMB::compile("src/aaa_fit/no_tips.cpp", flags = "-w")               # Compile the C++ file
 # TMB::compile("no_tips.cpp", flags = "-w")               # Compile the C++ file
-dyn.load(dynlib("no_tips"))
+# dyn.load(dynlib("no_tips"))
 
 tmb_int <- list()
 
