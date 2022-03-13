@@ -5,6 +5,7 @@ if (!basename(area_file) %in% list.files("depends")) {
 }
 
 
-areas <- read_area_merged(area_file)
+areas <- read_area_merged(area_file) %>%
+  st_make_valid()
 pop <- naomi_extract_worldpop(areas, iso3, years = c(2000, 2005, 2010, 2015, 2020))
 write_csv(pop, "population_worldpop_naomi.csv", na = "")
