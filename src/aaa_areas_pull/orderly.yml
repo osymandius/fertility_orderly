@@ -166,6 +166,10 @@ depends:
     id: latest
     use:
       depends/uga_areas.geojson: uga_areas.geojson
+  zaf_data_areas:
+    id: latest
+    use:
+      depends/zaf_areas.geojson: zaf_areas.geojson
   zmb_data_areas:
     id: latest
     use:
