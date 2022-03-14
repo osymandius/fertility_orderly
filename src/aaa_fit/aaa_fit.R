@@ -22,7 +22,8 @@ subnational_surveys <- c("KEN2009MICS", "KEN2011MICS")
 
 asfr <- asfr %>% 
   bind_rows(phia_asfr) %>%
-  filter(!survey_id %in% remove_survey)
+  filter(!survey_id %in% remove_survey,
+         !(iso3 == "SWZ" & period == 2017))
 
 lvl_map <- read.csv("resources/iso_mapping_fit.csv")
 lvl <- lvl_map$fertility_fit_level[lvl_map$iso3 == iso3]
