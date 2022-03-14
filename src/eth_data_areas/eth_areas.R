@@ -306,7 +306,8 @@ plot_area_hierarchy_summary(eth_areas2022)
 eth_clean <- eth_areas2022 %>%
   ms_simplify(keep = 0.15) %>%
   st_union(by_feature = TRUE) %>%
-  st_make_valid()
+  st_make_valid() %>%
+  st_collection_extract("POLYGON")
 
 st_is_valid(eth_clean)
 

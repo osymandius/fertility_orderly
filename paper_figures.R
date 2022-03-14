@@ -1,16 +1,16 @@
 library(tidyverse)
 library(sf)
 
-iso3_vec <- sort(c("CAF", "MOZ", "ETH", "GIN", "COG", "NGA", "BDI", "BEN", "BFA", "CIV", "CMR", "GMB", "KEN", "LSO", "MLI", "MWI",  "SLE", "SWZ", "TCD", "TGO", "ZWE", "AGO",  "GAB", "GHA", "LBR", "NAM",  "RWA", "SEN", "TZA", "UGA", "ZMB"))
+ssa_names <- c("Angola", "Botswana", "Eswatini", "Ethiopia", "Kenya", "Lesotho",  "Malawi", "Mozambique", "Namibia", "Rwanda", "South Africa", "South Sudan", "Uganda", "United Republic of Tanzania", "Zambia", "Zimbabwe", "Benin", "Burkina Faso", "Burundi", "Cameroon", "Central African Republic", "Chad", "Congo", "Côte d'Ivoire", "Democratic Republic of the Congo", "Equatorial Guinea", "Gabon", "Gambia", "Ghana", "Guinea", "Guinea-Bissau", "Liberia", "Mali", "Niger", "Nigeria", "Senegal", "Sierra Leone", "Togo")
+ssa_iso3 <- countrycode::countrycode(ssa_names, "country.name", "iso3c")
 
-id <- lapply(iso3_vec, function(x){
+id <- lapply(ssa_iso3[ssa_iso3 !='MLI'], function(x){
   orderly::orderly_search(name = "aaa_fit", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
 }) %>% unlist
 
-fr <- lapply(file.path("archive/aaa_fit", id, "fr.csv"), read.csv) %>%
-  setNames(iso3_vec)
+fr <- lapply(file.path("archive/aaa_fit", id[!is.na(id)], "fr.csv"), read.csv)
 
-fr <- c(fr, "COD" = list(read.csv("archive/cod_fit_new/20210922-172127-8f9e6cd3/fr.csv")))
+# fr <- c(fr, "COD" = list(read.csv("archive/cod_fit_new/20210922-172127-8f9e6cd3/fr.csv")))
 
 region <- read.csv("global/region.csv") %>%
   mutate(iso3 = toupper(iso3))
@@ -18,11 +18,13 @@ region <- read.csv("global/region.csv") %>%
 fr <- fr %>% 
   bind_rows() %>%
   separate(area_id, into=c("iso3", NA), remove=FALSE, sep=3) %>%
-  left_join(region)
+  left_join(region) %>%
+  arrange(iso3)
 
 fr_list <- fr %>%
   group_split(iso3) %>%
-  setNames(sort(c(iso3_vec, "COD")))
+  setNames(unique(fr$iso3))
+  # setNames(sort(c(ssa_iso3, "COD")))
 
 lvls <- fr %>%
   group_by(iso3) %>%
@@ -32,21 +34,22 @@ lvls <- fr %>%
   arrange(iso3) %>%
   .$area_level
 
-id_input <- lapply(iso3_vec, function(x){
-  orderly::orderly_search(name = "aaa_inputs_orderly_pull", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
-}) %>% unlist
+id_input <- lapply(names(fr_list), function(x){
+  orderly::orderly_search(name = "aaa_areas_pull", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
+}) %>% 
+  setNames(names(fr_list))
 
-areas_list <- lapply(file.path("archive/aaa_inputs_orderly_pull", id_input, "naomi_areas.geojson"), sf::read_sf) %>%
-  setNames(iso3_vec)
+areas_list <- lapply(file.path("archive/aaa_areas_pull", id_input, "naomi_areas.geojson"), sf::read_sf) %>%
+  setNames(names(fr_list))
 
-areas_list <- c(areas_list, "COD" = list(read_sf("archive/cod_data_areas/20201112-171234-2710c17f/cod_areas.geojson")))
+# areas_list <- c(areas_list, "COD" = list(read_sf("archive/cod_data_areas/20201112-171234-2710c17f/cod_areas.geojson")))
 
-areas_list <- areas_list[order(names(areas_list))]
+# areas_list <- areas_list[order(names(areas_list))]
 
 foo <- read_sf("~/Downloads/Longitude_Graticules_and_World_Countries_Boundaries-shp/99bfd9e7-bb42-4728-87b5-07f8c8ac631c2020328-1-1vef4ev.lu5nk.shp") %>%
-  filter(CNTRY_NAME %in% c("South Africa", "Botswana", "Western Sahara", "Mauritania", "Morocco", "Algeria", "Libya", "Tunisia", "Egypt", "Equatorial Guinea", "Guinea-Bissau", "Somalia", "Djibouti", "Eritrea", "Niger")) %>%
-  bind_rows(read_sf("~/Downloads/sdn_adm_cbs_nic_ssa_20200831_shp/sdn_admbnda_adm0_cbs_nic_ssa_20200831.shp")) %>%
-  bind_rows(read_sf("~/Downloads/ssd_admbnda_imwg_nbs_shp/ssd_admbnda_adm0_imwg_nbs_20180817.shp")) %>%
+  filter(CNTRY_NAME %in% c("South Africa", "Botswana", "Western Sahara", "Mauritania", "Morocco", "Algeria", "Libya", "Tunisia", "Egypt", "Equatorial Guinea", "Somalia", "Djibouti", "Eritrea")) %>%
+  bind_rows(read_sf("~/Downloads/sdn_adm_cbs_nic_ssa_20200831_shp/sdn_admbnda_adm0_cbs_nic_ssa_20200831.shp"))
+  # bind_rows(read_sf("~/Downloads/ssd_admbnda_imwg_nbs_shp/ssd_admbnda_adm0_imwg_nbs_20180817.shp")) %>%
   st_crop(xmin=-180, xmax=180, ymin=-35, ymax=90)
 
 
@@ -88,7 +91,8 @@ p3a <- fr %>%
   filter(area_level == 0,
         variable == "asfr",
         period %in% c(2000, 2010, 2020),
-        !iso3 %in% c("NER", "GAB", "GIN", "MWI")) %>%
+        # !iso3 %in% c("NER", "GAB", "GIN", "MWI")
+        ) %>%
   group_by(region, area_id, area_name, age_group) %>%
   summarise(ratio_10 = median[period == 2010]/median[period == 2000],
             ratio_20 = median[period == 2020]/median[period == 2010]) %>%
@@ -254,14 +258,15 @@ plots <- Map(function(fr, areas, level) {
   
   fr %>%
     filter(area_level == level,
+           period == 2016,
            variable == "tfr"
     ) %>%
-    select(-epp_level) %>%
+    select(-any_of(c("epp_level", "spectrum_region_code"))) %>%
     left_join(areas) %>%
     ggplot() +
-      geom_sf(aes(geometry = geometry, fill=median)) +
-      viridis::scale_fill_viridis()
-}, fr_list, areas_list, lvls)
+      geom_sf(aes(geometry = geometry, fill=median))
+      # viridis::scale_fill_viridis()
+}, fr_list, areas_list[names(fr_list)], lvls)
 
 asfr_list_admin1 <- fr %>%
   filter(variable == "asfr",
@@ -389,7 +394,7 @@ dist_fr_change <- Map(function(fr, areas, level) {
   
   
   
-}, fr_list, areas_list, lvls)
+}, fr_list, areas_list[names(fr_list)], lvls)
 
 admin1_fr_change <- Map(function(fr, areas, level) {
   
