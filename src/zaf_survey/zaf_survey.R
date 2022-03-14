@@ -3,7 +3,8 @@ iso3 <- "ZAF"
 
 areas <- read_sf("depends/zaf_areas.geojson") %>%
   mutate(area_name = str_trim(area_name)) %>%
-  st_make_valid()
+  st_make_valid() %>%
+  filter(area_level < 4)
 
 areas_wide <- spread_areas(areas)
 

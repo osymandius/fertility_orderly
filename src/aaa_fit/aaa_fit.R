@@ -17,7 +17,7 @@ phia_asfr <- read.csv("resources/phia_asfr.csv") %>%
   filter(iso3 == iso3_c) %>%
   mutate(survtype = "PHIA")
 
-remove_survey <- c("CIV2005AIS", "MLI2009MICS", "MLI2015MICS", "SLE2010MICS", "TGO2006MICS", "BEN1996DHS", "KEN2009MICS", "COD2017MICS")
+remove_survey <- c("CIV2005AIS", "MLI2009MICS", "MLI2015MICS", "SLE2010MICS", "TGO2006MICS", "BEN1996DHS", "KEN2009MICS", "COD2017MICS", "TZA2007AIS", "TZA2012AIS")
 subnational_surveys <- c("KEN2009MICS", "KEN2011MICS")
 
 asfr <- asfr %>% 
