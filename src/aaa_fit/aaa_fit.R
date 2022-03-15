@@ -40,7 +40,7 @@ asfr <- asfr %>%
          !(iso3 == "GMB" & period == 2013 & survey_id == "GMB2018MICS")
          )
 
-lvl_map <- read.csv("resources/iso_mapping_fit.csv")
+lvl_map <- read.csv("resources/iso_mapping_
 lvl <- lvl_map$fertility_fit_level[lvl_map$iso3 == iso3]
 admin1_lvl <- lvl_map$admin1_level[lvl_map$iso3 == iso3]
 
