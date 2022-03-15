@@ -222,21 +222,21 @@ tmb_int$par <- list(
 
   beta_spike_2000 = 0,
   beta_spike_1999 = 0,
-  beta_spike_2001 = 0,
+  beta_spike_2001 = 0
   # log_overdispersion = 0,
 
-  eta1 = array(0, c(ncol(mf$Z$Z_country), ncol(mf$Z$Z_period), ncol(mf$Z$Z_age))),
-  log_prec_eta1 = 0,
-  logit_eta1_phi_age = 0,
-  logit_eta1_phi_period = 0,
-
-  eta2 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_period))),
-  log_prec_eta2 = 0,
-  logit_eta2_phi_period = 0,
-  # #
-  eta3 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_age))),
-  log_prec_eta3 = 0,
-  logit_eta3_phi_age = 0
+  # eta1 = array(0, c(ncol(mf$Z$Z_country), ncol(mf$Z$Z_period), ncol(mf$Z$Z_age))),
+  # log_prec_eta1 = 0,
+  # logit_eta1_phi_age = 0,
+  # logit_eta1_phi_period = 0,
+  # 
+  # eta2 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_period))),
+  # log_prec_eta2 = 0,
+  # logit_eta2_phi_period = 0,
+  # # #
+  # eta3 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_age))),
+  # log_prec_eta3 = 0,
+  # logit_eta3_phi_age = 0
 )
 
 tmb_int$random <- c("beta_0",
@@ -256,10 +256,10 @@ tmb_int$random <- c("beta_0",
                     "zeta1",
                     "beta_spike_2000",
                     "beta_spike_1999",
-                    "beta_spike_2001",
-                    "eta1",
-                    "eta2",
-                    "eta3"
+                    "beta_spike_2001"
+                    # "eta1",
+                    # "eta2",
+                    # "eta3"
                     # "omega1",
                     # "omega2"
 )
