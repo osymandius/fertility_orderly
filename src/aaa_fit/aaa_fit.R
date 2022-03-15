@@ -25,6 +25,7 @@ remove_survey <- c("CIV2005AIS", "CIV2006MICS",
                    "BEN1996DHS", 
                    "KEN2009MICS", 
                    "COD2017MICS", 
+                   "NGA2007MICS",
                    "TZA2007AIS", "TZA2012AIS")
 subnational_surveys <- c("KEN2009MICS", "KEN2011MICS")
 
@@ -52,11 +53,23 @@ mf$observations$full_obs <- mf$observations$full_obs %>%
 mf$observations$full_obs <- mf$observations$full_obs %>%
   mutate(tips_dummy_5 = as.integer(tips %in% 5),
          tips_dummy_6 = as.integer(tips %in% 6),
+         tips_dummy_7 = as.integer(tips %in% 7),
+         tips_dummy_8 = as.integer(tips %in% 8),
          tips_dummy_0 = as.integer(tips %in% 0)
          )
 
+
+mf$observations$full_obs <- mf$observations$full_obs %>%
+  ungroup() %>%
+  group_by(tips, survey_id) %>%
+  mutate(id.zeta1 = factor(cur_group_id()),
+         id.zeta1 = fct_expand(id.zeta1, as.character(1:(length(unique(mf$observations$full_obs$survey_id))*15)))) %>%
+  ungroup()
+
 mf$Z$X_tips_dummy_5 <- model.matrix(~0 + tips_dummy_5, mf$observations$full_obs %>% filter(survtype == "DHS"))
 mf$Z$X_tips_dummy_6 <- model.matrix(~0 + tips_dummy_6, mf$observations$full_obs %>% filter(survtype == "DHS"))
+mf$Z$X_tips_dummy_7 <- model.matrix(~0 + tips_dummy_7, mf$observations$full_obs %>% filter(survtype == "DHS"))
+mf$Z$X_tips_dummy_8 <- model.matrix(~0 + tips_dummy_8, mf$observations$full_obs %>% filter(survtype == "DHS"))
 mf$Z$X_tips_dummy_0 <- model.matrix(~0 + tips_dummy_0, mf$observations$full_obs %>% filter(survtype == "DHS"))
 
 # R_smooth_iid <- as(diag(nrow = nrow(mf$observations$full_obs)), "sparseMatrix")
@@ -85,6 +98,8 @@ tmb_int$data <- list(
   X_tips_dummy_9_11 = mf$Z$X_tips_dummy_9_11,
   X_tips_dummy_5 = mf$Z$X_tips_dummy_5,
   X_tips_dummy_6 = mf$Z$X_tips_dummy_6,
+  X_tips_dummy_7 = mf$Z$X_tips_dummy_7,
+  X_tips_dummy_8 = mf$Z$X_tips_dummy_8,
   X_tips_dummy_0 = mf$Z$X_tips_dummy_0,
   X_period = mf$Z$X_period,
   X_urban_dummy = mf$Z$X_urban_dummy,
@@ -111,6 +126,8 @@ tmb_int$data <- list(
   # Z_smooth_iid_ais = sparse.model.matrix(~0 + id.smooth, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
   R_smooth_iid = R_smooth_iid,
   R_tips = mf$R$R_tips,
+  Z_zeta1 = sparse.model.matrix(~0 + id.zeta1, mf$observations$full_obs),
+  R_survey = as(diag(1, length(unique(mf$observations$full_obs$survey_id))), "dgTMatrix"),
   R_age = mf$R$R_age,
   # R_period = make_rw_structure_matrix(ncol(mf$Z$Z_period), 1, adjust_diagonal = TRUE),
   R_period = make_rw_structure_matrix(ncol(spline_mat), 1, adjust_diagonal = TRUE),
@@ -165,14 +182,18 @@ tmb_int$par <- list(
   beta_tips_dummy_10 = rep(0, ncol(mf$Z$X_tips_dummy_10)),
   beta_tips_dummy_5 = rep(0, ncol(mf$Z$X_tips_dummy_5)),
   beta_tips_dummy_6 = rep(0, ncol(mf$Z$X_tips_dummy_6)),
-  beta_tips_dummy_0 = rep(0, ncol(mf$Z$X_tips_dummy_0)),
+  # beta_tips_dummy_0 = rep(0, ncol(mf$Z$X_tips_dummy_0)),
   # beta_tips_dummy_9_11 = rep(0, ncol(mf$Z$X_tips_dummy_9_11)),
   # beta_urban_dummy = rep(0, ncol(mf$Z$X_urban_dummy)),
-  # u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
-  # log_prec_rw_tips = 0,
+  u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
+  log_prec_rw_tips = 0,
 
   u_age = rep(0, ncol(mf$Z$Z_age)),
   log_prec_rw_age = 0,
+  
+  zeta1 = array(0, c(length(unique(mf$observations$full_obs$survey_id)), ncol(mf$Z$Z_tips_dhs))),
+  log_prec_zeta1 = 0,
+  logit_zeta1_phi_tips = 0,
 
   # u_country = rep(0, ncol(mf$Z$Z_country)),
   # log_prec_country = 0,
@@ -228,10 +249,11 @@ tmb_int$random <- c("beta_0",
                     "beta_tips_dummy_10",
                     "beta_tips_dummy_5",
                     "beta_tips_dummy_6",
-                    "beta_tips_dummy_0",
+                    # "beta_tips_dummy_0",
                     # "beta_tips_dummy_9_11",
                     # "beta_urban_dummy",
-                    # "u_tips",
+                    "u_tips",
+                    "zeta1",
                     "beta_spike_2000",
                     "beta_spike_1999",
                     "beta_spike_2001",
