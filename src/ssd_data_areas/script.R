@@ -3,10 +3,17 @@
 ## Revert back to planar geometry
 sf::sf_use_s2(FALSE)
 
-humdata_path <- "~/Imperial College London/HIV Inference Group - WP - Documents/Data/naomi-raw/SSD/2022-03-13 humdata-shapefile/ssd_adm_imwg_nbs_20220121.zip"
+#' Authenticate SharePoint login
+sharepoint <- spud::sharepoint$new(Sys.getenv("SHAREPOINT_URL"))
+
+path <- "Shared Documents/Data/naomi-raw/SSD/2022-03-13 humdata-shapefile/ssd_adm_imwg_nbs_20220121.zip"
+
+path <- file.path("sites", Sys.getenv("SHAREPOINT_SITE"), path)
+
+files <- sharepoint$download(path)
 
 tempdir <- tempdir()
-unzip(humdata_path, exdir = tempdir)
+unzip(files, exdir = tempdir)
 admin0 <- read_sf(file.path(tempdir, "ssd_admbnda_adm0_imwg_nbs_20210924.shp")) %>%
   rename(area_name = ADM0_EN) %>%
   mutate(area_id = "SSD",
