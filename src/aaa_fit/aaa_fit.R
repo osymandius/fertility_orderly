@@ -126,6 +126,7 @@ tmb_int$data <- list(
   # Z_smooth_iid_ais = sparse.model.matrix(~0 + id.smooth, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
   R_smooth_iid = R_smooth_iid,
   R_tips = mf$R$R_tips,
+  R_tips_iid = as(diag(1, ncol(mf$Z$Z_tips_dhs)), "dgTMatrix"),
   Z_zeta1 = sparse.model.matrix(~0 + id.zeta1, mf$observations$full_obs),
   R_survey = as(diag(1, length(unique(mf$observations$full_obs$survey_id))), "dgTMatrix"),
   R_age = mf$R$R_age,
@@ -193,7 +194,7 @@ tmb_int$par <- list(
   
   zeta1 = array(0, c(length(unique(mf$observations$full_obs$survey_id)), ncol(mf$Z$Z_tips_dhs))),
   # log_prec_zeta1 = 0,
-  lag_logit_zeta1_phi_tips = 0,
+  # lag_logit_zeta1_phi_tips = 0,
 
   # u_country = rep(0, ncol(mf$Z$Z_country)),
   # log_prec_country = 0,
