@@ -17,13 +17,28 @@ phia_asfr <- read.csv("resources/phia_asfr.csv") %>%
   filter(iso3 == iso3_c) %>%
   mutate(survtype = "PHIA")
 
-remove_survey <- c("CIV2005AIS", "MLI2009MICS", "MLI2015MICS", "SLE2010MICS", "TGO2006MICS", "BEN1996DHS", "KEN2009MICS", "COD2017MICS", "TZA2007AIS", "TZA2012AIS")
+remove_survey <- c("CIV2005AIS", "CIV2006MICS", 
+                   "GMB2005MICS",
+                   "MLI2009MICS", "MLI2015MICS", 
+                   "SLE2010MICS", 
+                   "TGO2006MICS", 
+                   "BEN1996DHS", 
+                   "KEN2009MICS", 
+                   "COD2017MICS", 
+                   "LBR2019DHS",
+                   "TZA2007AIS", "TZA2012AIS")
 subnational_surveys <- c("KEN2009MICS", "KEN2011MICS")
 
 asfr <- asfr %>% 
   bind_rows(phia_asfr) %>%
   filter(!survey_id %in% remove_survey,
-         !(iso3 == "SWZ" & period == 2017))
+         !(iso3 == "SWZ" & period == 2017),
+         !(iso3 == "SWZ" & period == 1995 & survey_id == "SWZ2000MICS"),
+         !(iso3 == "SWZ" & period == 1999 & survey_id == "SWZ2014MICS"),
+         !(iso3 == "GMB" & period == 2004 & survey_id == "GMB2019DHS"),
+         !(iso3 == "GMB" & period == 2005 & survey_id == "GMB2010MICS"),
+         !(iso3 == "GMB" & period == 2013 & survey_id == "GMB2018MICS")
+         )
 
 lvl_map <- read.csv("resources/iso_mapping_fit.csv")
 lvl <- lvl_map$fertility_fit_level[lvl_map$iso3 == iso3]
@@ -34,6 +49,14 @@ mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level = lvl, p
 mf$observations$full_obs <- mf$observations$full_obs %>%
   ungroup() %>%
   mutate(id.smooth = factor(row_number()))
+
+mf$observations$full_obs <- mf$observations$full_obs %>%
+  mutate(tips_dummy_5 = as.integer(tips %in% 5),
+         tips_dummy_6 = as.integer(tips %in% 6)
+         )
+
+mf$Z$X_tips_dummy_5 <- model.matrix(~0 + tips_dummy_5, mf$observations$full_obs %>% filter(survtype == "DHS"))
+mf$Z$X_tips_dummy_6 <- model.matrix(~0 + tips_dummy_6, mf$observations$full_obs %>% filter(survtype == "DHS"))
 
 # R_smooth_iid <- as(diag(nrow = nrow(mf$observations$full_obs)), "sparseMatrix")
 R_smooth_iid <- sparseMatrix(i = 1:nrow(mf$observations$full_obs), j = 1:nrow(mf$observations$full_obs), x = 1)
@@ -47,9 +70,9 @@ mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
 
 validate_model_frame(mf, areas)
 
-# TMB::compile("src/aaa_fit/no_tips.cpp", flags = "-w")               # Compile the C++ file
-# TMB::compile("no_tips.cpp", flags = "-w")               # Compile the C++ file
-# dyn.load(dynlib("no_tips"))
+# TMB::compile("src/aaa_fit/dev.cpp", flags = "-w")               # Compile the C++ file
+# TMB::compile("dev.cpp", flags = "-w")               # Compile the C++ file
+# dyn.load(dynlib("dev"))
 
 tmb_int <- list()
 
@@ -59,6 +82,8 @@ tmb_int$data <- list(
   X_tips_dummy = mf$Z$X_tips_dummy,
   X_tips_dummy_10 = mf$Z$X_tips_dummy_10,
   X_tips_dummy_9_11 = mf$Z$X_tips_dummy_9_11,
+  X_tips_dummy_5 = mf$Z$X_tips_dummy_5,
+  X_tips_dummy_6 = mf$Z$X_tips_dummy_6,
   X_period = mf$Z$X_period,
   X_urban_dummy = mf$Z$X_urban_dummy,
   X_extract_dhs = mf$X_extract$X_extract_dhs,
@@ -134,12 +159,14 @@ tmb_int$data <- list(
 tmb_int$par <- list(
   beta_0 = 0,
 
-  beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
+  # beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
   beta_tips_dummy_10 = rep(0, ncol(mf$Z$X_tips_dummy_10)),
+  beta_tips_dummy_5 = rep(0, ncol(mf$Z$X_tips_dummy_5)),
+  beta_tips_dummy_6 = rep(0, ncol(mf$Z$X_tips_dummy_6)),
   # beta_tips_dummy_9_11 = rep(0, ncol(mf$Z$X_tips_dummy_9_11)),
   # beta_urban_dummy = rep(0, ncol(mf$Z$X_urban_dummy)),
-  u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
-  log_prec_rw_tips = 0,
+  # u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
+  # log_prec_rw_tips = 0,
 
   u_age = rep(0, ncol(mf$Z$Z_age)),
   log_prec_rw_age = 0,
@@ -194,11 +221,13 @@ tmb_int$random <- c("beta_0",
                     "u_period",
                     "u_smooth_iid",
                     "beta_period",
-                    "beta_tips_dummy",
+                    # "beta_tips_dummy",
                     "beta_tips_dummy_10",
+                    "beta_tips_dummy_5",
+                    "beta_tips_dummy_6",
                     # "beta_tips_dummy_9_11",
                     # "beta_urban_dummy",
-                    "u_tips",
+                    # "u_tips",
                     "beta_spike_2000",
                     "beta_spike_1999",
                     "beta_spike_2001",
@@ -231,7 +260,7 @@ if(mf$mics_toggle) {
 
 f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
                                parameters = tmb_int$par,
-                               DLL = "no_tips",
+                               DLL = "dfertility",
                                silent=0,
                                checkParameterOrder=FALSE)
 })
@@ -242,7 +271,7 @@ if(is.null(parallel::mccollect(f)[[1]])) {
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                        parameters = tmb_int$par,
-                       DLL = "no_tips",
+                       DLL = "dfertility",
                        random = tmb_int$random,
                        hessian = FALSE)
 
@@ -294,14 +323,15 @@ fr_plot <- fr_plot %>%
 cntry_name <- countrycode::countrycode(iso3, "iso3c", "country.name")
 
 plot_prep <- tmb_results %>%
-  filter(area_level %in% c(0, admin1_lvl), variable == "tfr")
+  # filter(area_level %in% c(0, admin1_lvl), variable == "tfr")
+  filter(area_level ==0, variable == "tfr")
 
 tfr_plot <- plot_prep %>%
   ggplot(aes(x=period, y=median)) +
   geom_line(size=1) +
   geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
-  geom_point(data = fr_plot %>% filter(variable == "tfr", value <10, !survey_id %in% remove_survey), aes(y=value, color=survey_id)) +
-  geom_point(data = fr_plot %>% filter(variable == "tfr", value <10, survey_id %in% remove_survey), aes(y=value, color=survey_id), shape=22, fill=NA) +
+  geom_point(data = fr_plot %>% filter(variable == "tfr", value <10, area_id == "BFA", !survey_id %in% remove_survey), aes(y=value, color=survey_id)) +
+  geom_point(data = fr_plot %>% filter(variable == "tfr", value <10, area_id == "BFA", survey_id %in% remove_survey), aes(y=value, color=survey_id), shape=22, fill=NA) +
   facet_wrap(~fct_relevel(area_name, levels=c(cntry_name, unique(plot_prep$area_name)[!unique(plot_prep$area_name) == cntry_name])), ncol=5) +
   labs(y="TFR", x=element_blank(), color="Survey ID", title=paste(iso3, "| Provincial TFR")) +
   theme_minimal() +
