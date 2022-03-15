@@ -25,7 +25,6 @@ remove_survey <- c("CIV2005AIS", "CIV2006MICS",
                    "BEN1996DHS", 
                    "KEN2009MICS", 
                    "COD2017MICS", 
-                   "LBR2019DHS",
                    "TZA2007AIS", "TZA2012AIS")
 subnational_surveys <- c("KEN2009MICS", "KEN2011MICS")
 
