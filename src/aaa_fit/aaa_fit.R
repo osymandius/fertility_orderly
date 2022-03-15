@@ -32,7 +32,7 @@ subnational_surveys <- c("KEN2009MICS", "KEN2011MICS")
 asfr <- asfr %>% 
   bind_rows(phia_asfr) %>%
   filter(!survey_id %in% remove_survey,
-         !(iso3 == "SWZ" & period == 2017),
+         !(iso3 == "SWZ" & period == 2017dfghjhytred)
          !(iso3 == "SWZ" & period == 1995 & survey_id == "SWZ2000MICS"),
          !(iso3 == "SWZ" & period == 1999 & survey_id == "SWZ2014MICS"),
          !(iso3 == "GMB" & period == 2004 & survey_id == "GMB2019DHS"),
