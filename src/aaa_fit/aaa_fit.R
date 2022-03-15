@@ -193,7 +193,7 @@ tmb_int$par <- list(
   
   zeta1 = array(0, c(length(unique(mf$observations$full_obs$survey_id)), ncol(mf$Z$Z_tips_dhs))),
   # log_prec_zeta1 = 0,
-  logit_zeta1_phi_tips = 0,
+  lag_logit_zeta1_phi_tips = 0,
 
   # u_country = rep(0, ncol(mf$Z$Z_country)),
   # log_prec_country = 0,
