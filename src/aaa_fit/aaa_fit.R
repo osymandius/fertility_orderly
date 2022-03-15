@@ -52,11 +52,13 @@ mf$observations$full_obs <- mf$observations$full_obs %>%
 
 mf$observations$full_obs <- mf$observations$full_obs %>%
   mutate(tips_dummy_5 = as.integer(tips %in% 5),
-         tips_dummy_6 = as.integer(tips %in% 6)
+         tips_dummy_6 = as.integer(tips %in% 6),
+         tips_dummy_0 = as.integer(tips %in% 0)
          )
 
 mf$Z$X_tips_dummy_5 <- model.matrix(~0 + tips_dummy_5, mf$observations$full_obs %>% filter(survtype == "DHS"))
 mf$Z$X_tips_dummy_6 <- model.matrix(~0 + tips_dummy_6, mf$observations$full_obs %>% filter(survtype == "DHS"))
+mf$Z$X_tips_dummy_0 <- model.matrix(~0 + tips_dummy_0, mf$observations$full_obs %>% filter(survtype == "DHS"))
 
 # R_smooth_iid <- as(diag(nrow = nrow(mf$observations$full_obs)), "sparseMatrix")
 R_smooth_iid <- sparseMatrix(i = 1:nrow(mf$observations$full_obs), j = 1:nrow(mf$observations$full_obs), x = 1)
@@ -84,6 +86,7 @@ tmb_int$data <- list(
   X_tips_dummy_9_11 = mf$Z$X_tips_dummy_9_11,
   X_tips_dummy_5 = mf$Z$X_tips_dummy_5,
   X_tips_dummy_6 = mf$Z$X_tips_dummy_6,
+  X_tips_dummy_0 = mf$Z$X_tips_dummy_0,
   X_period = mf$Z$X_period,
   X_urban_dummy = mf$Z$X_urban_dummy,
   X_extract_dhs = mf$X_extract$X_extract_dhs,
@@ -163,6 +166,7 @@ tmb_int$par <- list(
   beta_tips_dummy_10 = rep(0, ncol(mf$Z$X_tips_dummy_10)),
   beta_tips_dummy_5 = rep(0, ncol(mf$Z$X_tips_dummy_5)),
   beta_tips_dummy_6 = rep(0, ncol(mf$Z$X_tips_dummy_6)),
+  beta_tips_dummy_0 = rep(0, ncol(mf$Z$X_tips_dummy_0)),
   # beta_tips_dummy_9_11 = rep(0, ncol(mf$Z$X_tips_dummy_9_11)),
   # beta_urban_dummy = rep(0, ncol(mf$Z$X_urban_dummy)),
   # u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
@@ -225,6 +229,7 @@ tmb_int$random <- c("beta_0",
                     "beta_tips_dummy_10",
                     "beta_tips_dummy_5",
                     "beta_tips_dummy_6",
+                    "beta_tips_dummy_0",
                     # "beta_tips_dummy_9_11",
                     # "beta_urban_dummy",
                     # "u_tips",
@@ -323,15 +328,15 @@ fr_plot <- fr_plot %>%
 cntry_name <- countrycode::countrycode(iso3, "iso3c", "country.name")
 
 plot_prep <- tmb_results %>%
-  # filter(area_level %in% c(0, admin1_lvl), variable == "tfr")
-  filter(area_level ==0, variable == "tfr")
+  filter(area_level %in% c(0, admin1_lvl), variable == "tfr")
+  # filter(area_level ==0, variable == "tfr")
 
 tfr_plot <- plot_prep %>%
   ggplot(aes(x=period, y=median)) +
   geom_line(size=1) +
   geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
-  geom_point(data = fr_plot %>% filter(variable == "tfr", value <10, area_id == "BFA", !survey_id %in% remove_survey), aes(y=value, color=survey_id)) +
-  geom_point(data = fr_plot %>% filter(variable == "tfr", value <10, area_id == "BFA", survey_id %in% remove_survey), aes(y=value, color=survey_id), shape=22, fill=NA) +
+  geom_point(data = fr_plot %>% filter(variable == "tfr", value <10, !survey_id %in% remove_survey), aes(y=value, color=survey_id)) +
+  geom_point(data = fr_plot %>% filter(variable == "tfr", value <10, survey_id %in% remove_survey), aes(y=value, color=survey_id), shape=22, fill=NA) +
   facet_wrap(~fct_relevel(area_name, levels=c(cntry_name, unique(plot_prep$area_name)[!unique(plot_prep$area_name) == cntry_name])), ncol=5) +
   labs(y="TFR", x=element_blank(), color="Survey ID", title=paste(iso3, "| Provincial TFR")) +
   theme_minimal() +
