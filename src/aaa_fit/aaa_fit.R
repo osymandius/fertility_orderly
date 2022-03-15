@@ -192,7 +192,7 @@ tmb_int$par <- list(
   u_age = rep(0, ncol(mf$Z$Z_age)),
   log_prec_rw_age = 0,
   
-  zeta1 = array(0, c(length(unique(mf$observations$full_obs$survey_id)), ncol(mf$Z$Z_tips_dhs))),
+  # zeta1 = array(0, c(length(unique(mf$observations$full_obs$survey_id)), ncol(mf$Z$Z_tips_dhs))),
   # log_prec_zeta1 = 0,
   # lag_logit_zeta1_phi_tips = 0,
 
@@ -223,21 +223,21 @@ tmb_int$par <- list(
 
   beta_spike_2000 = 0,
   beta_spike_1999 = 0,
-  beta_spike_2001 = 0
+  beta_spike_2001 = 0,
   # log_overdispersion = 0,
 
-  # eta1 = array(0, c(ncol(mf$Z$Z_country), ncol(mf$Z$Z_period), ncol(mf$Z$Z_age))),
-  # log_prec_eta1 = 0,
-  # logit_eta1_phi_age = 0,
-  # logit_eta1_phi_period = 0,
-  # 
-  # eta2 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_period))),
-  # log_prec_eta2 = 0,
-  # logit_eta2_phi_period = 0,
-  # # #
-  # eta3 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_age))),
-  # log_prec_eta3 = 0,
-  # logit_eta3_phi_age = 0
+  eta1 = array(0, c(ncol(mf$Z$Z_country), ncol(mf$Z$Z_period), ncol(mf$Z$Z_age))),
+  log_prec_eta1 = 0,
+  logit_eta1_phi_age = 0,
+  logit_eta1_phi_period = 0,
+
+  eta2 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_period))),
+  log_prec_eta2 = 0,
+  logit_eta2_phi_period = 0,
+  # #
+  eta3 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_age))),
+  log_prec_eta3 = 0,
+  logit_eta3_phi_age = 0
 )
 
 tmb_int$random <- c("beta_0",
@@ -254,7 +254,7 @@ tmb_int$random <- c("beta_0",
                     # "beta_tips_dummy_9_11",
                     # "beta_urban_dummy",
                     "u_tips",
-                    "zeta1",
+                    # "zeta1",
                     "beta_spike_2000",
                     "beta_spike_1999",
                     "beta_spike_2001"
