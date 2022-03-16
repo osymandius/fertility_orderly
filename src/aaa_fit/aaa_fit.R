@@ -55,9 +55,25 @@ mf$observations$full_obs <- mf$observations$full_obs %>%
          tips_dummy_6 = as.integer(tips %in% 6),
          tips_dummy_7 = as.integer(tips %in% 7),
          tips_dummy_8 = as.integer(tips %in% 8),
-         tips_dummy_0 = as.integer(tips %in% 0)
-         )
+         tips_dummy_0 = as.integer(tips %in% 0),
+         tips_fe = factor(case_when(
+           tips == 0 ~ 1,
+           tips == 6 & survtype == "DHS" ~ 2,
+           tips == 10 ~ 3,
+           TRUE ~ 0
+         ))
+         ) %>%
+  ungroup() %>%
+  group_by(tips_fe, survey_id) %>%
+  mutate(id.zeta2 = factor(cur_group_id()),
+         id.zeta2 = forcats::fct_expand(id.zeta2, as.character(1:(length(unique(mf$observations$full_obs$survey_id))*4))))
 
+clear_col <- as.integer(unique(filter(mf$observations$full_obs, tips_fe == 0)$id.zeta2))
+mf$Z$Z_zeta2 <- sparse.model.matrix(~0 + id.zeta2, mf$observations$full_obs)
+mf$Z$Z_zeta2[,clear_col] <- 0
+
+mf$Z$X_tips_fe <- sparse.model.matrix(~0 + tips_fe, mf$observations$full_obs)
+mf$Z$X_tips_fe[,1] <- 0
 
 mf$observations$full_obs <- mf$observations$full_obs %>%
   ungroup() %>%
@@ -67,10 +83,10 @@ mf$observations$full_obs <- mf$observations$full_obs %>%
   ungroup()
 
 mf$Z$X_tips_dummy_5 <- model.matrix(~0 + tips_dummy_5, mf$observations$full_obs %>% filter(survtype == "DHS"))
-mf$Z$X_tips_dummy_6 <- model.matrix(~0 + tips_dummy_6, mf$observations$full_obs %>% filter(survtype == "DHS"))
-mf$Z$X_tips_dummy_7 <- model.matrix(~0 + tips_dummy_7, mf$observations$full_obs %>% filter(survtype == "DHS"))
-mf$Z$X_tips_dummy_8 <- model.matrix(~0 + tips_dummy_8, mf$observations$full_obs %>% filter(survtype == "DHS"))
-mf$Z$X_tips_dummy_0 <- model.matrix(~0 + tips_dummy_0, mf$observations$full_obs %>% filter(survtype == "DHS"))
+# mf$Z$X_tips_dummy_6 <- model.matrix(~0 + tips_dummy_6, mf$observations$full_obs %>% filter(survtype == "DHS"))
+# mf$Z$X_tips_dummy_7 <- model.matrix(~0 + tips_dummy_7, mf$observations$full_obs %>% filter(survtype == "DHS"))
+# mf$Z$X_tips_dummy_8 <- model.matrix(~0 + tips_dummy_8, mf$observations$full_obs %>% filter(survtype == "DHS"))
+
 
 # R_smooth_iid <- as(diag(nrow = nrow(mf$observations$full_obs)), "sparseMatrix")
 R_smooth_iid <- sparseMatrix(i = 1:nrow(mf$observations$full_obs), j = 1:nrow(mf$observations$full_obs), x = 1)
@@ -85,8 +101,8 @@ mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
 validate_model_frame(mf, areas)
 
 # TMB::compile("src/aaa_fit/dev.cpp", flags = "-w")               # Compile the C++ file
-# TMB::compile("models/model1.cpp", flags = "-w")               # Compile the C++ file
-# dyn.load(dynlib("models/model1"))
+# TMB::compile("models/model4.cpp", flags = "-w")               # Compile the C++ file
+# dyn.load(dynlib("models/model4"))
 
 tmb_int <- list()
 
@@ -94,13 +110,14 @@ tmb_int$data <- list(
   M_naomi_obs = mf$M_naomi_obs,
   M_full_obs = mf$M_full_obs,
   X_tips_dummy = mf$Z$X_tips_dummy,
-  X_tips_dummy_10 = mf$Z$X_tips_dummy_10,
+  # X_tips_dummy_10 = mf$Z$X_tips_dummy_10,
   X_tips_dummy_9_11 = mf$Z$X_tips_dummy_9_11,
   X_tips_dummy_5 = mf$Z$X_tips_dummy_5,
-  X_tips_dummy_6 = mf$Z$X_tips_dummy_6,
-  X_tips_dummy_7 = mf$Z$X_tips_dummy_7,
-  X_tips_dummy_8 = mf$Z$X_tips_dummy_8,
-  X_tips_dummy_0 = mf$Z$X_tips_dummy_0,
+  # X_tips_dummy_6 = mf$Z$X_tips_dummy_6,
+  # X_tips_dummy_7 = mf$Z$X_tips_dummy_7,
+  # X_tips_dummy_8 = mf$Z$X_tips_dummy_8,
+  # X_tips_dummy_0 = mf$Z$X_tips_dummy_0,
+  X_tips_fe = mf$Z$X_tips_fe,
   X_period = mf$Z$X_period,
   X_urban_dummy = mf$Z$X_urban_dummy,
   X_extract_dhs = mf$X_extract$X_extract_dhs,
@@ -127,7 +144,9 @@ tmb_int$data <- list(
   R_smooth_iid = R_smooth_iid,
   R_tips = mf$R$R_tips,
   R_tips_iid = as(diag(1, ncol(mf$Z$Z_tips_dhs)), "dgTMatrix"),
-  Z_zeta1 = sparse.model.matrix(~0 + id.zeta1, mf$observations$full_obs),
+  # Z_zeta1 = sparse.model.matrix(~0 + id.zeta1, mf$observations$full_obs),
+  Z_zeta2 = mf$Z$Z_zeta2,
+  R_zeta2 = as(diag(1, ncol(mf$Z$X_tips_fe)), "dgTMatrix"),
   R_survey = as(diag(1, length(unique(mf$observations$full_obs$survey_id))), "dgTMatrix"),
   R_age = mf$R$R_age,
   # R_period = make_rw_structure_matrix(ncol(mf$Z$Z_period), 1, adjust_diagonal = TRUE),
@@ -180,10 +199,11 @@ tmb_int$par <- list(
   beta_0 = 0,
 
   # beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
-  beta_tips_dummy_10 = rep(0, ncol(mf$Z$X_tips_dummy_10)),
+  # beta_tips_dummy_10 = rep(0, ncol(mf$Z$X_tips_dummy_10)),
   beta_tips_dummy_5 = rep(0, ncol(mf$Z$X_tips_dummy_5)),
-  beta_tips_dummy_6 = rep(0, ncol(mf$Z$X_tips_dummy_6)),
-  beta_tips_dummy_0 = rep(0, ncol(mf$Z$X_tips_dummy_0)),
+  # beta_tips_dummy_6 = rep(0, ncol(mf$Z$X_tips_dummy_6)),
+  # beta_tips_dummy_0 = rep(0, ncol(mf$Z$X_tips_dummy_0)),
+  beta_tips_fe = rep(0, ncol(mf$Z$X_tips_fe)),
   # beta_tips_dummy_9_11 = rep(0, ncol(mf$Z$X_tips_dummy_9_11)),
   # beta_urban_dummy = rep(0, ncol(mf$Z$X_urban_dummy)),
   u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
@@ -192,6 +212,7 @@ tmb_int$par <- list(
 
   u_age = rep(0, ncol(mf$Z$Z_age)),
   log_prec_rw_age = 0,
+  lag_logit_phi_age = 0,
   
   # zeta1 = array(0, c(length(unique(mf$observations$full_obs$survey_id)), ncol(mf$Z$Z_tips_dhs))),
   # log_prec_zeta1 = 0,
@@ -238,7 +259,13 @@ tmb_int$par <- list(
   # #
   eta3 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_age))),
   log_prec_eta3 = 0,
-  logit_eta3_phi_age = 0
+  logit_eta3_phi_age = 0,
+  
+  zeta2 = array(0, c(ncol(as(diag(1, length(unique(mf$observations$full_obs$survey_id))), "dgTMatrix")),
+                     ncol(mf$Z$X_tips_fe)
+                     )
+                ),
+  log_prec_zeta2 = 0
 )
 
 tmb_int$random <- c("beta_0",
@@ -248,14 +275,16 @@ tmb_int$random <- c("beta_0",
                     "u_smooth_iid",
                     "beta_period",
                     # "beta_tips_dummy",
-                    "beta_tips_dummy_10",
+                    # "beta_tips_dummy_10",
                     "beta_tips_dummy_5",
-                    "beta_tips_dummy_6",
-                    "beta_tips_dummy_0",
+                    # "beta_tips_dummy_6",
+                    # "beta_tips_dummy_0",
+                    "beta_tips_fe",
                     # "beta_tips_dummy_9_11",
                     # "beta_urban_dummy",
                     "u_tips",
                     # "zeta1",
+                    "zeta2",
                     "beta_spike_2000",
                     "beta_spike_1999",
                     "beta_spike_2001",
