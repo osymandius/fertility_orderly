@@ -287,7 +287,7 @@ if(mf$mics_toggle) {
 
 f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
                                parameters = tmb_int$par,
-                               DLL = "model1",
+                               DLL = "dfertility",
                                silent=0,
                                checkParameterOrder=FALSE)
 })
@@ -298,7 +298,7 @@ if(is.null(parallel::mccollect(f)[[1]])) {
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                        parameters = tmb_int$par,
-                       DLL = "model1",
+                       DLL = "dfertility",
                        random = tmb_int$random,
                        hessian = FALSE)
 
