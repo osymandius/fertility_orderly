@@ -47,7 +47,7 @@ areas_list <- lapply(file.path("archive/aaa_areas_pull", id_input, "naomi_areas.
 # areas_list <- areas_list[order(names(areas_list))]
 
 foo <- read_sf("~/Downloads/Longitude_Graticules_and_World_Countries_Boundaries-shp/99bfd9e7-bb42-4728-87b5-07f8c8ac631c2020328-1-1vef4ev.lu5nk.shp") %>%
-  filter(CNTRY_NAME %in% c("South Africa", "Botswana", "Western Sahara", "Mauritania", "Morocco", "Algeria", "Libya", "Tunisia", "Egypt", "Equatorial Guinea", "Somalia", "Djibouti", "Eritrea")) %>%
+  filter(CNTRY_NAME %in% c("Botswana", "Western Sahara", "Mauritania", "Morocco", "Algeria", "Libya", "Tunisia", "Egypt", "Equatorial Guinea", "Somalia", "Djibouti", "Eritrea")) %>%
   bind_rows(read_sf("~/Downloads/sdn_adm_cbs_nic_ssa_20200831_shp/sdn_admbnda_adm0_cbs_nic_ssa_20200831.shp"))
   # bind_rows(read_sf("~/Downloads/ssd_admbnda_imwg_nbs_shp/ssd_admbnda_adm0_imwg_nbs_20180817.shp")) %>%
   st_crop(xmin=-180, xmax=180, ymin=-35, ymax=90)
@@ -77,7 +77,8 @@ dist_fr <- fr_list %>%
 
 p1a <- dist_fr %>%
   bind_rows() %>%
-  filter(period == 2015) %>%
+  filter(period == 2015,
+         !iso3 %in% c("ETH", "AGO")) %>%
   ggplot() +
   geom_sf(aes(geometry = geometry, fill=median), size=0) +
   geom_sf(data = foo, aes(geometry = geometry), fill="grey", size=0.3) +

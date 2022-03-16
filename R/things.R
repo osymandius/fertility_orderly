@@ -494,20 +494,6 @@ pdf(paste0("~/Downloads/fr_comparison.pdf"), h = 6, w = 12)
 plots
 dev.off()
 
-dat[["MWI"]] %>%
-  mutate(source = "dfertility") %>%
-  filter(area_level == 0, variable == "tfr", period > 1999) %>%
-  bind_rows(
-    comparison_plot[["MWI"]] %>% 
-      filter(area_level == 0, 
-             variable == "tfr", 
-             source == "WPP2019") %>%
-      rename(median = val)
-  ) %>%
-  ggplot(aes(x=period, y=median)) +
-  geom_line(size=1, aes(color=source)) +
-  geom_ribbon(aes(ymin=lower, ymax=upper, fill=source), alpha=0.5, show.legend = FALSE) +
-  geom_step(data = comparison_plot[["MWI"]] %>% filter(area_level == 0, variable == "tfr", source == "WPP2019"), aes(y=val, color=source), size=1) +
-  # labs(y="TFR", x=element_blank(), title=paste(iso3_c, "| National TFR")) +
-  # lims(y=c(limits$ymin, limits$ymax)) +
-  moz.utils::standard_theme()
+###
+
+

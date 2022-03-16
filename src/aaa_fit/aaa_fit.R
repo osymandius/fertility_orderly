@@ -32,7 +32,7 @@ subnational_surveys <- c("KEN2009MICS", "KEN2011MICS")
 asfr <- asfr %>% 
   bind_rows(phia_asfr) %>%
   filter(!survey_id %in% remove_survey,
-         !(iso3 == "SWZ" & period == 2017dfghjhytred)
+         !(iso3 == "SWZ" & period == 2017),
          !(iso3 == "SWZ" & period == 1995 & survey_id == "SWZ2000MICS"),
          !(iso3 == "SWZ" & period == 1999 & survey_id == "SWZ2014MICS"),
          !(iso3 == "GMB" & period == 2004 & survey_id == "GMB2019DHS"),
@@ -40,7 +40,7 @@ asfr <- asfr %>%
          !(iso3 == "GMB" & period == 2013 & survey_id == "GMB2018MICS")
          )
 
-lvl_map <- read.csv("resources/iso_mapping_
+lvl_map <- read.csv("resources/iso_mapping_fit.csv")
 lvl <- lvl_map$fertility_fit_level[lvl_map$iso3 == iso3]
 admin1_lvl <- lvl_map$admin1_level[lvl_map$iso3 == iso3]
 
@@ -85,8 +85,8 @@ mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
 validate_model_frame(mf, areas)
 
 # TMB::compile("src/aaa_fit/dev.cpp", flags = "-w")               # Compile the C++ file
-# TMB::compile("dev.cpp", flags = "-w")               # Compile the C++ file
-# dyn.load(dynlib("dev"))
+# TMB::compile("models/model1.cpp", flags = "-w")               # Compile the C++ file
+# dyn.load(dynlib("models/model1"))
 
 tmb_int <- list()
 
@@ -257,10 +257,10 @@ tmb_int$random <- c("beta_0",
                     # "zeta1",
                     "beta_spike_2000",
                     "beta_spike_1999",
-                    "beta_spike_2001"
-                    # "eta1",
-                    # "eta2",
-                    # "eta3"
+                    "beta_spike_2001",
+                    "eta1",
+                    "eta2",
+                    "eta3"
                     # "omega1",
                     # "omega2"
 )
@@ -287,7 +287,7 @@ if(mf$mics_toggle) {
 
 f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
                                parameters = tmb_int$par,
-                               DLL = "dfertility",
+                               DLL = "model1",
                                silent=0,
                                checkParameterOrder=FALSE)
 })
@@ -298,7 +298,7 @@ if(is.null(parallel::mccollect(f)[[1]])) {
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                        parameters = tmb_int$par,
-                       DLL = "dfertility",
+                       DLL = "model1",
                        random = tmb_int$random,
                        hessian = FALSE)
 

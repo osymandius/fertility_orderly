@@ -54,9 +54,9 @@ mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
 
 validate_model_frame(mf, areas)
 
-# TMB::compile("src/mwi_rwa_fit/no_tips_mwi_rwa.cpp", flags = "-w")               # Compile the C++ file
+# TMB::compile("~/Documents/GitHub/dfertility/src/no_tips_mwi_rwa.cpp", flags = "-w")               # Compile the C++ file
 # TMB::compile("no_tips.cpp", flags = "-w")               # Compile the C++ file
-# dyn.load(dynlib("no_tips_mwi_rwa"))
+# dyn.load(dynlib("~/Documents/GitHub/dfertility/src/no_tips_mwi_rwa"))
 
 tmb_int <- list()
 
