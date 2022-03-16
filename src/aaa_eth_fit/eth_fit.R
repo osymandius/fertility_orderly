@@ -26,11 +26,16 @@ phia_asfr <- read.csv("resources/phia_asfr.csv") %>%
 remove_survey <- c("CIV2005AIS", "COG2014MICS", "MLI2009MICS", "MLI2015MICS", "SLE2010MICS", "TGO2006MICS", "BEN1996DHS", "KEN2009MICS")
 subnational_surveys <- c("KEN2009MICS", "KEN2011MICS")
 
-asfr <- asfr %>% bind_rows(
-  # mics_asfr, 
-  phia_asfr) %>%
-  filter(!survey_id %in% remove_survey)
-  # filter(!survey_id %in% c("BDI2005MICS", "BEN2014MICS", "BFA2006MICS", "CAF2006MICS", "CAF2010MICS", "CAF2018MICS", "CIV2006MICS", "CMR2000MICS", "CMR2006MICS", "COG2014MICS", "GMB2005MICS", "GMB2010MICS", "GMB2018MICS", "MLI2009MICS", "MLI2015MICS", "SLE2010MICS", "SLE2017MICS", "SWZ2000MICS", "TCD2010MICS", "TCD2019MICS", "TGO2006MICS", "TGO2010MICS", "TGO2017MICS", "CIV2005AIS"))
+asfr <- asfr %>% 
+  bind_rows(phia_asfr) %>%
+  filter(!survey_id %in% remove_survey,
+         !(iso3 == "SWZ" & period == 2017),
+         !(iso3 == "SWZ" & period == 1995 & survey_id == "SWZ2000MICS"),
+         !(iso3 == "SWZ" & period == 1999 & survey_id == "SWZ2014MICS"),
+         !(iso3 == "GMB" & period == 2004 & survey_id == "GMB2019DHS"),
+         !(iso3 == "GMB" & period == 2005 & survey_id == "GMB2010MICS"),
+         !(iso3 == "GMB" & period == 2013 & survey_id == "GMB2018MICS")
+  )
 
 lvl_map <- read.csv("resources/iso_mapping_fit.csv")
 lvl <- lvl_map$fertility_fit_level[lvl_map$iso3 == iso3]
@@ -42,8 +47,30 @@ mf$observations$full_obs <- mf$observations$full_obs %>%
   ungroup() %>%
   mutate(id.smooth = factor(row_number()))
 
+mf$observations$full_obs <- mf$observations$full_obs %>%
+  mutate(tips_dummy_5 = as.integer(tips %in% 5),
+         tips_dummy_6 = as.integer(tips %in% 6),
+         tips_dummy_7 = as.integer(tips %in% 7),
+         tips_dummy_8 = as.integer(tips %in% 8),
+         tips_dummy_0 = as.integer(tips %in% 0)
+  )
+
+
+mf$observations$full_obs <- mf$observations$full_obs %>%
+  ungroup() %>%
+  group_by(tips, survey_id) %>%
+  mutate(id.zeta1 = factor(cur_group_id()),
+         id.zeta1 = fct_expand(id.zeta1, as.character(1:(length(unique(mf$observations$full_obs$survey_id))*15)))) %>%
+  ungroup()
+
+mf$Z$X_tips_dummy_5 <- model.matrix(~0 + tips_dummy_5, mf$observations$full_obs %>% filter(survtype == "DHS"))
+mf$Z$X_tips_dummy_6 <- model.matrix(~0 + tips_dummy_6, mf$observations$full_obs %>% filter(survtype == "DHS"))
+mf$Z$X_tips_dummy_7 <- model.matrix(~0 + tips_dummy_7, mf$observations$full_obs %>% filter(survtype == "DHS"))
+mf$Z$X_tips_dummy_8 <- model.matrix(~0 + tips_dummy_8, mf$observations$full_obs %>% filter(survtype == "DHS"))
+mf$Z$X_tips_dummy_0 <- model.matrix(~0 + tips_dummy_0, mf$observations$full_obs %>% filter(survtype == "DHS"))
+
 # R_smooth_iid <- as(diag(nrow = nrow(mf$observations$full_obs)), "sparseMatrix")
-R_smooth_iid <- sparseMatrix(i = nrow(mf$observations$full_obs), j = nrow(mf$observations$full_obs), x = rep(1, nrow(mf$observations$full_obs)))
+R_smooth_iid <- sparseMatrix(i = 1:nrow(mf$observations$full_obs), j = 1:nrow(mf$observations$full_obs), x = 1)
 
 x <- 0:25
 k <- seq(-15, 40, by = 5)
@@ -54,9 +81,9 @@ mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
 
 validate_model_frame(mf, areas)
 
-# TMB::compile("src/eth_fit/no_tips_eth.cpp", flags = "-w")               # Compile the C++ file
-# TMB::compile("no_tips_eth.cpp", flags = "-w")               # Compile the C++ file
-# dyn.load(dynlib("no_tips_eth"))
+# TMB::compile("src/aaa_fit/model2.cpp", flags = "-w")               # Compile the C++ file
+# TMB::compile("model2.cpp", flags = "-w")               # Compile the C++ file
+dyn.load(dynlib("model2"))
 
 tmb_int <- list()
 
@@ -66,6 +93,11 @@ tmb_int$data <- list(
   X_tips_dummy = mf$Z$X_tips_dummy,
   X_tips_dummy_10 = mf$Z$X_tips_dummy_10,
   X_tips_dummy_9_11 = mf$Z$X_tips_dummy_9_11,
+  X_tips_dummy_5 = mf$Z$X_tips_dummy_5,
+  X_tips_dummy_6 = mf$Z$X_tips_dummy_6,
+  X_tips_dummy_7 = mf$Z$X_tips_dummy_7,
+  X_tips_dummy_8 = mf$Z$X_tips_dummy_8,
+  X_tips_dummy_0 = mf$Z$X_tips_dummy_0,
   X_period = mf$Z$X_period,
   X_urban_dummy = mf$Z$X_urban_dummy,
   X_extract_dhs = mf$X_extract$X_extract_dhs,
@@ -91,6 +123,9 @@ tmb_int$data <- list(
   # Z_smooth_iid_ais = sparse.model.matrix(~0 + id.smooth, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
   R_smooth_iid = R_smooth_iid,
   R_tips = mf$R$R_tips,
+  R_tips_iid = as(diag(1, ncol(mf$Z$Z_tips_dhs)), "dgTMatrix"),
+  Z_zeta1 = sparse.model.matrix(~0 + id.zeta1, mf$observations$full_obs),
+  R_survey = as(diag(1, length(unique(mf$observations$full_obs$survey_id))), "dgTMatrix"),
   R_age = mf$R$R_age,
   # R_period = make_rw_structure_matrix(ncol(mf$Z$Z_period), 1, adjust_diagonal = TRUE),
   R_period = make_rw_structure_matrix(ncol(spline_mat), 1, adjust_diagonal = TRUE),
@@ -99,31 +134,31 @@ tmb_int$data <- list(
   R_spatial_iid = mf$R$R_spatial_iid,
   R_country = mf$R$R_country,
   rankdef_R_spatial = 1,
-
+  
   log_offset_naomi = log(mf$observations$naomi_level_obs$pys),
   births_obs_naomi = mf$observations$naomi_level_obs$births,
-
+  
   log_offset_dhs = log(filter(mf$observations$full_obs, survtype == "DHS")$pys),
   births_obs_dhs = filter(mf$observations$full_obs, survtype == "DHS")$births,
-
+  
   log_offset_ais = log(filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS"))$pys),
   births_obs_ais = filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS"))$births,
   
   log_offset_phia = log(filter(mf$observations$full_obs, survtype == "PHIA")$pys),
   births_obs_phia = filter(mf$observations$full_obs, survtype == "PHIA")$births,
-
+  
   pop = mf$mf_model$population,
   # A_asfr_out = mf$out$A_asfr_out,
   A_tfr_out = mf$out$A_tfr_out,
-
+  
   A_full_obs = mf$observations$A_full_obs,
-
+  
   mics_toggle = mf$mics_toggle,
   
   X_spike_2000 = model.matrix(~0 + spike_2000, mf$observations$full_obs),
   X_spike_1999 = model.matrix(~0 + spike_1999, mf$observations$full_obs),
   X_spike_2001 = model.matrix(~0 + spike_2001, mf$observations$full_obs)
-
+  
   # X_spike_2000_dhs = model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype == "DHS")),
   # X_spike_1999_dhs = model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype == "DHS")),
   # X_spike_2001_dhs = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype == "DHS")),
@@ -131,29 +166,36 @@ tmb_int$data <- list(
   # X_spike_2000_ais = model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
   # X_spike_1999_ais = model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
   # X_spike_2001_ais = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
-
+  
   # n_threads = parallel::detectCores()
-
+  
   # out_toggle = mf$out_toggle
   # A_obs = mf$observations$A_obs,
 )
 
 tmb_int$par <- list(
   beta_0 = 0,
-
-  beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
+  
+  # beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
   beta_tips_dummy_10 = rep(0, ncol(mf$Z$X_tips_dummy_10)),
+  beta_tips_dummy_5 = rep(0, ncol(mf$Z$X_tips_dummy_5)),
+  beta_tips_dummy_6 = rep(0, ncol(mf$Z$X_tips_dummy_6)),
+  # beta_tips_dummy_0 = rep(0, ncol(mf$Z$X_tips_dummy_0)),
   # beta_tips_dummy_9_11 = rep(0, ncol(mf$Z$X_tips_dummy_9_11)),
   beta_urban_dummy = rep(0, ncol(mf$Z$X_urban_dummy)),
   u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
   log_prec_rw_tips = 0,
-
+  
   u_age = rep(0, ncol(mf$Z$Z_age)),
   log_prec_rw_age = 0,
-
+  
+  # zeta1 = array(0, c(length(unique(mf$observations$full_obs$survey_id)), ncol(mf$Z$Z_tips_dhs))),
+  # log_prec_zeta1 = 0,
+  # lag_logit_zeta1_phi_tips = 0,
+  
   # u_country = rep(0, ncol(mf$Z$Z_country)),
   # log_prec_country = 0,
-
+  
   # omega1 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_age))),
   # log_prec_omega1 = 0,
   # lag_logit_omega1_phi_age = 0,
@@ -161,7 +203,7 @@ tmb_int$par <- list(
   # omega2 = array(0, c(ncol(mf$R$R_country), ncol(mf$Z$Z_period))),
   # log_prec_omega2 = 0,
   # lag_logit_omega2_phi_period = 0,
-
+  
   # u_period = rep(0, ncol(mf$Z$Z_period)),
   u_period = rep(0, ncol(spline_mat)),
   log_prec_rw_period = 0,
@@ -169,23 +211,23 @@ tmb_int$par <- list(
   # lag_logit_phi_period = 0,
   lag_logit_phi_arima_period = 0,
   beta_period = 0,
-
+  
   log_prec_smooth_iid = 0,
   u_smooth_iid = rep(0, ncol(R_smooth_iid)),
-
+  
   u_spatial_str = rep(0, ncol(mf$Z$Z_spatial)),
   log_prec_spatial = 0,
-
+  
   beta_spike_2000 = 0,
   beta_spike_1999 = 0,
   beta_spike_2001 = 0,
   # log_overdispersion = 0,
-
+  
   eta1 = array(0, c(ncol(mf$Z$Z_country), ncol(mf$Z$Z_period), ncol(mf$Z$Z_age))),
   log_prec_eta1 = 0,
   logit_eta1_phi_age = 0,
   logit_eta1_phi_period = 0,
-
+  
   eta2 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_period))),
   log_prec_eta2 = 0,
   logit_eta2_phi_period = 0,
@@ -201,11 +243,15 @@ tmb_int$random <- c("beta_0",
                     "u_period",
                     "u_smooth_iid",
                     "beta_period",
-                    "beta_tips_dummy",
+                    # "beta_tips_dummy",
                     "beta_tips_dummy_10",
+                    "beta_tips_dummy_5",
+                    "beta_tips_dummy_6",
+                    # "beta_tips_dummy_0",
                     # "beta_tips_dummy_9_11",
                     "beta_urban_dummy",
                     "u_tips",
+                    # "zeta1",
                     "beta_spike_2000",
                     "beta_spike_1999",
                     "beta_spike_2001",
@@ -238,7 +284,7 @@ if(mf$mics_toggle) {
 
 f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
                                parameters = tmb_int$par,
-                               DLL = "no_tips_eth",
+                               DLL = "model2",
                                silent=0,
                                checkParameterOrder=FALSE)
 })
@@ -249,7 +295,7 @@ if(is.null(parallel::mccollect(f)[[1]])) {
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                        parameters = tmb_int$par,
-                       DLL = "no_tips_eth",
+                       DLL = "model2",
                        random = tmb_int$random,
                        hessian = FALSE)
 
