@@ -19,7 +19,7 @@ phia_asfr <- read.csv("resources/phia_asfr.csv") %>%
 
 remove_survey <- c("CIV2005AIS", "CIV2006MICS", 
                    "GMB2005MICS",
-                   "MLI2009MICS", "MLI2015MICS", 
+                   # "MLI2009MICS", "MLI2015MICS", 
                    "SLE2010MICS", 
                    "TGO2006MICS", 
                    "BEN1996DHS", 
@@ -37,7 +37,8 @@ asfr <- asfr %>%
          !(iso3 == "SWZ" & period == 1999 & survey_id == "SWZ2014MICS"),
          !(iso3 == "GMB" & period == 2004 & survey_id == "GMB2019DHS"),
          !(iso3 == "GMB" & period == 2005 & survey_id == "GMB2010MICS"),
-         !(iso3 == "GMB" & period == 2013 & survey_id == "GMB2018MICS")
+         !(iso3 == "GMB" & period == 2013 & survey_id == "GMB2018MICS"),
+         !(survey_id == "AGO2011MIS" & tips > 5)
          )
 
 lvl_map <- read.csv("resources/iso_mapping_fit.csv")
@@ -101,8 +102,8 @@ mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
 validate_model_frame(mf, areas)
 
 # TMB::compile("src/aaa_fit/dev.cpp", flags = "-w")               # Compile the C++ file
-# TMB::compile("models/model4.cpp", flags = "-w")               # Compile the C++ file
-# dyn.load(dynlib("models/model4"))
+# TMB::compile("models/model6.cpp", flags = "-w")               # Compile the C++ file
+# dyn.load(dynlib("models/model6"))
 
 tmb_int <- list()
 
