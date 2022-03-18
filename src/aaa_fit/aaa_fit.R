@@ -181,31 +181,14 @@ tmb_int$data <- list(
   X_spike_2000 = model.matrix(~0 + spike_2000, mf$observations$full_obs),
   X_spike_1999 = model.matrix(~0 + spike_1999, mf$observations$full_obs),
   X_spike_2001 = model.matrix(~0 + spike_2001, mf$observations$full_obs)
-
-  # X_spike_2000_dhs = model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype == "DHS")),
-  # X_spike_1999_dhs = model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype == "DHS")),
-  # X_spike_2001_dhs = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype == "DHS")),
-  # 
-  # X_spike_2000_ais = model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
-  # X_spike_1999_ais = model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
-  # X_spike_2001_ais = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
-
-  # n_threads = parallel::detectCores()
-
-  # out_toggle = mf$out_toggle
-  # A_obs = mf$observations$A_obs,
 )
 
 tmb_int$par <- list(
   beta_0 = 0,
 
   # beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
-  # beta_tips_dummy_10 = rep(0, ncol(mf$Z$X_tips_dummy_10)),
   beta_tips_dummy_5 = rep(0, ncol(mf$Z$X_tips_dummy_5)),
-  # beta_tips_dummy_6 = rep(0, ncol(mf$Z$X_tips_dummy_6)),
-  # beta_tips_dummy_0 = rep(0, ncol(mf$Z$X_tips_dummy_0)),
   beta_tips_fe = rep(0, ncol(mf$Z$X_tips_fe)),
-  # beta_tips_dummy_9_11 = rep(0, ncol(mf$Z$X_tips_dummy_9_11)),
   # beta_urban_dummy = rep(0, ncol(mf$Z$X_urban_dummy)),
   u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
   log_prec_rw_tips = 0,
@@ -276,12 +259,8 @@ tmb_int$random <- c("beta_0",
                     "u_smooth_iid",
                     "beta_period",
                     # "beta_tips_dummy",
-                    # "beta_tips_dummy_10",
                     "beta_tips_dummy_5",
-                    # "beta_tips_dummy_6",
-                    # "beta_tips_dummy_0",
                     "beta_tips_fe",
-                    # "beta_tips_dummy_9_11",
                     # "beta_urban_dummy",
                     "u_tips",
                     # "zeta1",

@@ -11,24 +11,35 @@ areas <- read_sf("depends/naomi_areas.geojson") %>%
   st_collection_extract("POLYGON")
 
 asfr <- read.csv("depends/asfr.csv")
-# filter(survtype != "MICS")
-
-# mics_asfr <- read.csv("resources/mics_asfr.csv") %>%
-#   filter(iso3 == iso3_c)
 
 phia_asfr <- read.csv("resources/phia_asfr.csv") %>%
   separate(area_id, into=c("iso3", NA), sep = 3, remove = FALSE) %>%
   filter(iso3 == iso3_c) %>%
   mutate(survtype = "PHIA")
 
-asfr <- asfr %>% bind_rows(
-  # mics_asfr, 
-  phia_asfr)
+remove_survey <- c("CIV2005AIS", "CIV2006MICS", 
+                   "GMB2005MICS",
+                   # "MLI2009MICS", "MLI2015MICS", 
+                   "SLE2010MICS", 
+                   "TGO2006MICS", 
+                   "BEN1996DHS", 
+                   "KEN2009MICS", 
+                   "COD2017MICS", 
+                   "NGA2007MICS",
+                   "TZA2007AIS", "TZA2012AIS")
+subnational_surveys <- c("KEN2009MICS", "KEN2011MICS")
 
-end_year <- 2016
-
-asfr <- asfr %>%
-  filter(survyear < end_year)
+asfr <- asfr %>% 
+  bind_rows(phia_asfr) %>%
+  filter(!survey_id %in% remove_survey,
+         !(iso3 == "SWZ" & period == 2017),
+         !(iso3 == "SWZ" & period == 1995 & survey_id == "SWZ2000MICS"),
+         !(iso3 == "SWZ" & period == 1999 & survey_id == "SWZ2014MICS"),
+         !(iso3 == "GMB" & period == 2004 & survey_id == "GMB2019DHS"),
+         !(iso3 == "GMB" & period == 2005 & survey_id == "GMB2010MICS"),
+         !(iso3 == "GMB" & period == 2013 & survey_id == "GMB2018MICS"),
+         !(survey_id == "AGO2011MIS" & tips > 5)
+  )
 
 lvl_map <- read.csv("resources/iso_mapping_fit.csv")
 lvl <- lvl_map$fertility_fit_level[lvl_map$iso3 == iso3]
@@ -36,9 +47,50 @@ admin1_lvl <- lvl_map$admin1_level[lvl_map$iso3 == iso3]
 
 mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level = lvl, project=2020)
 
+# mf$observations$full_obs <- mf$observations$full_obs %>%
+#   ungroup() %>%
+#   mutate(id.smooth = factor(row_number()))
+
+mf$observations$full_obs <- mf$observations$full_obs %>%
+  mutate(tips_dummy_5 = as.integer(tips %in% 5),
+         tips_dummy_6 = as.integer(tips %in% 6),
+         tips_dummy_7 = as.integer(tips %in% 7),
+         tips_dummy_8 = as.integer(tips %in% 8),
+         tips_dummy_0 = as.integer(tips %in% 0),
+         tips_fe = factor(case_when(
+           tips == 0 ~ 1,
+           tips == 6 & survtype == "DHS" ~ 2,
+           tips == 10 ~ 3,
+           TRUE ~ 0
+         ))
+  ) %>%
+  ungroup() %>%
+  group_by(tips_fe, survey_id) %>%
+  mutate(id.zeta2 = factor(cur_group_id()),
+         id.zeta2 = forcats::fct_expand(id.zeta2, as.character(1:(length(unique(mf$observations$full_obs$survey_id))*4))))
+
+clear_col <- as.integer(unique(filter(mf$observations$full_obs, tips_fe == 0)$id.zeta2))
+mf$Z$Z_zeta2 <- sparse.model.matrix(~0 + id.zeta2, mf$observations$full_obs)
+mf$Z$Z_zeta2[,clear_col] <- 0
+
+mf$Z$X_tips_fe <- sparse.model.matrix(~0 + tips_fe, mf$observations$full_obs)
+mf$Z$X_tips_fe[,1] <- 0
+
 mf$observations$full_obs <- mf$observations$full_obs %>%
   ungroup() %>%
-  mutate(id.smooth = factor(row_number()))
+  group_by(tips, survey_id) %>%
+  mutate(id.zeta1 = factor(cur_group_id()),
+         id.zeta1 = fct_expand(id.zeta1, as.character(1:(length(unique(mf$observations$full_obs$survey_id))*15)))) %>%
+  ungroup()
+
+mf$Z$X_tips_dummy_5 <- model.matrix(~0 + tips_dummy_5, mf$observations$full_obs %>% filter(survtype == "DHS"))
+
+mf$observations$full_obs <- mf$observations$full_obs %>%
+  separate(survey_id, into=c(NA, "survyear", "survtype"), sep=c(3,7), remove=FALSE, convert=TRUE) %>%
+  ungroup() %>%
+  mutate(id.smooth = factor(row_number())) %>%
+  group_by(survtype) %>%
+  mutate(idx = row_number()-1)
 
 R_smooth_iid <- sparseMatrix(i = 1:nrow(mf$observations$full_obs), j = 1:nrow(mf$observations$full_obs), x = 1)
 
@@ -51,9 +103,11 @@ mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
 
 validate_model_frame(mf, areas)
 
-# TMB::compile("src/aaa_fit/tmb_all_level_poisson.cpp", flags = "-w")               # Compile the C++ file
+end_year <- 2016
+
+TMB::compile("~/Documents/GitHub/dfertility/backup_src/rw.cpp", flags = "-w")               # Compile the C++ file
 # TMB::compile("rw.cpp", flags = "-w")               # Compile the C++ file
-# dyn.load(dynlib("rw"))
+dyn.load(dynlib("~/Documents/GitHub/dfertility/backup_src/rw"))
 
 tmb_int <- list()
 
@@ -61,16 +115,17 @@ tmb_int$data <- list(
   M_naomi_obs = mf$M_naomi_obs,
   M_full_obs = mf$M_full_obs,
   X_tips_dummy = mf$Z$X_tips_dummy,
-  X_tips_dummy_10 = mf$Z$X_tips_dummy_10,
+  X_tips_dummy_5 = mf$Z$X_tips_dummy_5,
+  X_tips_fe = mf$Z$X_tips_fe,
   X_period = mf$Z$X_period,
   X_urban_dummy = mf$Z$X_urban_dummy,
   X_extract_dhs = mf$X_extract$X_extract_dhs,
   X_extract_ais = mf$X_extract$X_extract_ais,
   X_extract_mics = mf$X_extract$X_extract_mics,
   X_extract_phia = mf$X_extract$X_extract_phia,
-  # Z_tips = mf$Z$Z_tips,
-  Z_tips_dhs = mf$Z$Z_tips_dhs,
-  Z_tips_ais = mf$Z$Z_tips_ais,
+  Z_tips = sparse.model.matrix(~0 + tips_f, mf$observations$full_obs),
+  # Z_tips_dhs = mf$Z$Z_tips_dhs,
+  # Z_tips_ais = mf$Z$Z_tips_ais,
   Z_age = mf$Z$Z_age,
   Z_period = mf$Z$Z_period,
   Z_spatial = mf$Z$Z_spatial,
@@ -87,6 +142,11 @@ tmb_int$data <- list(
   # Z_smooth_iid_ais = sparse.model.matrix(~0 + id.smooth, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
   R_smooth_iid = R_smooth_iid,
   R_tips = mf$R$R_tips,
+  R_tips_iid = as(diag(1, ncol(mf$Z$Z_tips_dhs)), "dgTMatrix"),
+  # Z_zeta1 = sparse.model.matrix(~0 + id.zeta1, mf$observations$full_obs),
+  Z_zeta2 = mf$Z$Z_zeta2,
+  R_zeta2 = as(diag(1, ncol(mf$Z$X_tips_fe)), "dgTMatrix"),
+  R_survey = as(diag(1, length(unique(mf$observations$full_obs$survey_id))), "dgTMatrix"),
   R_age = mf$R$R_age,
   # R_period = make_rw_structure_matrix(ncol(mf$Z$Z_period), 1, adjust_diagonal = TRUE),
   R_period = make_rw_structure_matrix(ncol(spline_mat), 1, adjust_diagonal = TRUE),
@@ -106,6 +166,11 @@ tmb_int$data <- list(
   
   log_offset_phia = log(filter(mf$observations$full_obs, survtype == "PHIA")$pys),
   births_obs_phia = filter(mf$observations$full_obs, survtype == "PHIA")$births,
+  
+  include_dhs_obs = filter(mf$observations$full_obs, survtype == "DHS", survyear < end_year)$idx,
+  include_ais_obs = filter(mf$observations$full_obs, survtype == "AIS", survyear < end_year)$idx,
+  include_phia_obs = filter(mf$observations$full_obs, survtype == "PHIA", survyear < end_year)$idx,
+  include_mics_obs = filter(mf$observations$full_obs, survtype == "MICS", survyear < end_year)$idx,
 
   pop = mf$mf_model$population,
   # A_asfr_out = mf$out$A_asfr_out,
@@ -115,31 +180,26 @@ tmb_int$data <- list(
 
   mics_toggle = mf$mics_toggle,
 
-  X_spike_2000_dhs = model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype == "DHS")),
-  X_spike_1999_dhs = model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype == "DHS")),
-  X_spike_2001_dhs = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype == "DHS")),
+  X_spike_2000 = model.matrix(~0 + spike_2000, mf$observations$full_obs),
+  X_spike_1999 = model.matrix(~0 + spike_1999, mf$observations$full_obs),
+  X_spike_2001 = model.matrix(~0 + spike_2001, mf$observations$full_obs)
 
-  X_spike_2000_ais = model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
-  X_spike_1999_ais = model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
-  X_spike_2001_ais = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
-
-  n_threads = parallel::detectCores()
-
-  # out_toggle = mf$out_toggle
-  # A_obs = mf$observations$A_obs,
 )
 
 tmb_int$par <- list(
   beta_0 = 0,
 
-  beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
-  beta_tips_dummy_10 = rep(0, ncol(mf$Z$X_tips_dummy_10)),
+  # beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
+  beta_tips_dummy_5 = rep(0, ncol(mf$Z$X_tips_dummy_5)),
+  beta_tips_fe = rep(0, ncol(mf$Z$X_tips_fe)),
   # beta_urban_dummy = rep(0, ncol(mf$Z$X_urban_dummy)),
   u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
   log_prec_rw_tips = 0,
+  lag_logit_phi_tips = 0,
 
   u_age = rep(0, ncol(mf$Z$Z_age)),
   log_prec_rw_age = 0,
+  lag_logit_phi_age = 0,
 
   # u_country = rep(0, ncol(mf$Z$Z_country)),
   # log_prec_country = 0,
@@ -182,7 +242,13 @@ tmb_int$par <- list(
   # #
   eta3 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_age))),
   log_prec_eta3 = 0,
-  logit_eta3_phi_age = 0
+  logit_eta3_phi_age = 0,
+  
+  zeta2 = array(0, c(ncol(as(diag(1, length(unique(mf$observations$full_obs$survey_id))), "dgTMatrix")),
+                     ncol(mf$Z$X_tips_fe)
+                     )
+                ),
+  log_prec_zeta2 = 0
 )
 
 tmb_int$random <- c("beta_0",
@@ -191,10 +257,12 @@ tmb_int$random <- c("beta_0",
                     "u_period",
                     "u_smooth_iid",
                     # "beta_period",
-                    "beta_tips_dummy",
-                    "beta_tips_dummy_10",
+                    # "beta_tips_dummy",
+                    "beta_tips_dummy_5",
+                    "beta_tips_fe",
                     # "beta_urban_dummy",
                     "u_tips",
+                    "zeta2",
                     "beta_spike_2000",
                     "beta_spike_1999",
                     "beta_spike_2001",
@@ -296,16 +364,17 @@ tmb_int$data <- list(
   M_naomi_obs = mf$M_naomi_obs,
   M_full_obs = mf$M_full_obs,
   X_tips_dummy = mf$Z$X_tips_dummy,
-  X_tips_dummy_10 = mf$Z$X_tips_dummy_10,
+  X_tips_dummy_5 = mf$Z$X_tips_dummy_5,
+  X_tips_fe = mf$Z$X_tips_fe,
   X_period = mf$Z$X_period,
   X_urban_dummy = mf$Z$X_urban_dummy,
   X_extract_dhs = mf$X_extract$X_extract_dhs,
   X_extract_ais = mf$X_extract$X_extract_ais,
   X_extract_mics = mf$X_extract$X_extract_mics,
   X_extract_phia = mf$X_extract$X_extract_phia,
-  # Z_tips = mf$Z$Z_tips,
-  Z_tips_dhs = mf$Z$Z_tips_dhs,
-  Z_tips_ais = mf$Z$Z_tips_ais,
+  Z_tips = sparse.model.matrix(~0 + tips_f, mf$observations$full_obs),
+  # Z_tips_dhs = mf$Z$Z_tips_dhs,
+  # Z_tips_ais = mf$Z$Z_tips_ais,
   Z_age = mf$Z$Z_age,
   Z_period = mf$Z$Z_period,
   Z_spatial = mf$Z$Z_spatial,
@@ -322,6 +391,11 @@ tmb_int$data <- list(
   # Z_smooth_iid_ais = sparse.model.matrix(~0 + id.smooth, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
   R_smooth_iid = R_smooth_iid,
   R_tips = mf$R$R_tips,
+  R_tips_iid = as(diag(1, ncol(mf$Z$Z_tips_dhs)), "dgTMatrix"),
+  # Z_zeta1 = sparse.model.matrix(~0 + id.zeta1, mf$observations$full_obs),
+  Z_zeta2 = mf$Z$Z_zeta2,
+  R_zeta2 = as(diag(1, ncol(mf$Z$X_tips_fe)), "dgTMatrix"),
+  R_survey = as(diag(1, length(unique(mf$observations$full_obs$survey_id))), "dgTMatrix"),
   R_age = mf$R$R_age,
   # R_period = make_rw_structure_matrix(ncol(mf$Z$Z_period), 1, adjust_diagonal = TRUE),
   R_period = make_rw_structure_matrix(ncol(spline_mat), 2, adjust_diagonal = TRUE),
@@ -342,6 +416,11 @@ tmb_int$data <- list(
   log_offset_phia = log(filter(mf$observations$full_obs, survtype == "PHIA")$pys),
   births_obs_phia = filter(mf$observations$full_obs, survtype == "PHIA")$births,
   
+  include_dhs_obs = filter(mf$observations$full_obs, survtype == "DHS", survyear < end_year)$idx,
+  include_ais_obs = filter(mf$observations$full_obs, survtype == "AIS", survyear < end_year)$idx,
+  include_phia_obs = filter(mf$observations$full_obs, survtype == "PHIA", survyear < end_year)$idx,
+  include_mics_obs = filter(mf$observations$full_obs, survtype == "MICS", survyear < end_year)$idx,
+  
   pop = mf$mf_model$population,
   # A_asfr_out = mf$out$A_asfr_out,
   A_tfr_out = mf$out$A_tfr_out,
@@ -350,18 +429,10 @@ tmb_int$data <- list(
   
   mics_toggle = mf$mics_toggle,
   
-  X_spike_2000_dhs = model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype == "DHS")),
-  X_spike_1999_dhs = model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype == "DHS")),
-  X_spike_2001_dhs = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype == "DHS")),
+  X_spike_2000 = model.matrix(~0 + spike_2000, mf$observations$full_obs),
+  X_spike_1999 = model.matrix(~0 + spike_1999, mf$observations$full_obs),
+  X_spike_2001 = model.matrix(~0 + spike_2001, mf$observations$full_obs)
   
-  X_spike_2000_ais = model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
-  X_spike_1999_ais = model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
-  X_spike_2001_ais = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
-  
-  n_threads = parallel::detectCores()
-  
-  # out_toggle = mf$out_toggle
-  # A_obs = mf$observations$A_obs,
 )
 
 if(mf$mics_toggle) {
@@ -393,6 +464,7 @@ tmb_int$random <- c("beta_0",
                     "beta_tips_dummy_10",
                     # "beta_urban_dummy",
                     "u_tips",
+                    "zeta2",
                     "beta_spike_2000",
                     "beta_spike_1999",
                     "beta_spike_2001",
@@ -458,16 +530,17 @@ tmb_int$data <- list(
   M_naomi_obs = mf$M_naomi_obs,
   M_full_obs = mf$M_full_obs,
   X_tips_dummy = mf$Z$X_tips_dummy,
-  X_tips_dummy_10 = mf$Z$X_tips_dummy_10,
+  X_tips_dummy_5 = mf$Z$X_tips_dummy_5,
+  X_tips_fe = mf$Z$X_tips_fe,
   X_period = mf$Z$X_period,
   X_urban_dummy = mf$Z$X_urban_dummy,
   X_extract_dhs = mf$X_extract$X_extract_dhs,
   X_extract_ais = mf$X_extract$X_extract_ais,
   X_extract_mics = mf$X_extract$X_extract_mics,
   X_extract_phia = mf$X_extract$X_extract_phia,
-  # Z_tips = mf$Z$Z_tips,
-  Z_tips_dhs = mf$Z$Z_tips_dhs,
-  Z_tips_ais = mf$Z$Z_tips_ais,
+  Z_tips = sparse.model.matrix(~0 + tips_f, mf$observations$full_obs),
+  # Z_tips_dhs = mf$Z$Z_tips_dhs,
+  # Z_tips_ais = mf$Z$Z_tips_ais,
   Z_age = mf$Z$Z_age,
   Z_period = mf$Z$Z_period,
   Z_spatial = mf$Z$Z_spatial,
@@ -484,6 +557,11 @@ tmb_int$data <- list(
   # Z_smooth_iid_ais = sparse.model.matrix(~0 + id.smooth, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
   R_smooth_iid = R_smooth_iid,
   R_tips = mf$R$R_tips,
+  R_tips_iid = as(diag(1, ncol(mf$Z$Z_tips_dhs)), "dgTMatrix"),
+  # Z_zeta1 = sparse.model.matrix(~0 + id.zeta1, mf$observations$full_obs),
+  Z_zeta2 = mf$Z$Z_zeta2,
+  R_zeta2 = as(diag(1, ncol(mf$Z$X_tips_fe)), "dgTMatrix"),
+  R_survey = as(diag(1, length(unique(mf$observations$full_obs$survey_id))), "dgTMatrix"),
   R_age = mf$R$R_age,
   # R_period = make_rw_structure_matrix(ncol(mf$Z$Z_period), 1, adjust_diagonal = TRUE),
   R_period = make_rw_structure_matrix(ncol(spline_mat), 1, adjust_diagonal = TRUE),
@@ -504,6 +582,11 @@ tmb_int$data <- list(
   log_offset_phia = log(filter(mf$observations$full_obs, survtype == "PHIA")$pys),
   births_obs_phia = filter(mf$observations$full_obs, survtype == "PHIA")$births,
   
+  include_dhs_obs = filter(mf$observations$full_obs, survtype == "DHS", survyear < end_year)$idx,
+  include_ais_obs = filter(mf$observations$full_obs, survtype == "AIS", survyear < end_year)$idx,
+  include_phia_obs = filter(mf$observations$full_obs, survtype == "PHIA", survyear < end_year)$idx,
+  include_mics_obs = filter(mf$observations$full_obs, survtype == "MICS", survyear < end_year)$idx,
+  
   pop = mf$mf_model$population,
   # A_asfr_out = mf$out$A_asfr_out,
   A_tfr_out = mf$out$A_tfr_out,
@@ -512,18 +595,10 @@ tmb_int$data <- list(
   
   mics_toggle = mf$mics_toggle,
   
-  X_spike_2000_dhs = model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype == "DHS")),
-  X_spike_1999_dhs = model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype == "DHS")),
-  X_spike_2001_dhs = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype == "DHS")),
-  
-  X_spike_2000_ais = model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
-  X_spike_1999_ais = model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
-  X_spike_2001_ais = model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype %in% c("AIS", "MIS"))),
-  
-  n_threads = parallel::detectCores()
-  
-  # out_toggle = mf$out_toggle
-  # A_obs = mf$observations$A_obs,
+  X_spike_2000 = model.matrix(~0 + spike_2000, mf$observations$full_obs),
+  X_spike_1999 = model.matrix(~0 + spike_1999, mf$observations$full_obs),
+  X_spike_2001 = model.matrix(~0 + spike_2001, mf$observations$full_obs)
+
 )
 
 if(mf$mics_toggle) {
@@ -548,14 +623,17 @@ if(mf$mics_toggle) {
 tmb_int$par <- list(
   beta_0 = 0,
   
-  beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
-  beta_tips_dummy_10 = rep(0, ncol(mf$Z$X_tips_dummy_10)),
+  # beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
+  beta_tips_dummy_5 = rep(0, ncol(mf$Z$X_tips_dummy_5)),
+  beta_tips_fe = rep(0, ncol(mf$Z$X_tips_fe)),
   # beta_urban_dummy = rep(0, ncol(mf$Z$X_urban_dummy)),
   u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
   log_prec_rw_tips = 0,
+  lag_logit_phi_tips = 0,
   
   u_age = rep(0, ncol(mf$Z$Z_age)),
   log_prec_rw_age = 0,
+  lag_logit_phi_age = 0,
   
   # u_country = rep(0, ncol(mf$Z$Z_country)),
   # log_prec_country = 0,
@@ -598,7 +676,13 @@ tmb_int$par <- list(
   # #
   eta3 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_age))),
   log_prec_eta3 = 0,
-  logit_eta3_phi_age = 0
+  logit_eta3_phi_age = 0,
+  
+  zeta2 = array(0, c(ncol(as(diag(1, length(unique(mf$observations$full_obs$survey_id))), "dgTMatrix")),
+                     ncol(mf$Z$X_tips_fe)
+                     )
+                ),
+  log_prec_zeta2 = 0
 )
 
 tmb_int$random <- c("beta_0",
@@ -611,6 +695,7 @@ tmb_int$random <- c("beta_0",
                     "beta_tips_dummy_10",
                     # "beta_urban_dummy",
                     "u_tips",
+                    "zeta2",
                     "beta_spike_2000",
                     "beta_spike_1999",
                     "beta_spike_2001",
@@ -678,14 +763,17 @@ phia_pred <- phia_pred %>%
 tmb_int$par <- list(
   beta_0 = 0,
   
-  beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
-  beta_tips_dummy_10 = rep(0, ncol(mf$Z$X_tips_dummy_10)),
+  # beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
+  beta_tips_dummy_5 = rep(0, ncol(mf$Z$X_tips_dummy_5)),
+  beta_tips_fe = rep(0, ncol(mf$Z$X_tips_fe)),
   # beta_urban_dummy = rep(0, ncol(mf$Z$X_urban_dummy)),
   u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
   log_prec_rw_tips = 0,
+  lag_logit_phi_tips = 0,
   
   u_age = rep(0, ncol(mf$Z$Z_age)),
   log_prec_rw_age = 0,
+  lag_logit_phi_age = 0,
   
   # u_country = rep(0, ncol(mf$Z$Z_country)),
   # log_prec_country = 0,
@@ -728,7 +816,13 @@ tmb_int$par <- list(
   # #
   eta3 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_age))),
   log_prec_eta3 = 0,
-  logit_eta3_phi_age = 0
+  logit_eta3_phi_age = 0,
+  
+  zeta2 = array(0, c(ncol(as(diag(1, length(unique(mf$observations$full_obs$survey_id))), "dgTMatrix")),
+                     ncol(mf$Z$X_tips_fe)
+                     )
+                ),
+  log_prec_zeta2 = 0
 )
 
 tmb_int$random <- c("beta_0",
@@ -741,6 +835,7 @@ tmb_int$random <- c("beta_0",
                     "beta_tips_dummy_10",
                     # "beta_urban_dummy",
                     "u_tips",
+                    "zeta2",
                     "beta_spike_2000",
                     "beta_spike_1999",
                     "beta_spike_2001",
@@ -808,14 +903,17 @@ phia_pred <- phia_pred %>%
 tmb_int$par <- list(
   beta_0 = 0,
   
-  beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
-  beta_tips_dummy_10 = rep(0, ncol(mf$Z$X_tips_dummy_10)),
+  # beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
+  beta_tips_dummy_5 = rep(0, ncol(mf$Z$X_tips_dummy_5)),
+  beta_tips_fe = rep(0, ncol(mf$Z$X_tips_fe)),
   # beta_urban_dummy = rep(0, ncol(mf$Z$X_urban_dummy)),
   u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
   log_prec_rw_tips = 0,
+  lag_logit_phi_tips = 0,
   
   u_age = rep(0, ncol(mf$Z$Z_age)),
   log_prec_rw_age = 0,
+  lag_logit_phi_age = 0,
   
   # u_country = rep(0, ncol(mf$Z$Z_country)),
   # log_prec_country = 0,
@@ -858,7 +956,13 @@ tmb_int$par <- list(
   # #
   eta3 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_age))),
   log_prec_eta3 = 0,
-  logit_eta3_phi_age = 0
+  logit_eta3_phi_age = 0,
+  
+  zeta2 = array(0, c(ncol(as(diag(1, length(unique(mf$observations$full_obs$survey_id))), "dgTMatrix")),
+                     ncol(mf$Z$X_tips_fe)
+                     )
+                ),
+  log_prec_zeta2 = 0
 )
 
 tmb_int$random <- c("beta_0",
@@ -867,10 +971,12 @@ tmb_int$random <- c("beta_0",
                     "u_period",
                     "u_smooth_iid",
                     "beta_period",
-                    "beta_tips_dummy",
-                    "beta_tips_dummy_10",
+                    # "beta_tips_dummy",
+                    "beta_tips_dummy_5",
+                    "beta_tips_fe",
                     # "beta_urban_dummy",
                     "u_tips",
+                    "zeta2",
                     "beta_spike_2000",
                     "beta_spike_1999",
                     "beta_spike_2001",
@@ -939,14 +1045,17 @@ phia_pred <- phia_pred %>%
 tmb_int$par <- list(
   beta_0 = 0,
   
-  beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
-  beta_tips_dummy_10 = rep(0, ncol(mf$Z$X_tips_dummy_10)),
+  # beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
+  beta_tips_dummy_5 = rep(0, ncol(mf$Z$X_tips_dummy_5)),
+  beta_tips_fe = rep(0, ncol(mf$Z$X_tips_fe)),
   # beta_urban_dummy = rep(0, ncol(mf$Z$X_urban_dummy)),
   u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
   log_prec_rw_tips = 0,
+  lag_logit_phi_tips = 0,
   
   u_age = rep(0, ncol(mf$Z$Z_age)),
   log_prec_rw_age = 0,
+  lag_logit_phi_age = 0,
   
   # u_country = rep(0, ncol(mf$Z$Z_country)),
   # log_prec_country = 0,
@@ -998,8 +1107,9 @@ tmb_int$random <- c("beta_0",
                     "u_period",
                     "u_smooth_iid",
                     # "beta_period",
-                    "beta_tips_dummy",
-                    "beta_tips_dummy_10",
+                    # "beta_tips_dummy",
+                    "beta_tips_dummy_5",
+                    "beta_tips_fe",
                     # "beta_urban_dummy",
                     "u_tips",
                     "beta_spike_2000",
@@ -1070,14 +1180,17 @@ phia_pred <- phia_pred %>%
 tmb_int$par <- list(
   beta_0 = 0,
   
-  beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
-  beta_tips_dummy_10 = rep(0, ncol(mf$Z$X_tips_dummy_10)),
+  # beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
+  beta_tips_dummy_5 = rep(0, ncol(mf$Z$X_tips_dummy_5)),
+  beta_tips_fe = rep(0, ncol(mf$Z$X_tips_fe)),
   # beta_urban_dummy = rep(0, ncol(mf$Z$X_urban_dummy)),
   u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
   log_prec_rw_tips = 0,
+  lag_logit_phi_tips = 0,
   
   u_age = rep(0, ncol(mf$Z$Z_age)),
   log_prec_rw_age = 0,
+  lag_logit_phi_age = 0,
   
   # u_country = rep(0, ncol(mf$Z$Z_country)),
   # log_prec_country = 0,
@@ -1120,7 +1233,13 @@ tmb_int$par <- list(
   # #
   eta3 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_age))),
   log_prec_eta3 = 0,
-  logit_eta3_phi_age = 0
+  logit_eta3_phi_age = 0,
+  
+  zeta2 = array(0, c(ncol(as(diag(1, length(unique(mf$observations$full_obs$survey_id))), "dgTMatrix")),
+                     ncol(mf$Z$X_tips_fe)
+                     )
+                ),
+  log_prec_zeta2 = 0
 )
 
 tmb_int$random <- c("beta_0",
@@ -1129,8 +1248,9 @@ tmb_int$random <- c("beta_0",
                     "u_period",
                     "u_smooth_iid",
                     "beta_period",
-                    "beta_tips_dummy",
-                    "beta_tips_dummy_10",
+                    # "beta_tips_dummy",
+                    "beta_tips_dummy_5",
+                    "beta_tips_fe",
                     # "beta_urban_dummy",
                     "u_tips",
                     "beta_spike_2000",
