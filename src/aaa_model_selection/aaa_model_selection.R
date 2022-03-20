@@ -105,9 +105,9 @@ validate_model_frame(mf, areas)
 
 end_year <- 2016
 
-TMB::compile("~/Documents/GitHub/dfertility/backup_src/rw.cpp", flags = "-w")               # Compile the C++ file
+# TMB::compile("~/Documents/GitHub/dfertility/backup_src/rw.cpp", flags = "-w")               # Compile the C++ file
 # TMB::compile("rw.cpp", flags = "-w")               # Compile the C++ file
-dyn.load(dynlib("~/Documents/GitHub/dfertility/backup_src/rw"))
+# dyn.load(dynlib("~/Documents/GitHub/dfertility/backup_src/rw"))
 
 tmb_int <- list()
 
@@ -168,9 +168,14 @@ tmb_int$data <- list(
   births_obs_phia = filter(mf$observations$full_obs, survtype == "PHIA")$births,
   
   include_dhs_obs = filter(mf$observations$full_obs, survtype == "DHS", survyear < end_year)$idx,
-  include_ais_obs = filter(mf$observations$full_obs, survtype == "AIS", survyear < end_year)$idx,
+  include_ais_obs = filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS"), survyear < end_year)$idx,
   include_phia_obs = filter(mf$observations$full_obs, survtype == "PHIA", survyear < end_year)$idx,
   include_mics_obs = filter(mf$observations$full_obs, survtype == "MICS", survyear < end_year)$idx,
+  
+  exclude_dhs_obs = filter(mf$observations$full_obs, survtype == "DHS", survyear >= end_year)$idx,
+  exclude_ais_obs = filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS"), survyear >= end_year)$idx,
+  exclude_phia_obs = filter(mf$observations$full_obs, survtype == "PHIA", survyear >= end_year)$idx,
+  exclude_mics_obs = filter(mf$observations$full_obs, survtype == "MICS", survyear >= end_year)$idx,
 
   pop = mf$mf_model$population,
   # A_asfr_out = mf$out$A_asfr_out,
@@ -323,40 +328,79 @@ fit <- naomi::sample_tmb(fit, random_only=TRUE)
 tmb_results <- dfertility::tmb_outputs(fit, mf, areas) %>%
   mutate(source = "rw")
 
-dhs_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))))
-ais_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))))
-phia_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))))
-
-dhs_pred <- filter(mf$observations$full_obs, survtype == "DHS") %>%
-  mutate(source = "rw") 
-
-if(nrow(dhs_pred)) {
-  dhs_pred <- dhs_pred %>%
-    bind_cols(dhs_qtls)
-} else {
-  dhs_pred <- data.frame()
+quant_pos_sum <- function(births, x) {
+  if(births < x)
+    0
+  else
+    1
 }
 
-ais_pred <- filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
-  mutate(source = "rw") 
+dhs_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype == "DHS", survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
 
-if(nrow(ais_pred)) {
-  ais_pred <- ais_pred %>%
-    bind_cols(ais_qtls)
+if(nrow(dhs_ppd)) {
+  dhsMatrix <- exp(fit$sample$log_rate_exclude_dhs)
+  dhs_ppd <- dhs_ppd %>% bind_cols(data.frame(dhsMatrix))
 } else {
-  ais_pred <- data.frame()
+  dhs_ppd <- data.frame()
 }
 
-phia_pred <- filter(mf$observations$full_obs, survtype == "PHIA") %>%
-  mutate(source = "rw") 
+ais_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype %in% c("AIS", "MIS"), survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
 
-if(nrow(phia_pred)) {
-  phia_pred <- phi_pred %>%
-    bind_cols(phia_qtls)
+if(nrow(ais_ppd)) {
+  aisMatrix <- exp(fit$sample$log_rate_exclude_ais)
+  ais_ppd <- ais_ppd %>% bind_cols(data.frame(aisMatrix))
 } else {
-  phia_pred <- data.frame()
+  ais_ppd <- data.frame()
 }
 
+phia_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype == "PHIA", survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
+
+if(nrow(phia_ppd)) {
+  phiaMatrix <- exp(fit$sample$log_rate_exclude_phia)
+  phia_ppd <- phia_ppd %>% bind_cols(data.frame(phiaMatrix))
+} else {
+  phia_ppd <- data.frame()
+}
+
+mics_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype == "MICS", survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
+
+if(nrow(mics_ppd)) {
+  micsMatrix <- exp(fit$sample$log_rate_exclude_mics)
+  mics_ppd <- mics_ppd %>% bind_cols(data.frame(micsMatrix))
+} else {
+  mics_ppd <- data.frame()
+}
+
+
+rw_ppd <- bind_rows(dhs_ppd, ais_ppd, phia_ppd, mics_ppd)
+
+qtls <- apply(rw_ppd[,c(8:1007)], 1, quantile, c(0.025, 0.5, 0.975))
+
+rw_ppd <- rw_ppd %>%
+  ungroup() %>%
+  rowwise() %>%
+  mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  ungroup() %>%
+  group_by(survey_id, area_id, period, age_group, births, tips, pys) %>%
+  rowwise() %>%
+  summarise(quant_pos = sum(across(starts_with("X"), ~quant_pos_sum(births, .x)))) %>%
+  ungroup %>%
+  mutate(lower = qtls[1,],
+         median = qtls[2,],
+         upper = qtls[3,],
+         source = "rw")
 
 ################ RW2
 
@@ -417,9 +461,14 @@ tmb_int$data <- list(
   births_obs_phia = filter(mf$observations$full_obs, survtype == "PHIA")$births,
   
   include_dhs_obs = filter(mf$observations$full_obs, survtype == "DHS", survyear < end_year)$idx,
-  include_ais_obs = filter(mf$observations$full_obs, survtype == "AIS", survyear < end_year)$idx,
+  include_ais_obs = filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS"), survyear < end_year)$idx,
   include_phia_obs = filter(mf$observations$full_obs, survtype == "PHIA", survyear < end_year)$idx,
   include_mics_obs = filter(mf$observations$full_obs, survtype == "MICS", survyear < end_year)$idx,
+  
+  exclude_dhs_obs = filter(mf$observations$full_obs, survtype == "DHS", survyear >= end_year)$idx,
+  exclude_ais_obs = filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS"), survyear >= end_year)$idx,
+  exclude_phia_obs = filter(mf$observations$full_obs, survtype == "PHIA", survyear >= end_year)$idx,
+  exclude_mics_obs = filter(mf$observations$full_obs, survtype == "MICS", survyear >= end_year)$idx,
   
   pop = mf$mf_model$population,
   # A_asfr_out = mf$out$A_asfr_out,
@@ -460,8 +509,8 @@ tmb_int$random <- c("beta_0",
                     "u_period",
                     "u_smooth_iid",
                     # "beta_period",
-                    "beta_tips_dummy",
-                    "beta_tips_dummy_10",
+                    "beta_tips_dummy_5",
+                    "beta_tips_fe",
                     # "beta_urban_dummy",
                     "u_tips",
                     "zeta2",
@@ -496,30 +545,72 @@ tmb_results <- tmb_results %>%
       mutate(source = "rw2")
   )
 
-dhs_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))))
-ais_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))))
-phia_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))))
+dhs_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype == "DHS", survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
 
-dhs_pred <- dhs_pred %>%
-  bind_rows(
-    filter(mf$observations$full_obs, survtype == "DHS") %>%
-      mutate(source = "rw2") %>%
-      bind_cols(dhs_qtls)
-  )
+if(nrow(dhs_ppd)) {
+  dhsMatrix <- exp(fit$sample$log_rate_exclude_dhs)
+  dhs_ppd <- dhs_ppd %>% bind_cols(data.frame(dhsMatrix))
+} else {
+  dhs_ppd <- data.frame()
+}
 
-ais_pred <- ais_pred %>%
-  bind_rows(
-    filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
-      mutate(source = "rw2") %>%
-      bind_cols(ais_qtls)
-  )
+ais_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype %in% c("AIS", "MIS"), survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
 
-phia_pred <- phia_pred %>%
-  bind_rows(
-    filter(mf$observations$full_obs, survtype == "PHIA") %>%
-      mutate(source = "rw2") %>%
-      bind_cols(phia_qtls)
-  )
+if(nrow(ais_ppd)) {
+  aisMatrix <- exp(fit$sample$log_rate_exclude_ais)
+  ais_ppd <- ais_ppd %>% bind_cols(data.frame(aisMatrix))
+} else {
+  ais_ppd <- data.frame()
+}
+
+phia_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype == "PHIA", survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
+
+if(nrow(phia_ppd)) {
+  phiaMatrix <- exp(fit$sample$log_rate_exclude_phia)
+  phia_ppd <- phia_ppd %>% bind_cols(data.frame(phiaMatrix))
+} else {
+  phia_ppd <- data.frame()
+}
+
+mics_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype == "MICS", survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
+
+if(nrow(mics_ppd)) {
+  micsMatrix <- exp(fit$sample$log_rate_exclude_mics)
+  mics_ppd <- mics_ppd %>% bind_cols(data.frame(micsMatrix))
+} else {
+  mics_ppd <- data.frame()
+}
+
+
+rw2_ppd <- bind_rows(dhs_ppd, ais_ppd, phia_ppd, mics_ppd)
+
+qtls <- apply(rw2_ppd[,c(8:1007)], 1, quantile, c(0.025, 0.5, 0.975))
+
+rw2_ppd <- rw2_ppd %>%
+  ungroup() %>%
+  rowwise() %>%
+  mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  ungroup() %>%
+  group_by(survey_id, area_id, period, age_group, births, tips, pys) %>%
+  rowwise() %>%
+  summarise(quant_pos = sum(across(starts_with("X"), ~quant_pos_sum(births, .x)))) %>%
+  ungroup %>%
+  mutate(lower = qtls[1,],
+         median = qtls[2,],
+         upper = qtls[3,],
+         source = "rw2")
 
 ######### RW1 + trend
 
@@ -583,9 +674,14 @@ tmb_int$data <- list(
   births_obs_phia = filter(mf$observations$full_obs, survtype == "PHIA")$births,
   
   include_dhs_obs = filter(mf$observations$full_obs, survtype == "DHS", survyear < end_year)$idx,
-  include_ais_obs = filter(mf$observations$full_obs, survtype == "AIS", survyear < end_year)$idx,
+  include_ais_obs = filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS"), survyear < end_year)$idx,
   include_phia_obs = filter(mf$observations$full_obs, survtype == "PHIA", survyear < end_year)$idx,
   include_mics_obs = filter(mf$observations$full_obs, survtype == "MICS", survyear < end_year)$idx,
+  
+  exclude_dhs_obs = filter(mf$observations$full_obs, survtype == "DHS", survyear >= end_year)$idx,
+  exclude_ais_obs = filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS"), survyear >= end_year)$idx,
+  exclude_phia_obs = filter(mf$observations$full_obs, survtype == "PHIA", survyear >= end_year)$idx,
+  exclude_mics_obs = filter(mf$observations$full_obs, survtype == "MICS", survyear >= end_year)$idx,
   
   pop = mf$mf_model$population,
   # A_asfr_out = mf$out$A_asfr_out,
@@ -691,8 +787,8 @@ tmb_int$random <- c("beta_0",
                     "u_period",
                     "u_smooth_iid",
                     "beta_period",
-                    "beta_tips_dummy",
-                    "beta_tips_dummy_10",
+                    "beta_tips_dummy_5",
+                    "beta_tips_fe",
                     # "beta_urban_dummy",
                     "u_tips",
                     "zeta2",
@@ -729,31 +825,72 @@ tmb_results <- tmb_results %>%
       mutate(source = "rw + trend")
   )
 
-dhs_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))))
-ais_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))))
-phia_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))))
+dhs_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype == "DHS", survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
 
-dhs_pred <- dhs_pred %>%
-  bind_rows(
-    filter(mf$observations$full_obs, survtype == "DHS") %>%
-      mutate(source = "rw + trend") %>%
-      bind_cols(dhs_qtls)
-  )
+if(nrow(dhs_ppd)) {
+  dhsMatrix <- exp(fit$sample$log_rate_exclude_dhs)
+  dhs_ppd <- dhs_ppd %>% bind_cols(data.frame(dhsMatrix))
+} else {
+  dhs_ppd <- data.frame()
+}
 
-ais_pred <- ais_pred %>%
-  bind_rows(
-    filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
-      mutate(source = "rw + trend") %>%
-      bind_cols(ais_qtls)
-  )
+ais_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype %in% c("AIS", "MIS"), survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
 
-phia_pred <- phia_pred %>%
-  bind_rows(
-    filter(mf$observations$full_obs, survtype == "PHIA") %>%
-      mutate(source = "rw + trend") %>%
-      bind_cols(phia_qtls)
-  )
+if(nrow(ais_ppd)) {
+  aisMatrix <- exp(fit$sample$log_rate_exclude_ais)
+  ais_ppd <- ais_ppd %>% bind_cols(data.frame(aisMatrix))
+} else {
+  ais_ppd <- data.frame()
+}
 
+phia_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype == "PHIA", survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
+
+if(nrow(phia_ppd)) {
+  phiaMatrix <- exp(fit$sample$log_rate_exclude_phia)
+  phia_ppd <- phia_ppd %>% bind_cols(data.frame(phiaMatrix))
+} else {
+  phia_ppd <- data.frame()
+}
+
+mics_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype == "MICS", survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
+
+if(nrow(mics_ppd)) {
+  micsMatrix <- exp(fit$sample$log_rate_exclude_mics)
+  mics_ppd <- mics_ppd %>% bind_cols(data.frame(micsMatrix))
+} else {
+  mics_ppd <- data.frame()
+}
+
+
+rw_trend_ppd <- bind_rows(dhs_ppd, ais_ppd, phia_ppd, mics_ppd)
+
+qtls <- apply(rw_trend_ppd[,c(8:1007)], 1, quantile, c(0.025, 0.5, 0.975))
+
+rw_trend_ppd <- rw_trend_ppd %>%
+  ungroup() %>%
+  rowwise() %>%
+  mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  ungroup() %>%
+  group_by(survey_id, area_id, period, age_group, births, tips, pys) %>%
+  rowwise() %>%
+  summarise(quant_pos = sum(across(starts_with("X"), ~quant_pos_sum(births, .x)))) %>%
+  ungroup %>%
+  mutate(lower = qtls[1,],
+         median = qtls[2,],
+         upper = qtls[3,],
+         source = "rw + trend")
 
 ########### ARIMA (1,1,0)
 
@@ -831,8 +968,8 @@ tmb_int$random <- c("beta_0",
                     "u_period",
                     "u_smooth_iid",
                     # "beta_period",
-                    "beta_tips_dummy",
-                    "beta_tips_dummy_10",
+                    "beta_tips_dummy_5",
+                    "beta_tips_fe",
                     # "beta_urban_dummy",
                     "u_tips",
                     "zeta2",
@@ -869,31 +1006,72 @@ tmb_results <- tmb_results %>%
       mutate(source = "ARIMA(1,1,0)")
   )
 
-dhs_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))))
-ais_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))))
-phia_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))))
+dhs_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype == "DHS", survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
 
-dhs_pred <- dhs_pred %>%
-  bind_rows(
-    filter(mf$observations$full_obs, survtype == "DHS") %>%
-      mutate(source = "ARIMA(1,1,0)") %>%
-      bind_cols(dhs_qtls)
-  )
+if(nrow(dhs_ppd)) {
+  dhsMatrix <- exp(fit$sample$log_rate_exclude_dhs)
+  dhs_ppd <- dhs_ppd %>% bind_cols(data.frame(dhsMatrix))
+} else {
+  dhs_ppd <- data.frame()
+}
 
-ais_pred <- ais_pred %>%
-  bind_rows(
-    filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
-      mutate(source = "ARIMA(1,1,0)") %>%
-      bind_cols(ais_qtls)
-  )
+ais_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype %in% c("AIS", "MIS"), survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
 
-phia_pred <- phia_pred %>%
-  bind_rows(
-    filter(mf$observations$full_obs, survtype == "PHIA") %>%
-      mutate(source = "ARIMA(1,1,0)") %>%
-      bind_cols(phia_qtls)
-  )
+if(nrow(ais_ppd)) {
+  aisMatrix <- exp(fit$sample$log_rate_exclude_ais)
+  ais_ppd <- ais_ppd %>% bind_cols(data.frame(aisMatrix))
+} else {
+  ais_ppd <- data.frame()
+}
 
+phia_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype == "PHIA", survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
+
+if(nrow(phia_ppd)) {
+  phiaMatrix <- exp(fit$sample$log_rate_exclude_phia)
+  phia_ppd <- phia_ppd %>% bind_cols(data.frame(phiaMatrix))
+} else {
+  phia_ppd <- data.frame()
+}
+
+mics_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype == "MICS", survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
+
+if(nrow(mics_ppd)) {
+  micsMatrix <- exp(fit$sample$log_rate_exclude_mics)
+  mics_ppd <- mics_ppd %>% bind_cols(data.frame(micsMatrix))
+} else {
+  mics_ppd <- data.frame()
+}
+
+
+arima_ppd <- bind_rows(dhs_ppd, ais_ppd, phia_ppd, mics_ppd)
+
+qtls <- apply(arima_ppd[,c(8:1007)], 1, quantile, c(0.025, 0.5, 0.975))
+
+arima_ppd <- arima_ppd %>%
+  ungroup() %>%
+  rowwise() %>%
+  mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  ungroup() %>%
+  group_by(survey_id, area_id, period, age_group, births, tips, pys) %>%
+  rowwise() %>%
+  summarise(quant_pos = sum(across(starts_with("X"), ~quant_pos_sum(births, .x)))) %>%
+  ungroup %>%
+  mutate(lower = qtls[1,],
+         median = qtls[2,],
+         upper = qtls[3,],
+         source = "arima")
 
 ########### ARIMA with trend
 
@@ -1010,32 +1188,72 @@ tmb_results <- tmb_results %>%
       mutate(source = "ARIMA(1,1,0) + trend")
   )
 
-dhs_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))))
-ais_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))))
-phia_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))))
+dhs_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype == "DHS", survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
 
-dhs_pred <- dhs_pred %>%
-  bind_rows(
-    filter(mf$observations$full_obs, survtype == "DHS") %>%
-      mutate(source = "ARIMA(1,1,0) + trend") %>%
-      bind_cols(dhs_qtls)
-  )
+if(nrow(dhs_ppd)) {
+  dhsMatrix <- exp(fit$sample$log_rate_exclude_dhs)
+  dhs_ppd <- dhs_ppd %>% bind_cols(data.frame(dhsMatrix))
+} else {
+  dhs_ppd <- data.frame()
+}
 
-ais_pred <- ais_pred %>%
-  bind_rows(
-    filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
-      mutate(source = "ARIMA(1,1,0) + trend") %>%
-      bind_cols(ais_qtls)
-  )
+ais_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype %in% c("AIS", "MIS"), survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
 
-phia_pred <- phia_pred %>%
-  bind_rows(
-    filter(mf$observations$full_obs, survtype == "PHIA") %>%
-      mutate(source = "ARIMA(1,1,0) + trend") %>%
-      bind_cols(phia_qtls)
-  )
+if(nrow(ais_ppd)) {
+  aisMatrix <- exp(fit$sample$log_rate_exclude_ais)
+  ais_ppd <- ais_ppd %>% bind_cols(data.frame(aisMatrix))
+} else {
+  ais_ppd <- data.frame()
+}
+
+phia_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype == "PHIA", survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
+
+if(nrow(phia_ppd)) {
+  phiaMatrix <- exp(fit$sample$log_rate_exclude_phia)
+  phia_ppd <- phia_ppd %>% bind_cols(data.frame(phiaMatrix))
+} else {
+  phia_ppd <- data.frame()
+}
+
+mics_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype == "MICS", survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
+
+if(nrow(mics_ppd)) {
+  micsMatrix <- exp(fit$sample$log_rate_exclude_mics)
+  mics_ppd <- mics_ppd %>% bind_cols(data.frame(micsMatrix))
+} else {
+  mics_ppd <- data.frame()
+}
 
 
+arima_trend_ppd <- bind_rows(dhs_ppd, ais_ppd, phia_ppd, mics_ppd)
+
+qtls <- apply(arima_trend_ppd[,c(8:1007)], 1, quantile, c(0.025, 0.5, 0.975))
+
+arima_trend_ppd <- arima_trend_ppd %>%
+  ungroup() %>%
+  rowwise() %>%
+  mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  ungroup() %>%
+  group_by(survey_id, area_id, period, age_group, births, tips, pys) %>%
+  rowwise() %>%
+  summarise(quant_pos = sum(across(starts_with("X"), ~quant_pos_sum(births, .x)))) %>%
+  ungroup %>%
+  mutate(lower = qtls[1,],
+         median = qtls[2,],
+         upper = qtls[3,],
+         source = "ARIMA(1,1,0) + trend")
 ########### AR1
 
 # TMB::compile("ar1.cpp", flags = "-w")               # Compile the C++ file
@@ -1145,31 +1363,72 @@ tmb_results <- tmb_results %>%
       mutate(source = "AR1")
   )
 
-dhs_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))))
-ais_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))))
-phia_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))))
+dhs_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype == "DHS", survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
 
-dhs_pred <- dhs_pred %>%
-  bind_rows(
-    filter(mf$observations$full_obs, survtype == "DHS") %>%
-      mutate(source = "AR1") %>%
-      bind_cols(dhs_qtls)
-  )
+if(nrow(dhs_ppd)) {
+  dhsMatrix <- exp(fit$sample$log_rate_exclude_dhs)
+  dhs_ppd <- dhs_ppd %>% bind_cols(data.frame(dhsMatrix))
+} else {
+  dhs_ppd <- data.frame()
+}
 
-ais_pred <- ais_pred %>%
-  bind_rows(
-    filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
-      mutate(source = "AR1") %>%
-      bind_cols(ais_qtls)
-  )
+ais_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype %in% c("AIS", "MIS"), survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
 
-phia_pred <- phia_pred %>%
-  bind_rows(
-    filter(mf$observations$full_obs, survtype == "PHIA") %>%
-      mutate(source = "AR1") %>%
-      bind_cols(phia_qtls)
-  )
+if(nrow(ais_ppd)) {
+  aisMatrix <- exp(fit$sample$log_rate_exclude_ais)
+  ais_ppd <- ais_ppd %>% bind_cols(data.frame(aisMatrix))
+} else {
+  ais_ppd <- data.frame()
+}
 
+phia_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype == "PHIA", survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
+
+if(nrow(phia_ppd)) {
+  phiaMatrix <- exp(fit$sample$log_rate_exclude_phia)
+  phia_ppd <- phia_ppd %>% bind_cols(data.frame(phiaMatrix))
+} else {
+  phia_ppd <- data.frame()
+}
+
+mics_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype == "MICS", survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
+
+if(nrow(mics_ppd)) {
+  micsMatrix <- exp(fit$sample$log_rate_exclude_mics)
+  mics_ppd <- mics_ppd %>% bind_cols(data.frame(micsMatrix))
+} else {
+  mics_ppd <- data.frame()
+}
+
+
+ar1_ppd <- bind_rows(dhs_ppd, ais_ppd, phia_ppd, mics_ppd)
+
+qtls <- apply(ar1_ppd[,c(8:1007)], 1, quantile, c(0.025, 0.5, 0.975))
+
+ar1_ppd <- ar1_ppd %>%
+  ungroup() %>%
+  rowwise() %>%
+  mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  ungroup() %>%
+  group_by(survey_id, area_id, period, age_group, births, tips, pys) %>%
+  rowwise() %>%
+  summarise(quant_pos = sum(across(starts_with("X"), ~quant_pos_sum(births, .x)))) %>%
+  ungroup %>%
+  mutate(lower = qtls[1,],
+         median = qtls[2,],
+         upper = qtls[3,],
+         source = "AR1")
 
 ########## AR1 + trend
 
@@ -1286,32 +1545,74 @@ tmb_results <- tmb_results %>%
       mutate(source = "AR1 + trend")
   )
 
-dhs_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_dhs, 1, quantile, c(0.025, 0.5, 0.975)))))
-ais_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_ais, 1, quantile, c(0.025, 0.5, 0.975)))))
-phia_qtls <- data.frame(t(exp(apply(fit$sample$mu_obs_pred_phia, 1, quantile, c(0.025, 0.5, 0.975)))))
+dhs_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype == "DHS", survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
 
-dhs_pred <- dhs_pred %>%
-  bind_rows(
-    filter(mf$observations$full_obs, survtype == "DHS") %>%
-      mutate(source = "AR1 + trend") %>%
-      bind_cols(dhs_qtls)
-  )
+if(nrow(dhs_ppd)) {
+  dhsMatrix <- exp(fit$sample$log_rate_exclude_dhs)
+  dhs_ppd <- dhs_ppd %>% bind_cols(data.frame(dhsMatrix))
+} else {
+  dhs_ppd <- data.frame()
+}
 
-ais_pred <- ais_pred %>%
-  bind_rows(
-    filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS")) %>%
-      mutate(source = "AR1 + trend") %>%
-      bind_cols(ais_qtls)
-  )
+ais_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype %in% c("AIS", "MIS"), survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
 
-phia_pred <- phia_pred %>%
-  bind_rows(
-    filter(mf$observations$full_obs, survtype == "PHIA") %>%
-      mutate(source = "AR1 + trend") %>%
-      bind_cols(phia_qtls)
-  )
+if(nrow(ais_ppd)) {
+  aisMatrix <- exp(fit$sample$log_rate_exclude_ais)
+  ais_ppd <- ais_ppd %>% bind_cols(data.frame(aisMatrix))
+} else {
+  ais_ppd <- data.frame()
+}
 
-pred <- bind_rows(dhs_pred, ais_pred, phia_pred)
+phia_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype == "PHIA", survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
+
+if(nrow(phia_ppd)) {
+  phiaMatrix <- exp(fit$sample$log_rate_exclude_phia)
+  phia_ppd <- phia_ppd %>% bind_cols(data.frame(phiaMatrix))
+} else {
+  phia_ppd <- data.frame()
+}
+
+mics_ppd <- mf$observations$full_obs %>%
+  ungroup() %>%
+  filter(survtype == "MICS", survyear >= end_year) %>%
+  select(survey_id, area_id, period, age_group, births, tips, pys)
+
+if(nrow(mics_ppd)) {
+  micsMatrix <- exp(fit$sample$log_rate_exclude_mics)
+  mics_ppd <- mics_ppd %>% bind_cols(data.frame(micsMatrix))
+} else {
+  mics_ppd <- data.frame()
+}
+
+
+ar1_trend_ppd <- bind_rows(dhs_ppd, ais_ppd, phia_ppd, mics_ppd)
+
+qtls <- apply(ar1_trend_ppd[,c(8:1007)], 1, quantile, c(0.025, 0.5, 0.975))
+
+ar1_trend_ppd <- ar1_trend_ppd %>%
+  ungroup() %>%
+  rowwise() %>%
+  mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  ungroup() %>%
+  group_by(survey_id, area_id, period, age_group, births, tips, pys) %>%
+  rowwise() %>%
+  summarise(quant_pos = sum(across(starts_with("X"), ~quant_pos_sum(births, .x)))) %>%
+  ungroup %>%
+  mutate(lower = qtls[1,],
+         median = qtls[2,],
+         upper = qtls[3,],
+         source = "AR1 + trend")
+
+pred <- bind_rows(rw_ppd, rw2_ppd, arima_ppd, arima_trend_ppd, ar1_ppd, ar1_trend_ppd)
 
 write_csv(tmb_results, "fr.csv")
 write_csv(pred, "pred.csv")

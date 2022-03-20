@@ -4,20 +4,48 @@ library(sf)
 ssa_names <- c("Angola", "Botswana", "Eswatini", "Ethiopia", "Kenya", "Lesotho",  "Malawi", "Mozambique", "Namibia", "Rwanda", "South Africa", "South Sudan", "Uganda", "United Republic of Tanzania", "Zambia", "Zimbabwe", "Benin", "Burkina Faso", "Burundi", "Cameroon", "Central African Republic", "Chad", "Congo", "Côte d'Ivoire", "Democratic Republic of the Congo", "Equatorial Guinea", "Gabon", "Gambia", "Ghana", "Guinea", "Guinea-Bissau", "Liberia", "Mali", "Niger", "Nigeria", "Senegal", "Sierra Leone", "Togo")
 ssa_iso3 <- countrycode::countrycode(ssa_names, "country.name", "iso3c")
 
-id <- lapply(ssa_iso3[ssa_iso3 !='MLI'], function(x){
-  orderly::orderly_search(name = "aaa_fit", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
-}) %>% unlist
+mapping <- read.csv("global/iso_mapping_fit.csv")
 
-fr <- lapply(file.path("archive/aaa_fit", id[!is.na(id)], "fr.csv"), read.csv)
+id <- lapply(ssa_iso3[!ssa_iso3 %in% c("SSD", "ETH", "GNQ", "BWA", "MWI", "RWA", "GNB", "CAF","SSD")], function(x){
+  orderly::orderly_search(name = "aaa_fit", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
+})
+
+id2 <- lapply(c("RWA", "MWI"), function(x){
+  orderly::orderly_search(name = "aaa_mwi_rwa_fit", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
+})
+
+id3 <- lapply("ETH", function(x){
+  orderly::orderly_search(name = "aaa_eth_fit", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
+})
+
+dat <- lapply(paste0("archive/aaa_fit/", id, "/fr.csv"), read_csv, show_col_types = FALSE)
+dat2 <- lapply(paste0("archive/aaa_mwi_rwa_fit/", id2, "/fr.csv"), read_csv, show_col_types = FALSE)
+dat3 <- lapply(paste0("archive/aaa_eth_fit/", id3, "/fr.csv"), read_csv, show_col_types = FALSE)
+dat <- c(dat, dat2, dat3)
+
+fr_plot <- lapply(file.path("archive/aaa_fit", id, "depends/fr_plot.csv"), read.csv)
+fr_plot2 <- lapply(file.path("archive/aaa_mwi_rwa_fit", id2, "depends/fr_plot.csv"), read.csv)
+fr_plot3 <- lapply(file.path("archive/aaa_eth_fit", id3, "depends/fr_plot.csv"), read.csv)
+fr_plot <- c(fr_plot, fr_plot2, fr_plot3)
+
+pop <- lapply(file.path("archive/aaa_fit", id, "depends/interpolated_population.csv"), read.csv)
+pop2 <- lapply(file.path("archive/aaa_mwi_rwa_fit", id2, "depends/interpolated_population.csv"), read.csv)
+pop3 <- lapply(file.path("archive/aaa_eth_fit", id3, "depends/interpolated_population.csv"), read.csv)
+pop <- c(pop, pop2, pop3)
+
+pop <- pop %>% 
+  bind_rows() %>%
+  filter(year == 2015,
+         sex == "female") %>%
+  moz.utils::five_year_to_15to49("population")
 
 # fr <- c(fr, "COD" = list(read.csv("archive/cod_fit_new/20210922-172127-8f9e6cd3/fr.csv")))
 
 region <- read.csv("global/region.csv") %>%
   mutate(iso3 = toupper(iso3))
 
-fr <- fr %>% 
+fr <- dat %>% 
   bind_rows() %>%
-  separate(area_id, into=c("iso3", NA), remove=FALSE, sep=3) %>%
   left_join(region) %>%
   arrange(iso3)
 
@@ -49,8 +77,6 @@ areas_list <- lapply(file.path("archive/aaa_areas_pull", id_input, "naomi_areas.
 foo <- read_sf("~/Downloads/Longitude_Graticules_and_World_Countries_Boundaries-shp/99bfd9e7-bb42-4728-87b5-07f8c8ac631c2020328-1-1vef4ev.lu5nk.shp") %>%
   filter(CNTRY_NAME %in% c("Botswana", "Western Sahara", "Mauritania", "Morocco", "Algeria", "Libya", "Tunisia", "Egypt", "Equatorial Guinea", "Somalia", "Djibouti", "Eritrea")) %>%
   bind_rows(read_sf("~/Downloads/sdn_adm_cbs_nic_ssa_20200831_shp/sdn_admbnda_adm0_cbs_nic_ssa_20200831.shp"))
-  # bind_rows(read_sf("~/Downloads/ssd_admbnda_imwg_nbs_shp/ssd_admbnda_adm0_imwg_nbs_20180817.shp")) %>%
-  st_crop(xmin=-180, xmax=180, ymin=-35, ymax=90)
 
 
 
@@ -77,8 +103,7 @@ dist_fr <- fr_list %>%
 
 p1a <- dist_fr %>%
   bind_rows() %>%
-  filter(period == 2015,
-         !iso3 %in% c("ETH", "AGO")) %>%
+  filter(period == 2015) %>%
   ggplot() +
   geom_sf(aes(geometry = geometry, fill=median), size=0) +
   geom_sf(data = foo, aes(geometry = geometry), fill="grey", size=0.3) +
@@ -87,6 +112,149 @@ p1a <- dist_fr %>%
   viridis::scale_fill_viridis() +
   theme_minimal() +
   coord_sf(datum = NA)
+
+dist_15 <- dist_fr %>%
+  bind_rows() %>%
+  filter(period == 2015)
+
+nat_15 <- fr %>%
+  filter(area_level ==0, period == 2015) %>%
+  mutate(country = countrycode::countrycode(iso3, "iso3c", "country.name")) 
+
+dist_15 %>%
+  mutate(country = countrycode::countrycode(iso3, "iso3c", "country.name")) %>%
+  left_join(region) %>%
+  left_join(pop %>% ungroup() %>% select(area_id, population)) %>%
+  group_by(iso3) %>%
+  mutate(population = population/sum(population)) %>%
+  ggplot(aes(x=iso3, y=median)) +
+    geom_jitter(aes(color=region, size = population), shape=20, width =0.1, alpha = 0.5) +
+    geom_point(data=nat_15 %>% filter(variable == "tfr"), shape = 21, size = 3, fill = "white", col = "black", alpha = 0.9) +
+  standard_theme() +
+    labs(y="TFR", x=element_blank()) +
+    scale_color_manual(values = wesanderson::wes_palette("Zissou1")[c(1,4)]) +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2))
+
+###
+
+nat_decline <- fr %>%
+  filter(area_level ==0,
+         variable == "tfr",
+         period > 1999) %>%
+  group_by(iso3, region) %>%
+  summarise(decline = median[period == 2020]/median[period == 2000])
+
+1-quantile(nat_decline$decline, c(0.25, 0.5, 0.75))
+1-quantile(filter(nat_decline, region == "ESA")$decline, c(0.25, 0.5, 0.75))
+1-quantile(filter(nat_decline, region == "WCA")$decline, c(0.25, 0.5, 0.75))
+
+###
+
+ntl_change <- fr %>%
+  filter(area_level ==0,
+         variable == "tfr") %>%
+  group_by(iso3) %>%
+  mutate(ntl_change = median/median[period == 2000]) %>%
+  select(iso3, period, ntl_change)
+
+dist_fr %>%
+  bind_rows() %>%
+  select(-geometry) %>%
+  filter(period > 1999) %>%
+  group_by(area_id) %>%
+  mutate(dist_change = median/median[period == 2000]) %>%
+  left_join(ntl_change) %>%
+  mutate(dist_ntl_change_ratio = dist_change/ntl_change) %>%
+  ggplot(aes(x=period,y=dist_ntl_change_ratio-1, group=area_id)) +
+    geom_line(alpha = 0.1) +
+    scale_y_continuous(labels = scales::label_percent()) +
+    standard_theme() +
+    labs(x=element_blank(), y="District change relative to national change")
+
+#####
+
+p <- fr %>%
+  left_join(mapping %>% select(iso3, fertility_fit_level)) %>%
+  filter(area_level %in% c(0, fertility_fit_level)) %>%
+  group_by(iso3) %>%
+  group_split() %>%
+  lapply(function(x) {
+    
+    ntl_change <- x %>%
+      filter(area_level ==0,
+             variable == "tfr",
+             period > 1999) %>%
+      group_by(iso3) %>%
+      mutate(ntl_change = median/median[period == 2000]) %>%
+      select(iso3, period, ntl_change)
+    
+    x %>%
+      filter(period > 1999,
+             variable == "tfr") %>%
+      select(iso3, area_id, period, median) %>%
+      group_by(area_id) %>%
+      mutate(dist_change = median/median[period == 2000]) %>%
+      left_join(ntl_change) %>%
+      mutate(dist_ntl_change_ratio = dist_change/ntl_change) %>%
+      ggplot(aes(x=period,y=dist_ntl_change_ratio-1, group=area_id)) +
+      geom_line(alpha = 0.1) +
+      scale_y_continuous(labels = scales::label_percent()) +
+      standard_theme() +
+      labs(x=element_blank(), y="District change relative to national change", title = unique(ntl_change$iso3))
+    
+  })
+
+fr %>%
+  filter(iso3 == "UGA",
+         variable == "tfr",
+         area_level == 3,
+         area_id != "UGA_3_022") %>%
+  ggplot(aes(x=period, y=median, group = area_id)) +
+    geom_line(alpha = 0.3) +
+    geom_line(data = fr %>%
+                filter(iso3 == "UGA",
+                       variable == "tfr",
+                       area_level == 0),
+              size=2) +
+  geom_line(data = fr %>%
+              filter(variable == "tfr",
+                     area_id == "UGA_3_022"),
+            color="red",
+            size=1)
+
+#TZA SEN RWA MWI ETH
+fr %>%
+  filter(iso3 == "TZA",
+         variable == "tfr",
+         area_level == 4,
+         # str_detect(area_id, "TZA_4_12|4_14"),
+         !area_id %in% c("TZA_4_072dv", "TZA_4_048rr", "TZA_4_122um", "TZA_4_145tt")
+         ) %>%
+  ggplot(aes(x=period, y=median, group = area_id)) +
+  geom_line(alpha = 0.2) +
+  geom_line(data = fr %>%
+              filter(iso3 == "TZA",
+                     variable == "tfr",
+                     area_level == 0),
+            size=2) +
+  geom_line(data = fr %>%
+              filter(variable == "tfr",
+                     area_id %in% c("TZA_4_072dv", "TZA_4_048rr", "TZA_4_122um", "TZA_4_145tt")),
+            aes(color=area_id),
+            size=1.5)
+
+
+  geom_line(data = fr %>%
+              filter(iso3 == "UGA",
+                     variable == "tfr",
+                     area_level == 0),
+            size=2) +
+  geom_line(data = fr %>%
+              filter(variable == "tfr",
+                     area_id == "UGA_3_022"),
+            color="red",
+            size=1)
+    
 
 p3a <- fr %>%
   filter(area_level == 0,
@@ -116,8 +284,7 @@ p3a <- fr %>%
 fr %>%
   filter(area_level == 0,
          variable == "asfr",
-         period %in% c(2000, 2010, 2020),
-         iso3 != "GMB") %>%
+         period %in% c(2000, 2010, 2020)) %>%
   group_by(region, area_id, area_name, age_group) %>%
   summarise(`2000` = 1,
             `2010` = median[period == 2010]/median[period == 2000],
@@ -309,7 +476,7 @@ tfr_plots_admin1 <- lapply(tfr_list_admin1, function(x) {
 
 names(tfr_plots_admin1) <- unique(fr$iso3)
 
-pdf(paste0("~/Downloads/test.pdf"), h = 12, w = 20)
+pdf(paste0("~/Downloads/asfr_admin1.pdf"), h = 12, w = 20)
 asfr_plots_admin1
 dev.off()
 
@@ -326,52 +493,6 @@ pdf(paste0("~/Downloads/2020_tfr.pdf"), h = 12, w = 20)
 tfr_2020_map
 dev.off()
 
-
-
-
-## Box plot of TFR distributions
-dist_fr %>%
-  bind_rows() %>%
-  filter(period %in% c(2000,2010,2020)) %>%
-  mutate(period = factor(period)) %>%
-  ggplot(aes(x=iso3, y=median, fill=period)) +
-    geom_boxplot()
-
-p1b <- dist_fr %>%
-  bind_rows() %>%
-  filter(period %in% c(2015), iso3 != "NER") %>%
-  mutate(period = factor(period),
-         country_name = countrycode::countrycode(iso3, "iso3c", "country.name")) %>%
-  ggplot(aes(x=fct_rev(country_name), y=median)) +
-  geom_boxplot() +
-  labs(y="TFR", x=element_blank()) +
-  theme_minimal() +
-  coord_flip()
-
-ggpubr::ggarrange(p1a + theme(legend.position = "bottom",
-                              plot.margin = unit(c(0,0,0,0), "lines")), p1b + theme(plot.margin = unit(c(1,1,1,0), "lines")), nrow=1)
-
-dist_fr %>%
-  bind_rows() %>%
-  # filter(iso3 == "ETH") %>%
-  group_by(iso3, area_id, area_name) %>%
-  summarise(
-    # ratio_05 = median[period == 2005]/median[period == 2000],
-    # ratio_10 = median[period == 2010]/median[period == 2005],
-    # ratio_15 = median[period == 2015]/median[period == 2010],
-    # ratio_20 = median[period == 2020]/median[period == 2015],
-
-    ratio_10 = median[period == 2010]/median[period == 2000],
-    ratio_20 = median[period == 2020]/median[period == 2010]
-    
-    ) %>%
-  pivot_longer(-c(iso3, area_id, area_name)) %>%
-  # left_join(areas_list[["ETH"]]) %>%
-  # mutate(name = factor(name, labels=c("2000-2005", "2005-2010","2010-2015","2015-2020"))) %>%
-  mutate(name = factor(name, labels=c("2000-2010", "2010-2020"))) %>%
-  ggplot(aes(x=iso3, y=value, fill=name)) +
-  geom_boxplot()
-  # facet_wrap(~name)
 
 dist_fr_change <- Map(function(fr, areas, level) {
   
