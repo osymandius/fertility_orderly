@@ -1316,7 +1316,13 @@ tmb_int$par <- list(
   # #
   eta3 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_age))),
   log_prec_eta3 = 0,
-  logit_eta3_phi_age = 0
+  logit_eta3_phi_age = 0,
+  
+  zeta2 = array(0, c(ncol(as(diag(1, length(unique(mf$observations$full_obs$survey_id))), "dgTMatrix")),
+                     ncol(mf$Z$X_tips_fe)
+  )
+  ),
+  log_prec_zeta2 = 0
 )
 
 tmb_int$random <- c("beta_0",
@@ -1330,6 +1336,7 @@ tmb_int$random <- c("beta_0",
                     "beta_tips_fe",
                     # "beta_urban_dummy",
                     "u_tips",
+                    "zeta2",
                     "beta_spike_2000",
                     "beta_spike_1999",
                     "beta_spike_2001",
@@ -1512,6 +1519,7 @@ tmb_int$random <- c("beta_0",
                     "beta_tips_fe",
                     # "beta_urban_dummy",
                     "u_tips",
+                    "zeta2",
                     "beta_spike_2000",
                     "beta_spike_1999",
                     "beta_spike_2001",
