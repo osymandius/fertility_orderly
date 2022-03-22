@@ -6,9 +6,11 @@ ssa_iso3 <- countrycode::countrycode(ssa_names, "country.name", "iso3c")
 
 mapping <- read.csv("global/iso_mapping_fit.csv")
 
-id <- lapply(ssa_iso3[!ssa_iso3 %in% c("SSD", "ETH", "GNQ", "BWA", "MWI", "RWA", "GNB", "CAF","SSD")], function(x){
+lapply(ssa_iso3[!ssa_iso3 %in% c("SSD", "ETH", "GNQ", "BWA", "MWI", "RWA", "GNB", "CAF","SSD", "COD")], function(x) orderly_pull_oli("aaa_fit", x))
+
+id <- lapply(ssa_iso3[!ssa_iso3 %in% c("SSD", "ETH", "GNQ", "BWA", "MWI", "RWA", "GNB", "CAF","SSD", "COD")], function(x){
   orderly::orderly_search(name = "aaa_fit", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
-})
+}) 
 
 id2 <- lapply(c("RWA", "MWI"), function(x){
   orderly::orderly_search(name = "aaa_mwi_rwa_fit", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
@@ -100,6 +102,49 @@ dist_fr <- fr_list %>%
   
   
 }, fr = ., areas_list[names(.)], lvls)
+
+age_dist <- fr %>%
+  left_join(mapping) %>% 
+  filter(area_level == admin1_level,
+         variable == "asfr",
+         period == 2015) %>%
+  group_by(area_id) %>%
+  mutate(median = median/median[age_group == "Y020_024"]) %>%
+  filter(age_group == "Y025_029") %>%
+  left_join(areas_list %>% bind_rows() %>% select(area_id)) %>%
+  group_by(iso3) %>%
+  group_split() %>%
+  lapply(function(x) {
+    c <- unique(x$iso3)
+    x %>%
+      ggplot() +
+        geom_sf(aes(geometry = geometry, fill=median)) +
+        scale_fill_gradient2(breaks = seq(0.9, 1.4, 0.1), 
+                             labels = as.character(seq(0.9, 1.4, 0.1)), 
+                             # limits = c(0.9, 1.5),
+                             midpoint=1) +
+        labs(title = c)
+      
+  }) %>% setNames(unique(fr$iso3))
+
+fr %>%
+  left_join(mapping) %>% 
+  filter(area_level == fertility_fit_level,
+         variable == "asfr",
+         period == 2015) %>%
+  group_by(area_id) %>%
+  mutate(median = median/median[age_group == "Y020_024"]) %>%
+  filter(age_group == "Y025_029") %>%
+  ggplot(aes(x=iso3, y=median)) +
+    geom_jitter(aes(color=region), shape=20, width =0.1, alpha = 0.5) +
+    geom_point(data=nat_15 %>% filter(variable == "asfr") %>% group_by(iso3) %>%
+                 mutate(median = median/median[age_group == "Y020_024"]) %>% filter(age_group == "Y025_029"), shape = 21, size = 3, fill = "white", col = "black", alpha = 0.9) +
+    scale_color_manual(values = wesanderson::wes_palette("Zissou1")[c(1,4)]) +
+    scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+    geom_hline(yintercept = 1, color="red", linetype = 3) +
+    labs(y="25-29 ASFR relative to 20-24", x=element_blank()) +
+    standard_theme()
+  
 
 p1a <- dist_fr %>%
   bind_rows() %>%
@@ -725,16 +770,18 @@ fr %>%
 
 ##############
 
-survey <- lapply(id, function(x) {
-  read.csv(paste0("archive/aaa_fit/", x, "/depends/fertility_asfr.csv"))
-})
+sd_report <- lapply(paste0("archive/aaa_fit/", id, "/sd_report.csv"), read_csv, show_col_types = FALSE)
+sd_report2 <- lapply(paste0("archive/aaa_mwi_rwa_fit/", id2, "/sd_report.csv"), read_csv, show_col_types = FALSE)
+sd_report3 <- lapply(paste0("archive/aaa_eth_fit/", id3, "/sd_report.csv"), read_csv, show_col_types = FALSE)
+sd_report <- c(sd_report, sd_report2, sd_report3)
 
-survey %>%
+sd_report %>%
   bind_rows() %>%
-  distinct(survey_id, survtype) %>%
-  filter(survtype != "MICS")
-
-mics_asfr <- read.csv("global/mics_asfr.csv") %>%
-  distinct(survey_id)
-
-mics_asfr
+  filter(str_detect(hyper, "beta_tips"),
+         !iso %in% c("UGA","TZA")) %>%
+  rename(iso3 = iso) %>%
+  group_by(iso3) %>%
+  mutate(fe = c(5,NA, 0,6,10)) %>%
+  filter(!is.na(fe)) %>%
+  ggplot(aes(x=fe, y=Estimate, group=fe)) +
+    geom_boxplot()

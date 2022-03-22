@@ -106,8 +106,8 @@ mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
 
 validate_model_frame(mf, areas)
 
-# TMB::compile("src/aaa_fit/models/model6.cpp.cpp", flags = "-w")               # Compile the C++ file
-TMB::compile("models/model6.cpp", flags = "-w")               # Compile the C++ file
+# TMB::compile("src/aaa_fit/models/model6.cpp", flags = "-w")               # Compile the C++ file
+# TMB::compile("models/model6.cpp", flags = "-w")               # Compile the C++ file
 dyn.load(dynlib("models/model6"))
 
 tmb_int <- list()
