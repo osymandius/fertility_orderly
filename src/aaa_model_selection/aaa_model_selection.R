@@ -336,12 +336,13 @@ quant_pos_sum <- function(births, x) {
 }
 
 dhs_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype == "DHS", survyear >= end_year)
   
+
 if(nrow(dhs_ppd)) {
   dhsMatrix <- exp(fit$sample$log_rate_exclude_dhs)
-  dhs_ppd <- dhs_ppd %>%
-  filter(survtype == "DHS", survyear >= end_year) %>%
+  dhs_ppd <- dhs_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
   bind_cols(data.frame(dhsMatrix)) 
 } else {
@@ -349,25 +350,27 @@ if(nrow(dhs_ppd)) {
 }
 
 ais_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype %in% c("AIS", "MIS"), survyear >= end_year)
   
+
 if(nrow(ais_ppd)) {
   aisMatrix <- exp(fit$sample$log_rate_exclude_ais)
-  ais_ppd <- ais_ppd %>% 
-  filter(survtype %in% c("AIS", "MIS"), survyear >= end_year) %>%
+  ais_ppd <- ais_ppd %>%
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(aisMatrix))
+   bind_cols(data.frame(aisMatrix))
 } else {
   ais_ppd <- data.frame()
 }
 
 phia_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype == "PHIA", survyear >= end_year)
   
+
 if(nrow(phia_ppd)) {
   phiaMatrix <- exp(fit$sample$log_rate_exclude_phia)
-  phia_ppd <- phia_ppd %>%
-  filter(survtype == "PHIA", survyear >= end_year) %>%
+  phia_ppd <- phia_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
   bind_cols(data.frame(phiaMatrix))
 } else {
@@ -375,12 +378,13 @@ if(nrow(phia_ppd)) {
 }
 
 mics_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype == "MICS", survyear >= end_year)
   
+
 if(nrow(mics_ppd)) {
   micsMatrix <- exp(fit$sample$log_rate_exclude_mics)
-  mics_ppd <- mics_ppd %>%
-  filter(survtype == "MICS", survyear >= end_year) %>%
+  mics_ppd <- mics_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
   bind_cols(data.frame(micsMatrix))
 } else {
@@ -561,38 +565,41 @@ tmb_results <- tmb_results %>%
   )
 
 dhs_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype == "DHS", survyear >= end_year)
   
+
 if(nrow(dhs_ppd)) {
   dhsMatrix <- exp(fit$sample$log_rate_exclude_dhs)
-  dhs_ppd <- dhs_ppd %>% 
-  filter(survtype == "DHS", survyear >= end_year) %>%
+  dhs_ppd <- dhs_ppd %>%
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(dhsMatrix))
+   bind_cols(data.frame(dhsMatrix))
 } else {
   dhs_ppd <- data.frame()
 }
 
 ais_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype %in% c("AIS", "MIS"), survyear >= end_year)
   
+
 if(nrow(ais_ppd)) {
   aisMatrix <- exp(fit$sample$log_rate_exclude_ais)
-  ais_ppd <- ais_ppd %>% 
-  filter(survtype %in% c("AIS", "MIS"), survyear >= end_year) %>%
+  ais_ppd <- ais_ppd %>%
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(aisMatrix))
+   bind_cols(data.frame(aisMatrix))
 } else {
   ais_ppd <- data.frame()
 }
 
 phia_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype == "PHIA", survyear >= end_year)
   
+
 if(nrow(phia_ppd)) {
   phiaMatrix <- exp(fit$sample$log_rate_exclude_phia)
-  phia_ppd <- phia_ppd %>%
-  filter(survtype == "PHIA", survyear >= end_year) %>%
+  phia_ppd <- phia_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
   bind_cols(data.frame(phiaMatrix))
 } else {
@@ -600,12 +607,13 @@ if(nrow(phia_ppd)) {
 }
 
 mics_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype == "MICS", survyear >= end_year)
   
+
 if(nrow(mics_ppd)) {
   micsMatrix <- exp(fit$sample$log_rate_exclude_mics)
-  mics_ppd <- mics_ppd %>%
-  filter(survtype == "MICS", survyear >= end_year) %>%
+  mics_ppd <- mics_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
   bind_cols(data.frame(micsMatrix))
 } else {
@@ -854,38 +862,41 @@ tmb_results <- tmb_results %>%
   )
 
 dhs_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype == "DHS", survyear >= end_year)
   
+
 if(nrow(dhs_ppd)) {
   dhsMatrix <- exp(fit$sample$log_rate_exclude_dhs)
-  dhs_ppd <- dhs_ppd %>% 
-  filter(survtype == "DHS", survyear >= end_year) %>%
+  dhs_ppd <- dhs_ppd %>%
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(dhsMatrix))
+   bind_cols(data.frame(dhsMatrix))
 } else {
   dhs_ppd <- data.frame()
 }
 
 ais_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype %in% c("AIS", "MIS"), survyear >= end_year)
   
+
 if(nrow(ais_ppd)) {
   aisMatrix <- exp(fit$sample$log_rate_exclude_ais)
-  ais_ppd <- ais_ppd %>% 
-  filter(survtype %in% c("AIS", "MIS"), survyear >= end_year) %>%
+  ais_ppd <- ais_ppd %>%
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(aisMatrix))
+   bind_cols(data.frame(aisMatrix))
 } else {
   ais_ppd <- data.frame()
 }
 
 phia_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype == "PHIA", survyear >= end_year)
   
+
 if(nrow(phia_ppd)) {
   phiaMatrix <- exp(fit$sample$log_rate_exclude_phia)
-  phia_ppd <- phia_ppd %>%
-  filter(survtype == "PHIA", survyear >= end_year) %>%
+  phia_ppd <- phia_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
   bind_cols(data.frame(phiaMatrix))
 } else {
@@ -893,12 +904,13 @@ if(nrow(phia_ppd)) {
 }
 
 mics_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype == "MICS", survyear >= end_year)
   
+
 if(nrow(mics_ppd)) {
   micsMatrix <- exp(fit$sample$log_rate_exclude_mics)
-  mics_ppd <- mics_ppd %>%
-  filter(survtype == "MICS", survyear >= end_year) %>%
+  mics_ppd <- mics_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
   bind_cols(data.frame(micsMatrix))
 } else {
@@ -1049,38 +1061,41 @@ tmb_results <- tmb_results %>%
   )
 
 dhs_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype == "DHS", survyear >= end_year)
   
+
 if(nrow(dhs_ppd)) {
   dhsMatrix <- exp(fit$sample$log_rate_exclude_dhs)
-  dhs_ppd <- dhs_ppd %>% 
-  filter(survtype == "DHS", survyear >= end_year) %>%
+  dhs_ppd <- dhs_ppd %>%
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(dhsMatrix))
+   bind_cols(data.frame(dhsMatrix))
 } else {
   dhs_ppd <- data.frame()
 }
 
 ais_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype %in% c("AIS", "MIS"), survyear >= end_year)
   
+
 if(nrow(ais_ppd)) {
   aisMatrix <- exp(fit$sample$log_rate_exclude_ais)
-  ais_ppd <- ais_ppd %>% 
-  filter(survtype %in% c("AIS", "MIS"), survyear >= end_year) %>%
+  ais_ppd <- ais_ppd %>%
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(aisMatrix))
+   bind_cols(data.frame(aisMatrix))
 } else {
   ais_ppd <- data.frame()
 }
 
 phia_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype == "PHIA", survyear >= end_year)
   
+
 if(nrow(phia_ppd)) {
   phiaMatrix <- exp(fit$sample$log_rate_exclude_phia)
-  phia_ppd <- phia_ppd %>%
-  filter(survtype == "PHIA", survyear >= end_year) %>%
+  phia_ppd <- phia_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
   bind_cols(data.frame(phiaMatrix))
 } else {
@@ -1088,12 +1103,13 @@ if(nrow(phia_ppd)) {
 }
 
 mics_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype == "MICS", survyear >= end_year)
   
+
 if(nrow(mics_ppd)) {
   micsMatrix <- exp(fit$sample$log_rate_exclude_mics)
-  mics_ppd <- mics_ppd %>%
-  filter(survtype == "MICS", survyear >= end_year) %>%
+  mics_ppd <- mics_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
   bind_cols(data.frame(micsMatrix))
 } else {
@@ -1245,38 +1261,41 @@ tmb_results <- tmb_results %>%
   )
 
 dhs_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype == "DHS", survyear >= end_year)
   
+
 if(nrow(dhs_ppd)) {
   dhsMatrix <- exp(fit$sample$log_rate_exclude_dhs)
-  dhs_ppd <- dhs_ppd %>% 
-  filter(survtype == "DHS", survyear >= end_year) %>%
+  dhs_ppd <- dhs_ppd %>%
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(dhsMatrix))
+   bind_cols(data.frame(dhsMatrix))
 } else {
   dhs_ppd <- data.frame()
 }
 
 ais_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype %in% c("AIS", "MIS"), survyear >= end_year)
   
+
 if(nrow(ais_ppd)) {
   aisMatrix <- exp(fit$sample$log_rate_exclude_ais)
-  ais_ppd <- ais_ppd %>% 
-  filter(survtype %in% c("AIS", "MIS"), survyear >= end_year) %>%
+  ais_ppd <- ais_ppd %>%
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(aisMatrix))
+   bind_cols(data.frame(aisMatrix))
 } else {
   ais_ppd <- data.frame()
 }
 
 phia_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype == "PHIA", survyear >= end_year)
   
+
 if(nrow(phia_ppd)) {
   phiaMatrix <- exp(fit$sample$log_rate_exclude_phia)
-  phia_ppd <- phia_ppd %>%
-  filter(survtype == "PHIA", survyear >= end_year) %>%
+  phia_ppd <- phia_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
   bind_cols(data.frame(phiaMatrix))
 } else {
@@ -1284,12 +1303,13 @@ if(nrow(phia_ppd)) {
 }
 
 mics_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype == "MICS", survyear >= end_year)
   
+
 if(nrow(mics_ppd)) {
   micsMatrix <- exp(fit$sample$log_rate_exclude_mics)
-  mics_ppd <- mics_ppd %>%
-  filter(survtype == "MICS", survyear >= end_year) %>%
+  mics_ppd <- mics_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
   bind_cols(data.frame(micsMatrix))
 } else {
@@ -1441,38 +1461,41 @@ tmb_results <- tmb_results %>%
   )
 
 dhs_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype == "DHS", survyear >= end_year)
   
+
 if(nrow(dhs_ppd)) {
   dhsMatrix <- exp(fit$sample$log_rate_exclude_dhs)
-  dhs_ppd <- dhs_ppd %>% 
-  filter(survtype == "DHS", survyear >= end_year) %>%
+  dhs_ppd <- dhs_ppd %>%
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(dhsMatrix))
+   bind_cols(data.frame(dhsMatrix))
 } else {
   dhs_ppd <- data.frame()
 }
 
 ais_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype %in% c("AIS", "MIS"), survyear >= end_year)
   
+
 if(nrow(ais_ppd)) {
   aisMatrix <- exp(fit$sample$log_rate_exclude_ais)
-  ais_ppd <- ais_ppd %>% 
-  filter(survtype %in% c("AIS", "MIS"), survyear >= end_year) %>%
+  ais_ppd <- ais_ppd %>%
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(aisMatrix))
+   bind_cols(data.frame(aisMatrix))
 } else {
   ais_ppd <- data.frame()
 }
 
 phia_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype == "PHIA", survyear >= end_year)
   
+
 if(nrow(phia_ppd)) {
   phiaMatrix <- exp(fit$sample$log_rate_exclude_phia)
-  phia_ppd <- phia_ppd %>%
-  filter(survtype == "PHIA", survyear >= end_year) %>%
+  phia_ppd <- phia_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
   bind_cols(data.frame(phiaMatrix))
 } else {
@@ -1480,12 +1503,13 @@ if(nrow(phia_ppd)) {
 }
 
 mics_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype == "MICS", survyear >= end_year)
   
+
 if(nrow(mics_ppd)) {
   micsMatrix <- exp(fit$sample$log_rate_exclude_mics)
-  mics_ppd <- mics_ppd %>%
-  filter(survtype == "MICS", survyear >= end_year) %>%
+  mics_ppd <- mics_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
   bind_cols(data.frame(micsMatrix))
 } else {
@@ -1638,38 +1662,41 @@ tmb_results <- tmb_results %>%
   )
 
 dhs_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype == "DHS", survyear >= end_year)
   
+
 if(nrow(dhs_ppd)) {
   dhsMatrix <- exp(fit$sample$log_rate_exclude_dhs)
-  dhs_ppd <- dhs_ppd %>% 
-  filter(survtype == "DHS", survyear >= end_year) %>%
+  dhs_ppd <- dhs_ppd %>%
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(dhsMatrix))
+   bind_cols(data.frame(dhsMatrix))
 } else {
   dhs_ppd <- data.frame()
 }
 
 ais_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype %in% c("AIS", "MIS"), survyear >= end_year)
   
+
 if(nrow(ais_ppd)) {
   aisMatrix <- exp(fit$sample$log_rate_exclude_ais)
-  ais_ppd <- ais_ppd %>% 
-  filter(survtype %in% c("AIS", "MIS"), survyear >= end_year) %>%
+  ais_ppd <- ais_ppd %>%
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(aisMatrix))
+   bind_cols(data.frame(aisMatrix))
 } else {
   ais_ppd <- data.frame()
 }
 
 phia_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype == "PHIA", survyear >= end_year)
   
+
 if(nrow(phia_ppd)) {
   phiaMatrix <- exp(fit$sample$log_rate_exclude_phia)
-  phia_ppd <- phia_ppd %>%
-  filter(survtype == "PHIA", survyear >= end_year) %>%
+  phia_ppd <- phia_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
   bind_cols(data.frame(phiaMatrix))
 } else {
@@ -1677,12 +1704,13 @@ if(nrow(phia_ppd)) {
 }
 
 mics_ppd <- mf$observations$full_obs %>%
-  ungroup()
+  ungroup() %>%
+  filter(survtype == "MICS", survyear >= end_year)
   
+
 if(nrow(mics_ppd)) {
   micsMatrix <- exp(fit$sample$log_rate_exclude_mics)
-  mics_ppd <- mics_ppd %>%
-  filter(survtype == "MICS", survyear >= end_year) %>%
+  mics_ppd <- mics_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
   bind_cols(data.frame(micsMatrix))
 } else {
