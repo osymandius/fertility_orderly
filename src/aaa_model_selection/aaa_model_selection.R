@@ -103,7 +103,9 @@ mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
 
 validate_model_frame(mf, areas)
 
-end_year <- 2016
+end_year <- max(unique(mf$observations$full_obs$survyear))-5
+
+# end_year <- 2016
 
 # TMB::compile("~/Documents/GitHub/dfertility/backup_src/rw.cpp", flags = "-w")               # Compile the C++ file
 # TMB::compile("rw.cpp", flags = "-w")               # Compile the C++ file
