@@ -342,7 +342,7 @@ dhs_ppd <- mf$observations$full_obs %>%
 
 if(nrow(dhs_ppd)) {
   dhsMatrix <- exp(fit$sample$log_rate_exclude_dhs)
-  dhs_ppd <- dhs_ppd %>% bind_cols(data.frame(dhsMatrix))
+  dhs_ppd <- dhs_ppd %>% bind_cols(data.frame(dhsMatrix)) 
 } else {
   dhs_ppd <- data.frame()
 }
@@ -386,21 +386,32 @@ if(nrow(mics_ppd)) {
 
 rw_ppd <- bind_rows(dhs_ppd, ais_ppd, phia_ppd, mics_ppd)
 
-qtls <- apply(rw_ppd[,c(8:1007)], 1, quantile, c(0.025, 0.5, 0.975))
-
 rw_ppd <- rw_ppd %>%
   ungroup() %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  group_by(survey_id, period, area_id,tips) %>%
+  summarise(
+            survey_tfr = 5*sum(births/pys),
+            across(starts_with("X"), ~5*sum(.x/pys)),
+            observed_births = sum(births),
+            pys = sum(pys)
+  ) %>%
   ungroup() %>%
-  group_by(survey_id, area_id, period, age_group, births, tips, pys) %>%
+  select(survey_id:survey_tfr, observed_births, pys, everything())
+
+qtls <- apply(select(rw_ppd, starts_with("X")), 1, quantile, c(0.025, 0.5, 0.975))
+
+rw_ppd <- rw_ppd %>%
+  group_by(survey_id, area_id, period, tips, observed_births, pys, survey_tfr) %>%
   rowwise() %>%
-  summarise(quant_pos = sum(across(starts_with("X"), ~quant_pos_sum(births, .x)))) %>%
+  summarise(quant_pos = sum(across(starts_with("X"), ~quant_pos_sum(survey_tfr, .x)))) %>%
   ungroup %>%
   mutate(lower = qtls[1,],
          median = qtls[2,],
          upper = qtls[3,],
          source = "rw")
+
 
 ################ RW2
 
@@ -594,18 +605,26 @@ if(nrow(mics_ppd)) {
 }
 
 
-rw2_ppd <- bind_rows(dhs_ppd, ais_ppd, phia_ppd, mics_ppd)
-
-qtls <- apply(rw2_ppd[,c(8:1007)], 1, quantile, c(0.025, 0.5, 0.975))
-
 rw2_ppd <- rw2_ppd %>%
   ungroup() %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  group_by(survey_id, period, area_id,tips) %>%
+  summarise(
+    survey_tfr = 5*sum(births/pys),
+    across(starts_with("X"), ~5*sum(.x/pys)),
+    observed_births = sum(births),
+    pys = sum(pys)
+  ) %>%
   ungroup() %>%
-  group_by(survey_id, area_id, period, age_group, births, tips, pys) %>%
+  select(survey_id:survey_tfr, observed_births, pys, everything())
+
+qtls <- apply(select(rw2_ppd, starts_with("X")), 1, quantile, c(0.025, 0.5, 0.975))
+
+rw2_ppd <- rw2_ppd %>%
+  group_by(survey_id, area_id, period, tips, observed_births, pys, survey_tfr) %>%
   rowwise() %>%
-  summarise(quant_pos = sum(across(starts_with("X"), ~quant_pos_sum(births, .x)))) %>%
+  summarise(quant_pos = sum(across(starts_with("X"), ~quant_pos_sum(survey_tfr, .x)))) %>%
   ungroup %>%
   mutate(lower = qtls[1,],
          median = qtls[2,],
@@ -876,16 +895,26 @@ if(nrow(mics_ppd)) {
 
 rw_trend_ppd <- bind_rows(dhs_ppd, ais_ppd, phia_ppd, mics_ppd)
 
-qtls <- apply(rw_trend_ppd[,c(8:1007)], 1, quantile, c(0.025, 0.5, 0.975))
-
 rw_trend_ppd <- rw_trend_ppd %>%
   ungroup() %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  group_by(survey_id, period, area_id,tips) %>%
+  summarise(
+    survey_tfr = 5*sum(births/pys),
+    across(starts_with("X"), ~5*sum(.x/pys)),
+    observed_births = sum(births),
+    pys = sum(pys)
+  ) %>%
   ungroup() %>%
-  group_by(survey_id, area_id, period, age_group, births, tips, pys) %>%
+  select(survey_id:survey_tfr, observed_births, pys, everything())
+
+qtls <- apply(select(rw_trend_ppd, starts_with("X")), 1, quantile, c(0.025, 0.5, 0.975))
+
+rw_trend_ppd <- rw_trend_ppd %>%
+  group_by(survey_id, area_id, period, tips, observed_births, pys, survey_tfr) %>%
   rowwise() %>%
-  summarise(quant_pos = sum(across(starts_with("X"), ~quant_pos_sum(births, .x)))) %>%
+  summarise(quant_pos = sum(across(starts_with("X"), ~quant_pos_sum(survey_tfr, .x)))) %>%
   ungroup %>%
   mutate(lower = qtls[1,],
          median = qtls[2,],
@@ -1057,16 +1086,26 @@ if(nrow(mics_ppd)) {
 
 arima_ppd <- bind_rows(dhs_ppd, ais_ppd, phia_ppd, mics_ppd)
 
-qtls <- apply(arima_ppd[,c(8:1007)], 1, quantile, c(0.025, 0.5, 0.975))
-
 arima_ppd <- arima_ppd %>%
   ungroup() %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  group_by(survey_id, period, area_id,tips) %>%
+  summarise(
+    survey_tfr = 5*sum(births/pys),
+    across(starts_with("X"), ~5*sum(.x/pys)),
+    observed_births = sum(births),
+    pys = sum(pys)
+  ) %>%
   ungroup() %>%
-  group_by(survey_id, area_id, period, age_group, births, tips, pys) %>%
+  select(survey_id:survey_tfr, observed_births, pys, everything())
+
+qtls <- apply(select(arima_ppd, starts_with("X")), 1, quantile, c(0.025, 0.5, 0.975))
+
+arima_ppd <- arima_ppd %>%
+  group_by(survey_id, area_id, period, tips, observed_births, pys, survey_tfr) %>%
   rowwise() %>%
-  summarise(quant_pos = sum(across(starts_with("X"), ~quant_pos_sum(births, .x)))) %>%
+  summarise(quant_pos = sum(across(starts_with("X"), ~quant_pos_sum(survey_tfr, .x)))) %>%
   ungroup %>%
   mutate(lower = qtls[1,],
          median = qtls[2,],
@@ -1239,21 +1278,31 @@ if(nrow(mics_ppd)) {
 
 arima_trend_ppd <- bind_rows(dhs_ppd, ais_ppd, phia_ppd, mics_ppd)
 
-qtls <- apply(arima_trend_ppd[,c(8:1007)], 1, quantile, c(0.025, 0.5, 0.975))
-
 arima_trend_ppd <- arima_trend_ppd %>%
   ungroup() %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  group_by(survey_id, period, area_id,tips) %>%
+  summarise(
+    survey_tfr = 5*sum(births/pys),
+    across(starts_with("X"), ~5*sum(.x/pys)),
+    observed_births = sum(births),
+    pys = sum(pys)
+  ) %>%
   ungroup() %>%
-  group_by(survey_id, area_id, period, age_group, births, tips, pys) %>%
+  select(survey_id:survey_tfr, observed_births, pys, everything())
+
+qtls <- apply(select(arima_trend_ppd, starts_with("X")), 1, quantile, c(0.025, 0.5, 0.975))
+
+arima_trend_ppd <- arima_trend_ppd %>%
+  group_by(survey_id, area_id, period, tips, observed_births, pys, survey_tfr) %>%
   rowwise() %>%
-  summarise(quant_pos = sum(across(starts_with("X"), ~quant_pos_sum(births, .x)))) %>%
+  summarise(quant_pos = sum(across(starts_with("X"), ~quant_pos_sum(survey_tfr, .x)))) %>%
   ungroup %>%
   mutate(lower = qtls[1,],
          median = qtls[2,],
          upper = qtls[3,],
-         source = "ARIMA(1,1,0) + trend")
+         source = "arima_trend")
 ########### AR1
 
 # TMB::compile("ar1.cpp", flags = "-w")               # Compile the C++ file
@@ -1421,21 +1470,31 @@ if(nrow(mics_ppd)) {
 
 ar1_ppd <- bind_rows(dhs_ppd, ais_ppd, phia_ppd, mics_ppd)
 
-qtls <- apply(ar1_ppd[,c(8:1007)], 1, quantile, c(0.025, 0.5, 0.975))
-
 ar1_ppd <- ar1_ppd %>%
   ungroup() %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  group_by(survey_id, period, area_id,tips) %>%
+  summarise(
+    survey_tfr = 5*sum(births/pys),
+    across(starts_with("X"), ~5*sum(.x/pys)),
+    observed_births = sum(births),
+    pys = sum(pys)
+  ) %>%
   ungroup() %>%
-  group_by(survey_id, area_id, period, age_group, births, tips, pys) %>%
+  select(survey_id:survey_tfr, observed_births, pys, everything())
+
+qtls <- apply(select(ar1_ppd, starts_with("X")), 1, quantile, c(0.025, 0.5, 0.975))
+
+ar1_ppd <- ar1_ppd %>%
+  group_by(survey_id, area_id, period, tips, observed_births, pys, survey_tfr) %>%
   rowwise() %>%
-  summarise(quant_pos = sum(across(starts_with("X"), ~quant_pos_sum(births, .x)))) %>%
+  summarise(quant_pos = sum(across(starts_with("X"), ~quant_pos_sum(survey_tfr, .x)))) %>%
   ungroup %>%
   mutate(lower = qtls[1,],
          median = qtls[2,],
          upper = qtls[3,],
-         source = "AR1")
+         source = "ar1")
 
 ########## AR1 + trend
 
@@ -1604,21 +1663,31 @@ if(nrow(mics_ppd)) {
 
 ar1_trend_ppd <- bind_rows(dhs_ppd, ais_ppd, phia_ppd, mics_ppd)
 
-qtls <- apply(ar1_trend_ppd[,c(8:1007)], 1, quantile, c(0.025, 0.5, 0.975))
-
 ar1_trend_ppd <- ar1_trend_ppd %>%
   ungroup() %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  group_by(survey_id, period, area_id,tips) %>%
+  summarise(
+    survey_tfr = 5*sum(births/pys),
+    across(starts_with("X"), ~5*sum(.x/pys)),
+    observed_births = sum(births),
+    pys = sum(pys)
+  ) %>%
   ungroup() %>%
-  group_by(survey_id, area_id, period, age_group, births, tips, pys) %>%
+  select(survey_id:survey_tfr, observed_births, pys, everything())
+
+qtls <- apply(select(ar1_trend_ppd, starts_with("X")), 1, quantile, c(0.025, 0.5, 0.975))
+
+ar1_trend_ppd <- ar1_trend_ppd %>%
+  group_by(survey_id, area_id, period, tips, observed_births, pys, survey_tfr) %>%
   rowwise() %>%
-  summarise(quant_pos = sum(across(starts_with("X"), ~quant_pos_sum(births, .x)))) %>%
+  summarise(quant_pos = sum(across(starts_with("X"), ~quant_pos_sum(survey_tfr, .x)))) %>%
   ungroup %>%
   mutate(lower = qtls[1,],
          median = qtls[2,],
          upper = qtls[3,],
-         source = "AR1 + trend")
+         source = "ar1_trend")
 
 pred <- bind_rows(rw_ppd, rw2_ppd, arima_ppd, arima_trend_ppd, ar1_ppd, ar1_trend_ppd)
 
