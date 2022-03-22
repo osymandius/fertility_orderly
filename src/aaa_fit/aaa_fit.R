@@ -67,7 +67,12 @@ mf$observations$full_obs <- mf$observations$full_obs %>%
   ungroup() %>%
   group_by(tips_fe, survey_id) %>%
   mutate(id.zeta2 = factor(cur_group_id()),
-         id.zeta2 = forcats::fct_expand(id.zeta2, as.character(1:(length(unique(mf$observations$full_obs$survey_id))*4))))
+         id.zeta2 = factor(ifelse(iso3 %in% c("GNB", "CAF", "SSD"), 
+                           forcats::fct_expand(id.zeta2, as.character(1:(length(unique(mf$observations$full_obs$survey_id))*3))),
+                           forcats::fct_expand(id.zeta2, as.character(1:(length(unique(mf$observations$full_obs$survey_id))*4)))
+                           )
+  )) %>%
+  ungroup()
 
 clear_col <- as.integer(unique(filter(mf$observations$full_obs, tips_fe == 0)$id.zeta2))
 mf$Z$Z_zeta2 <- sparse.model.matrix(~0 + id.zeta2, mf$observations$full_obs)
@@ -101,9 +106,9 @@ mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
 
 validate_model_frame(mf, areas)
 
-# TMB::compile("src/aaa_fit/dev.cpp", flags = "-w")               # Compile the C++ file
-# TMB::compile("models/model6.cpp", flags = "-w")               # Compile the C++ file
-# dyn.load(dynlib("models/model6"))
+# TMB::compile("src/aaa_fit/models/model6.cpp.cpp", flags = "-w")               # Compile the C++ file
+TMB::compile("models/model6.cpp", flags = "-w")               # Compile the C++ file
+dyn.load(dynlib("models/model6"))
 
 tmb_int <- list()
 
