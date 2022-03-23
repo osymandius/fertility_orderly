@@ -400,6 +400,10 @@ rw_ppd <- rw_ppd %>%
   ungroup() %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  aggregate_to_admin(c("survey_id", "period", "age_group", "tips"),
+                   c(paste0("X", 1:1000), "births", "pys"),
+                   1,
+                   areas) %>%
   group_by(survey_id, period, area_id,tips) %>%
   summarise(
             survey_tfr = 5*sum(births/pys),
@@ -628,6 +632,10 @@ rw2_ppd <- rw2_ppd %>%
   ungroup() %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  aggregate_to_admin(c("survey_id", "period", "age_group", "tips"),
+                   c(paste0("X", 1:1000), "births", "pys"),
+                   1,
+                   areas) %>%
   group_by(survey_id, period, area_id,tips) %>%
   summarise(
     survey_tfr = 5*sum(births/pys),
@@ -926,6 +934,10 @@ rw_trend_ppd <- rw_trend_ppd %>%
   ungroup() %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  aggregate_to_admin(c("survey_id", "period", "age_group", "tips"),
+                   c(paste0("X", 1:1000), "births", "pys"),
+                   1,
+                   areas) %>%
   group_by(survey_id, period, area_id,tips) %>%
   summarise(
     survey_tfr = 5*sum(births/pys),
@@ -1125,6 +1137,10 @@ arima_ppd <- arima_ppd %>%
   ungroup() %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  aggregate_to_admin(c("survey_id", "period", "age_group", "tips"),
+                   c(paste0("X", 1:1000), "births", "pys"),
+                   1,
+                   areas) %>%
   group_by(survey_id, period, area_id,tips) %>%
   summarise(
     survey_tfr = 5*sum(births/pys),
@@ -1325,6 +1341,10 @@ arima_trend_ppd <- arima_trend_ppd %>%
   ungroup() %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  aggregate_to_admin(c("survey_id", "period", "age_group", "tips"),
+                   c(paste0("X", 1:1000), "births", "pys"),
+                   1,
+                   areas) %>%
   group_by(survey_id, period, area_id,tips) %>%
   summarise(
     survey_tfr = 5*sum(births/pys),
@@ -1525,6 +1545,10 @@ ar1_ppd <- ar1_ppd %>%
   ungroup() %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  aggregate_to_admin(c("survey_id", "period", "age_group", "tips"),
+                   c(paste0("X", 1:1000), "births", "pys"),
+                   1,
+                   areas) %>%
   group_by(survey_id, period, area_id,tips) %>%
   summarise(
     survey_tfr = 5*sum(births/pys),
@@ -1726,6 +1750,10 @@ ar1_trend_ppd <- ar1_trend_ppd %>%
   ungroup() %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  aggregate_to_admin(c("survey_id", "period", "age_group", "tips"),
+                   c(paste0("X", 1:1000), "births", "pys"),
+                   1,
+                   areas) %>%
   group_by(survey_id, period, area_id,tips) %>%
   summarise(
     survey_tfr = 5*sum(births/pys),
