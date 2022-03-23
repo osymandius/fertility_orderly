@@ -59,6 +59,7 @@ packages:
   - purrr
   - rlang
   - mgcv
+  - moz.utils
 
 
 
