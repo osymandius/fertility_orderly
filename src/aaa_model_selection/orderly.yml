@@ -9,6 +9,14 @@ artefacts:
       description: posterior predictions
       filenames:
         - pred.csv
+  - data:
+      description: elpd
+      filenames:
+        - elpd.csv
+  - data:
+      description: crps
+      filenames:
+        - crps.csv
 
 
 global_resources:
@@ -60,6 +68,8 @@ packages:
   - rlang
   - mgcv
   - moz.utils
+  - scoringutils
+  - loo
 
 
 

@@ -393,8 +393,34 @@ if(nrow(mics_ppd)) {
   mics_ppd <- data.frame()
 }
 
+dxpois <- function(x, lambda, log = TRUE) {
+  val <- x * log(lambda) - lambda - lgamma(x+1)
+  if (log) {
+    val <- exp(val)
+  }
+  val
+}
+
 
 rw_ppd <- bind_rows(dhs_ppd, ais_ppd, phia_ppd, mics_ppd)
+
+true_values <- rw_ppd %>%
+  select(births, pys) %>%
+  mutate(observed_asfr = births/pys) %>%
+  .$observed_asfr
+
+predictions <- rw_ppd %>%
+  select(X1:X1000) %>%
+  as.matrix()
+
+rw_crps = sum(scoringutils::crps(true_values, predictions))
+
+est_births <- as.matrix(rw_ppd[,8:1007]) * rw_ppd$pys
+ll_pred <- dxpois(rw_ppd$births, est_births, TRUE)
+rw_elpd <- loo::elpd(t(ll_pred))
+rw_elpd <- rw_elpd$estimates %>%
+  as.data.frame() %>%
+  mutate(source = "rw")
 
 rw_ppd <- rw_ppd %>%
   ungroup() %>%
@@ -627,6 +653,24 @@ if(nrow(mics_ppd)) {
 }
 
 rw2_ppd <- bind_rows(dhs_ppd, ais_ppd, phia_ppd, mics_ppd)
+
+true_values <- rw2_ppd %>%
+  select(births, pys) %>%
+  mutate(observed_asfr = births/pys) %>%
+  .$observed_asfr
+
+predictions <- rw2_ppd %>%
+  select(X1:X1000) %>%
+  as.matrix()
+
+rw2_crps = sum(scoringutils::crps(true_values, predictions))
+
+est_births <- as.matrix(rw2_ppd[,8:1007]) * rw2_ppd$pys
+ll_pred <- dxpois(rw2_ppd$births, est_births, TRUE)
+rw2_elpd <- loo::elpd(t(ll_pred))
+rw2_elpd <- rw2_elpd$estimates %>%
+  as.data.frame() %>%
+  mutate(source = "rw2")
 
 rw2_ppd <- rw2_ppd %>%
   ungroup() %>%
@@ -930,6 +974,24 @@ if(nrow(mics_ppd)) {
 
 rw_trend_ppd <- bind_rows(dhs_ppd, ais_ppd, phia_ppd, mics_ppd)
 
+true_values <- rw_trend_ppd %>%
+  select(births, pys) %>%
+  mutate(observed_asfr = births/pys) %>%
+  .$observed_asfr
+
+predictions <- rw_trend_ppd %>%
+  select(X1:X1000) %>%
+  as.matrix()
+
+rw_trend_crps = sum(scoringutils::crps(true_values, predictions))
+
+est_births <- as.matrix(rw_trend_ppd[,8:1007]) * rw_trend_ppd$pys
+ll_pred <- dxpois(rw_trend_ppd$births, est_births, TRUE)
+rw_trend_elpd <- loo::elpd(t(ll_pred))
+rw_trend_elpd <- rw_trend_elpd$estimates %>%
+  as.data.frame() %>%
+  mutate(source = "rw_trend")
+
 rw_trend_ppd <- rw_trend_ppd %>%
   ungroup() %>%
   rowwise() %>%
@@ -1132,6 +1194,24 @@ if(nrow(mics_ppd)) {
 
 
 arima_ppd <- bind_rows(dhs_ppd, ais_ppd, phia_ppd, mics_ppd)
+
+true_values <- arima_ppd %>%
+  select(births, pys) %>%
+  mutate(observed_asfr = births/pys) %>%
+  .$observed_asfr
+
+predictions <- arima_ppd %>%
+  select(X1:X1000) %>%
+  as.matrix()
+
+arima_crps = sum(scoringutils::crps(true_values, predictions))
+
+est_births <- as.matrix(arima_ppd[,8:1007]) * arima_ppd$pys
+ll_pred <- dxpois(arima_ppd$births, est_births, TRUE)
+arima_elpd <- loo::elpd(t(ll_pred))
+arima_elpd <- arima_elpd$estimates %>%
+  as.data.frame() %>%
+  mutate(source = "arima")
 
 arima_ppd <- arima_ppd %>%
   ungroup() %>%
@@ -1337,6 +1417,24 @@ if(nrow(mics_ppd)) {
 
 arima_trend_ppd <- bind_rows(dhs_ppd, ais_ppd, phia_ppd, mics_ppd)
 
+true_values <- arima_trend_ppd %>%
+  select(births, pys) %>%
+  mutate(observed_asfr = births/pys) %>%
+  .$observed_asfr
+
+predictions <- arima_trend_ppd %>%
+  select(X1:X1000) %>%
+  as.matrix()
+
+arima_trend_crps = sum(scoringutils::crps(true_values, predictions))
+
+est_births <- as.matrix(arima_trend_ppd[,8:1007]) * arima_trend_ppd$pys
+ll_pred <- dxpois(arima_trend_ppd$births, est_births, TRUE)
+arima_trend_elpd <- loo::elpd(t(ll_pred))
+arima_trend_elpd <- arima_trend_elpd$estimates %>%
+  as.data.frame() %>%
+  mutate(source = "arima_trend")
+
 arima_trend_ppd <- arima_trend_ppd %>%
   ungroup() %>%
   rowwise() %>%
@@ -1540,6 +1638,24 @@ if(nrow(mics_ppd)) {
 
 
 ar1_ppd <- bind_rows(dhs_ppd, ais_ppd, phia_ppd, mics_ppd)
+
+true_values <- ar1_ppd %>%
+  select(births, pys) %>%
+  mutate(observed_asfr = births/pys) %>%
+  .$observed_asfr
+
+predictions <- ar1_ppd %>%
+  select(X1:X1000) %>%
+  as.matrix()
+
+ar1_crps = sum(scoringutils::crps(true_values, predictions))
+
+est_births <- as.matrix(ar1_ppd[,8:1007]) * ar1_ppd$pys
+ll_pred <- dxpois(ar1_ppd$births, est_births, TRUE)
+ar1_elpd <- loo::elpd(t(ll_pred))
+ar1_elpd <- ar1_elpd$estimates %>%
+  as.data.frame() %>%
+  mutate(source = "ar1")
 
 ar1_ppd <- ar1_ppd %>%
   ungroup() %>%
@@ -1746,6 +1862,24 @@ if(nrow(mics_ppd)) {
 
 ar1_trend_ppd <- bind_rows(dhs_ppd, ais_ppd, phia_ppd, mics_ppd)
 
+true_values <- ar1_trend_ppd %>%
+  select(births, pys) %>%
+  mutate(observed_asfr = births/pys) %>%
+  .$observed_asfr
+
+predictions <- ar1_trend_ppd %>%
+  select(X1:X1000) %>%
+  as.matrix()
+
+ar1_trend_crps = sum(scoringutils::crps(true_values, predictions))
+
+est_births <- as.matrix(ar1_trend_ppd[,8:1007]) * ar1_trend_ppd$pys
+ll_pred <- dxpois(ar1_trend_ppd$births, est_births, TRUE)
+ar1_trend_elpd <- loo::elpd(t(ll_pred))
+ar1_trend_elpd <- ar1_trend_elpd$estimates %>%
+  as.data.frame() %>%
+  mutate(source = "ar1_trend")
+
 ar1_trend_ppd <- ar1_trend_ppd %>%
   ungroup() %>%
   rowwise() %>%
@@ -1777,6 +1911,15 @@ ar1_trend_ppd <- ar1_trend_ppd %>%
          source = "ar1_trend")
 
 pred <- bind_rows(rw_ppd, rw2_ppd, arima_ppd, arima_trend_ppd, ar1_ppd, ar1_trend_ppd)
+elpd <- bind_rows(rw_elpd, rw2_elpd, arima_elpd, arima_trend_elpd, ar1_elpd, ar1_trend_elpd)
+crps <- data.frame("rw" = rw_crps,
+                   "rw2" = rw2_crps,
+                   "arima" = arima_crps,
+                   "arima_trend" = arima_trend_crps,
+                   "ar1" = ar1_crps,
+                   "ar1_trend" = ar1_trend_crps)
 
 write_csv(tmb_results, "fr.csv")
 write_csv(pred, "pred.csv")
+write_csv(elpd, "elpd.csv")
+write_csv(crps, "elpd.csv")
