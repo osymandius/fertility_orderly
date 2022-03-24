@@ -346,7 +346,9 @@ if(nrow(dhs_ppd)) {
   dhsMatrix <- exp(fit$sample$log_rate_exclude_dhs)
   dhs_ppd <- dhs_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(dhsMatrix)) 
+  bind_cols(data.frame(dhsMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   dhs_ppd <- data.frame()
 }
@@ -360,7 +362,9 @@ if(nrow(ais_ppd)) {
   aisMatrix <- exp(fit$sample$log_rate_exclude_ais)
   ais_ppd <- ais_ppd %>%
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-   bind_cols(data.frame(aisMatrix))
+   bind_cols(data.frame(aisMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   ais_ppd <- data.frame()
 }
@@ -374,7 +378,9 @@ if(nrow(phia_ppd)) {
   phiaMatrix <- exp(fit$sample$log_rate_exclude_phia)
   phia_ppd <- phia_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(phiaMatrix))
+  bind_cols(data.frame(phiaMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   phia_ppd <- data.frame()
 }
@@ -388,7 +394,9 @@ if(nrow(mics_ppd)) {
   micsMatrix <- exp(fit$sample$log_rate_exclude_mics)
   mics_ppd <- mics_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(micsMatrix))
+  bind_cols(data.frame(micsMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   mics_ppd <- data.frame()
 }
@@ -426,6 +434,9 @@ rw_ppd <- rw_ppd %>%
   ungroup() %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  type.convert() %>%
+  mutate(period = plyr::round_any(period, 3, round)) %>%
+  ungroup() %>%
   aggregate_to_admin(c("survey_id", "period", "age_group", "tips"),
                    c(paste0("X", 1:1000), "births", "pys"),
                    1,
@@ -605,7 +616,9 @@ if(nrow(dhs_ppd)) {
   dhsMatrix <- exp(fit$sample$log_rate_exclude_dhs)
   dhs_ppd <- dhs_ppd %>%
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-   bind_cols(data.frame(dhsMatrix))
+   bind_cols(data.frame(dhsMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   dhs_ppd <- data.frame()
 }
@@ -619,7 +632,9 @@ if(nrow(ais_ppd)) {
   aisMatrix <- exp(fit$sample$log_rate_exclude_ais)
   ais_ppd <- ais_ppd %>%
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-   bind_cols(data.frame(aisMatrix))
+   bind_cols(data.frame(aisMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   ais_ppd <- data.frame()
 }
@@ -633,7 +648,9 @@ if(nrow(phia_ppd)) {
   phiaMatrix <- exp(fit$sample$log_rate_exclude_phia)
   phia_ppd <- phia_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(phiaMatrix))
+  bind_cols(data.frame(phiaMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   phia_ppd <- data.frame()
 }
@@ -647,7 +664,9 @@ if(nrow(mics_ppd)) {
   micsMatrix <- exp(fit$sample$log_rate_exclude_mics)
   mics_ppd <- mics_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(micsMatrix))
+  bind_cols(data.frame(micsMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   mics_ppd <- data.frame()
 }
@@ -676,6 +695,9 @@ rw2_ppd <- rw2_ppd %>%
   ungroup() %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  type.convert() %>%
+  mutate(period = plyr::round_any(period, 3, round)) %>%
+  ungroup() %>%
   aggregate_to_admin(c("survey_id", "period", "age_group", "tips"),
                    c(paste0("X", 1:1000), "births", "pys"),
                    1,
@@ -924,7 +946,9 @@ if(nrow(dhs_ppd)) {
   dhsMatrix <- exp(fit$sample$log_rate_exclude_dhs)
   dhs_ppd <- dhs_ppd %>%
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-   bind_cols(data.frame(dhsMatrix))
+   bind_cols(data.frame(dhsMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   dhs_ppd <- data.frame()
 }
@@ -938,7 +962,9 @@ if(nrow(ais_ppd)) {
   aisMatrix <- exp(fit$sample$log_rate_exclude_ais)
   ais_ppd <- ais_ppd %>%
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-   bind_cols(data.frame(aisMatrix))
+   bind_cols(data.frame(aisMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   ais_ppd <- data.frame()
 }
@@ -952,7 +978,9 @@ if(nrow(phia_ppd)) {
   phiaMatrix <- exp(fit$sample$log_rate_exclude_phia)
   phia_ppd <- phia_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(phiaMatrix))
+  bind_cols(data.frame(phiaMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   phia_ppd <- data.frame()
 }
@@ -966,7 +994,9 @@ if(nrow(mics_ppd)) {
   micsMatrix <- exp(fit$sample$log_rate_exclude_mics)
   mics_ppd <- mics_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(micsMatrix))
+  bind_cols(data.frame(micsMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   mics_ppd <- data.frame()
 }
@@ -996,6 +1026,9 @@ rw_trend_ppd <- rw_trend_ppd %>%
   ungroup() %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  type.convert() %>%
+  mutate(period = plyr::round_any(period, 3, round)) %>%
+  ungroup() %>%
   aggregate_to_admin(c("survey_id", "period", "age_group", "tips"),
                    c(paste0("X", 1:1000), "births", "pys"),
                    1,
@@ -1145,7 +1178,9 @@ if(nrow(dhs_ppd)) {
   dhsMatrix <- exp(fit$sample$log_rate_exclude_dhs)
   dhs_ppd <- dhs_ppd %>%
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-   bind_cols(data.frame(dhsMatrix))
+   bind_cols(data.frame(dhsMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   dhs_ppd <- data.frame()
 }
@@ -1159,7 +1194,9 @@ if(nrow(ais_ppd)) {
   aisMatrix <- exp(fit$sample$log_rate_exclude_ais)
   ais_ppd <- ais_ppd %>%
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-   bind_cols(data.frame(aisMatrix))
+   bind_cols(data.frame(aisMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   ais_ppd <- data.frame()
 }
@@ -1173,7 +1210,9 @@ if(nrow(phia_ppd)) {
   phiaMatrix <- exp(fit$sample$log_rate_exclude_phia)
   phia_ppd <- phia_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(phiaMatrix))
+  bind_cols(data.frame(phiaMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   phia_ppd <- data.frame()
 }
@@ -1187,7 +1226,9 @@ if(nrow(mics_ppd)) {
   micsMatrix <- exp(fit$sample$log_rate_exclude_mics)
   mics_ppd <- mics_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(micsMatrix))
+  bind_cols(data.frame(micsMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   mics_ppd <- data.frame()
 }
@@ -1217,6 +1258,9 @@ arima_ppd <- arima_ppd %>%
   ungroup() %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  type.convert() %>%
+  mutate(period = plyr::round_any(period, 3, round)) %>%
+  ungroup() %>%
   aggregate_to_admin(c("survey_id", "period", "age_group", "tips"),
                    c(paste0("X", 1:1000), "births", "pys"),
                    1,
@@ -1367,7 +1411,9 @@ if(nrow(dhs_ppd)) {
   dhsMatrix <- exp(fit$sample$log_rate_exclude_dhs)
   dhs_ppd <- dhs_ppd %>%
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-   bind_cols(data.frame(dhsMatrix))
+   bind_cols(data.frame(dhsMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   dhs_ppd <- data.frame()
 }
@@ -1381,7 +1427,9 @@ if(nrow(ais_ppd)) {
   aisMatrix <- exp(fit$sample$log_rate_exclude_ais)
   ais_ppd <- ais_ppd %>%
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-   bind_cols(data.frame(aisMatrix))
+   bind_cols(data.frame(aisMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   ais_ppd <- data.frame()
 }
@@ -1395,7 +1443,9 @@ if(nrow(phia_ppd)) {
   phiaMatrix <- exp(fit$sample$log_rate_exclude_phia)
   phia_ppd <- phia_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(phiaMatrix))
+  bind_cols(data.frame(phiaMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   phia_ppd <- data.frame()
 }
@@ -1409,7 +1459,9 @@ if(nrow(mics_ppd)) {
   micsMatrix <- exp(fit$sample$log_rate_exclude_mics)
   mics_ppd <- mics_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(micsMatrix))
+  bind_cols(data.frame(micsMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   mics_ppd <- data.frame()
 }
@@ -1439,6 +1491,9 @@ arima_trend_ppd <- arima_trend_ppd %>%
   ungroup() %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  type.convert() %>%
+  mutate(period = plyr::round_any(period, 3, round)) %>%
+  ungroup() %>%
   aggregate_to_admin(c("survey_id", "period", "age_group", "tips"),
                    c(paste0("X", 1:1000), "births", "pys"),
                    1,
@@ -1589,7 +1644,9 @@ if(nrow(dhs_ppd)) {
   dhsMatrix <- exp(fit$sample$log_rate_exclude_dhs)
   dhs_ppd <- dhs_ppd %>%
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-   bind_cols(data.frame(dhsMatrix))
+   bind_cols(data.frame(dhsMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   dhs_ppd <- data.frame()
 }
@@ -1603,7 +1660,9 @@ if(nrow(ais_ppd)) {
   aisMatrix <- exp(fit$sample$log_rate_exclude_ais)
   ais_ppd <- ais_ppd %>%
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-   bind_cols(data.frame(aisMatrix))
+   bind_cols(data.frame(aisMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   ais_ppd <- data.frame()
 }
@@ -1617,7 +1676,9 @@ if(nrow(phia_ppd)) {
   phiaMatrix <- exp(fit$sample$log_rate_exclude_phia)
   phia_ppd <- phia_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(phiaMatrix))
+  bind_cols(data.frame(phiaMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   phia_ppd <- data.frame()
 }
@@ -1631,7 +1692,9 @@ if(nrow(mics_ppd)) {
   micsMatrix <- exp(fit$sample$log_rate_exclude_mics)
   mics_ppd <- mics_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(micsMatrix))
+  bind_cols(data.frame(micsMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   mics_ppd <- data.frame()
 }
@@ -1661,6 +1724,9 @@ ar1_ppd <- ar1_ppd %>%
   ungroup() %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  type.convert() %>%
+  mutate(period = plyr::round_any(period, 3, round)) %>%
+  ungroup() %>%
   aggregate_to_admin(c("survey_id", "period", "age_group", "tips"),
                    c(paste0("X", 1:1000), "births", "pys"),
                    1,
@@ -1812,7 +1878,9 @@ if(nrow(dhs_ppd)) {
   dhsMatrix <- exp(fit$sample$log_rate_exclude_dhs)
   dhs_ppd <- dhs_ppd %>%
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-   bind_cols(data.frame(dhsMatrix))
+   bind_cols(data.frame(dhsMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   dhs_ppd <- data.frame()
 }
@@ -1826,7 +1894,9 @@ if(nrow(ais_ppd)) {
   aisMatrix <- exp(fit$sample$log_rate_exclude_ais)
   ais_ppd <- ais_ppd %>%
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-   bind_cols(data.frame(aisMatrix))
+   bind_cols(data.frame(aisMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   ais_ppd <- data.frame()
 }
@@ -1840,7 +1910,9 @@ if(nrow(phia_ppd)) {
   phiaMatrix <- exp(fit$sample$log_rate_exclude_phia)
   phia_ppd <- phia_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(phiaMatrix))
+  bind_cols(data.frame(phiaMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   phia_ppd <- data.frame()
 }
@@ -1854,7 +1926,9 @@ if(nrow(mics_ppd)) {
   micsMatrix <- exp(fit$sample$log_rate_exclude_mics)
   mics_ppd <- mics_ppd %>% 
   select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-  bind_cols(data.frame(micsMatrix))
+  bind_cols(data.frame(micsMatrix)) %>%
+    type.convert() %>%
+    filter(period >= end_year)
 } else {
   mics_ppd <- data.frame()
 }
@@ -1884,6 +1958,9 @@ ar1_trend_ppd <- ar1_trend_ppd %>%
   ungroup() %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
+  type.convert() %>%
+  mutate(period = plyr::round_any(period, 3, round)) %>%
+  ungroup() %>%
   aggregate_to_admin(c("survey_id", "period", "age_group", "tips"),
                    c(paste0("X", 1:1000), "births", "pys"),
                    1,
