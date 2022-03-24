@@ -53,6 +53,7 @@ parameters:
     default: ~
 
 packages:
+  - plyr
   - dplyr
   - tidyr
   - dfertility

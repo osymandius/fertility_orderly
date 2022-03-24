@@ -435,7 +435,7 @@ rw_ppd <- rw_ppd %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
   type.convert() %>%
-  mutate(period = plyr::round_any(period, 3, round)) %>%
+  mutate(period = plyr::round_any(period, 2, round)) %>%
   ungroup() %>%
   aggregate_to_admin(c("survey_id", "period", "age_group", "tips"),
                    c(paste0("X", 1:1000), "births", "pys"),
@@ -696,7 +696,7 @@ rw2_ppd <- rw2_ppd %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
   type.convert() %>%
-  mutate(period = plyr::round_any(period, 3, round)) %>%
+  mutate(period = plyr::round_any(period, 2, round)) %>%
   ungroup() %>%
   aggregate_to_admin(c("survey_id", "period", "age_group", "tips"),
                    c(paste0("X", 1:1000), "births", "pys"),
@@ -1027,7 +1027,7 @@ rw_trend_ppd <- rw_trend_ppd %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
   type.convert() %>%
-  mutate(period = plyr::round_any(period, 3, round)) %>%
+  mutate(period = plyr::round_any(period, 2, round)) %>%
   ungroup() %>%
   aggregate_to_admin(c("survey_id", "period", "age_group", "tips"),
                    c(paste0("X", 1:1000), "births", "pys"),
@@ -1259,7 +1259,7 @@ arima_ppd <- arima_ppd %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
   type.convert() %>%
-  mutate(period = plyr::round_any(period, 3, round)) %>%
+  mutate(period = plyr::round_any(period, 2, round)) %>%
   ungroup() %>%
   aggregate_to_admin(c("survey_id", "period", "age_group", "tips"),
                    c(paste0("X", 1:1000), "births", "pys"),
@@ -1492,7 +1492,7 @@ arima_trend_ppd <- arima_trend_ppd %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
   type.convert() %>%
-  mutate(period = plyr::round_any(period, 3, round)) %>%
+  mutate(period = plyr::round_any(period, 2, round)) %>%
   ungroup() %>%
   aggregate_to_admin(c("survey_id", "period", "age_group", "tips"),
                    c(paste0("X", 1:1000), "births", "pys"),
@@ -1725,7 +1725,7 @@ ar1_ppd <- ar1_ppd %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
   type.convert() %>%
-  mutate(period = plyr::round_any(period, 3, round)) %>%
+  mutate(period = plyr::round_any(period, 2, round)) %>%
   ungroup() %>%
   aggregate_to_admin(c("survey_id", "period", "age_group", "tips"),
                    c(paste0("X", 1:1000), "births", "pys"),
@@ -1959,7 +1959,7 @@ ar1_trend_ppd <- ar1_trend_ppd %>%
   rowwise() %>%
   mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
   type.convert() %>%
-  mutate(period = plyr::round_any(period, 3, round)) %>%
+  mutate(period = plyr::round_any(period, 2, round)) %>%
   ungroup() %>%
   aggregate_to_admin(c("survey_id", "period", "age_group", "tips"),
                    c(paste0("X", 1:1000), "births", "pys"),
@@ -1999,4 +1999,4 @@ crps <- data.frame("rw" = rw_crps,
 write_csv(tmb_results, "fr.csv")
 write_csv(pred, "pred.csv")
 write_csv(elpd, "elpd.csv")
-write_csv(crps, "elpd.csv")
+write_csv(crps, "crps.csv")
