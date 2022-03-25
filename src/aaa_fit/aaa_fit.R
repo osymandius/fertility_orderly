@@ -51,7 +51,7 @@ mf$observations$full_obs <- mf$observations$full_obs %>%
   ungroup() %>%
   mutate(id.smooth = factor(row_number()))
 
-zeta2_combinations <- length(unique(mf$observations$full_obs$survey_id))*4
+# zeta2_combinations <- length(unique(mf$observations$full_obs$survey_id))*4
 
 mf$observations$full_obs <- mf$observations$full_obs %>%
   mutate(tips_dummy_5 = as.integer(tips %in% 5),
@@ -69,18 +69,24 @@ mf$observations$full_obs <- mf$observations$full_obs %>%
   ungroup()
 
 if(iso3 %in% c("CAF", "GNB", "SSD")) {
+  
+  zeta2_combinations <- length(unique(mf$observations$full_obs$survey_id))*3
+  
   mf$observations$full_obs <- mf$observations$full_obs %>%
     group_by(tips_fe, survey_id) %>%
     mutate(
       id.zeta2 = as.character(cur_group_id()),
-      id.zeta2 = fct_expand(id.zeta2, as.character(1:12))) %>%
+      id.zeta2 = fct_expand(id.zeta2, as.character(1:zeta2_combinations))) %>%
     ungroup()
 } else {
+  
+  zeta2_combinations <- length(unique(mf$observations$full_obs$survey_id))*4
+  
   mf$observations$full_obs <- mf$observations$full_obs %>%
     group_by(tips_fe, survey_id) %>%
     mutate(
       id.zeta2 = as.character(cur_group_id()),
-      id.zeta2 = fct_expand(id.zeta2, as.character(1:16))) %>%
+      id.zeta2 = fct_expand(id.zeta2, as.character(1:zeta2_combinations))) %>%
     ungroup()
 }
 
