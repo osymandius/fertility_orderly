@@ -22,6 +22,7 @@ if(dhs_flag == 1) {
   
   dhs_fr <- calculate_dhs_fertility(iso3, surveys, clusters, areas_wide)
   
+  saveRDS(dhs_fr$nrow_ir, "nrow_ir.rds")
 }
 
 if(mics_flag == 1) {

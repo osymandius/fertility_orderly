@@ -9,6 +9,10 @@ artefacts:
       description: fertility indicator dataset
       filenames:
         - fr_plot.csv
+  - data:
+      description: nrow ir
+      filenames:
+        - nrow_ir.rds
   - staticgraph:
       description: Validate admin-1 TFRs
       filenames:
