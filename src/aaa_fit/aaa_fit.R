@@ -51,6 +51,8 @@ mf$observations$full_obs <- mf$observations$full_obs %>%
   ungroup() %>%
   mutate(id.smooth = factor(row_number()))
 
+# zeta2_combinations <- length(unique(mf$observations$full_obs$survey_id))*4
+
 mf$observations$full_obs <- mf$observations$full_obs %>%
   mutate(tips_dummy_5 = as.integer(tips %in% 5),
          tips_dummy_6 = as.integer(tips %in% 6),
@@ -64,15 +66,29 @@ mf$observations$full_obs <- mf$observations$full_obs %>%
            TRUE ~ 0
          ))
          ) %>%
-  ungroup() %>%
-  group_by(tips_fe, survey_id) %>%
-  mutate(id.zeta2 = factor(cur_group_id()),
-         id.zeta2 = factor(ifelse(iso3 %in% c("GNB", "CAF", "SSD"), 
-                           forcats::fct_expand(id.zeta2, as.character(1:(length(unique(mf$observations$full_obs$survey_id))*3))),
-                           forcats::fct_expand(id.zeta2, as.character(1:(length(unique(mf$observations$full_obs$survey_id))*4)))
-                           )
-  )) %>%
   ungroup()
+
+if(iso3 %in% c("CAF", "GNB", "SSD")) {
+  
+  zeta2_combinations <- length(unique(mf$observations$full_obs$survey_id))*3
+  
+  mf$observations$full_obs <- mf$observations$full_obs %>%
+    group_by(tips_fe, survey_id) %>%
+    mutate(
+      id.zeta2 = as.character(cur_group_id()),
+      id.zeta2 = fct_expand(id.zeta2, as.character(1:zeta2_combinations))) %>%
+    ungroup()
+} else {
+  
+  zeta2_combinations <- length(unique(mf$observations$full_obs$survey_id))*4
+  
+  mf$observations$full_obs <- mf$observations$full_obs %>%
+    group_by(tips_fe, survey_id) %>%
+    mutate(
+      id.zeta2 = as.character(cur_group_id()),
+      id.zeta2 = fct_expand(id.zeta2, as.character(1:zeta2_combinations))) %>%
+    ungroup()
+}
 
 clear_col <- as.integer(unique(filter(mf$observations$full_obs, tips_fe == 0)$id.zeta2))
 mf$Z$Z_zeta2 <- sparse.model.matrix(~0 + id.zeta2, mf$observations$full_obs)
@@ -106,9 +122,9 @@ mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
 
 validate_model_frame(mf, areas)
 
-# TMB::compile("src/aaa_fit/models/model6.cpp", flags = "-w")               # Compile the C++ file
+# TMB::compile("~/Documents/GitHub/dfertility/backup_src/model6.cpp", flags = "-w")               # Compile the C++ file
 # TMB::compile("models/model6.cpp", flags = "-w")               # Compile the C++ file
-dyn.load(dynlib("models/model6"))
+# dyn.load(dynlib("~/Documents/GitHub/dfertility/backup_src/model6"))
 
 tmb_int <- list()
 
@@ -221,10 +237,9 @@ tmb_int$par <- list(
   # u_period = rep(0, ncol(mf$Z$Z_period)),
   u_period = rep(0, ncol(spline_mat)),
   log_prec_rw_period = 0,
-  # logit_phi_period = 0,
-  # lag_logit_phi_period = 0,
-  lag_logit_phi_arima_period = 0,
-  beta_period = 0,
+  lag_logit_phi_period = 0,
+  # lag_logit_phi_arima_period = 0,
+  # beta_period = 0,
 
   log_prec_smooth_iid = 0,
   u_smooth_iid = rep(0, ncol(R_smooth_iid)),
@@ -262,7 +277,7 @@ tmb_int$random <- c("beta_0",
                     "u_age",
                     "u_period",
                     "u_smooth_iid",
-                    "beta_period",
+                    # "beta_period",
                     # "beta_tips_dummy",
                     "beta_tips_dummy_5",
                     "beta_tips_fe",
@@ -302,7 +317,7 @@ if(mf$mics_toggle) {
 
 f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
                                parameters = tmb_int$par,
-                               DLL = "model6",
+                               DLL = "model7",
                                silent=0,
                                checkParameterOrder=FALSE)
 })
@@ -313,7 +328,7 @@ if(is.null(parallel::mccollect(f)[[1]])) {
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                        parameters = tmb_int$par,
-                       DLL = "model6",
+                       DLL = "model7",
                        random = tmb_int$random,
                        hessian = FALSE)
 

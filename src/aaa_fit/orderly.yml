@@ -41,9 +41,9 @@ resources:
   # - no_tips.cpp
   # - no_tips.o
   # - no_tips.so
-  - models/model6.cpp
-  - models/model6.so
-  - models/model6.o
+  # - models/model6.cpp
+  # - models/model6.so
+  # - models/model6.o
 
 
 
