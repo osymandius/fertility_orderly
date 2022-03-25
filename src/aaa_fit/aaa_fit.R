@@ -51,6 +51,8 @@ mf$observations$full_obs <- mf$observations$full_obs %>%
   ungroup() %>%
   mutate(id.smooth = factor(row_number()))
 
+zeta2_combinations <- length(unique(mf$observations$full_obs$survey_id))*4
+
 mf$observations$full_obs <- mf$observations$full_obs %>%
   mutate(tips_dummy_5 = as.integer(tips %in% 5),
          tips_dummy_6 = as.integer(tips %in% 6),
@@ -64,15 +66,23 @@ mf$observations$full_obs <- mf$observations$full_obs %>%
            TRUE ~ 0
          ))
          ) %>%
-  ungroup() %>%
-  group_by(tips_fe, survey_id) %>%
-  mutate(id.zeta2 = factor(cur_group_id()),
-         id.zeta2 = factor(ifelse(iso3 %in% c("GNB", "CAF", "SSD"), 
-                           forcats::fct_expand(id.zeta2, as.character(1:(length(unique(mf$observations$full_obs$survey_id))*3))),
-                           forcats::fct_expand(id.zeta2, as.character(1:(length(unique(mf$observations$full_obs$survey_id))*4)))
-                           )
-  )) %>%
   ungroup()
+
+if(iso3 %in% c("CAF", "GNB", "SSD")) {
+  mf$observations$full_obs <- mf$observations$full_obs %>%
+    group_by(tips_fe, survey_id) %>%
+    mutate(
+      id.zeta2 = as.character(cur_group_id()),
+      id.zeta2 = fct_expand(id.zeta2, as.character(1:12))) %>%
+    ungroup()
+} else {
+  mf$observations$full_obs <- mf$observations$full_obs %>%
+    group_by(tips_fe, survey_id) %>%
+    mutate(
+      id.zeta2 = as.character(cur_group_id()),
+      id.zeta2 = fct_expand(id.zeta2, as.character(1:16))) %>%
+    ungroup()
+}
 
 clear_col <- as.integer(unique(filter(mf$observations$full_obs, tips_fe == 0)$id.zeta2))
 mf$Z$Z_zeta2 <- sparse.model.matrix(~0 + id.zeta2, mf$observations$full_obs)
@@ -106,9 +116,9 @@ mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
 
 validate_model_frame(mf, areas)
 
-# TMB::compile("src/aaa_fit/models/model6.cpp", flags = "-w")               # Compile the C++ file
+# TMB::compile("~/Documents/GitHub/dfertility/backup_src/model6.cpp", flags = "-w")               # Compile the C++ file
 # TMB::compile("models/model6.cpp", flags = "-w")               # Compile the C++ file
-# dyn.load(dynlib("models/model6"))
+# dyn.load(dynlib("~/Documents/GitHub/dfertility/backup_src/model6"))
 
 tmb_int <- list()
 
@@ -222,7 +232,6 @@ tmb_int$par <- list(
   u_period = rep(0, ncol(spline_mat)),
   log_prec_rw_period = 0,
   lag_logit_phi_period = 0,
-  # lag_logit_phi_period = 0,
   # lag_logit_phi_arima_period = 0,
   # beta_period = 0,
 
