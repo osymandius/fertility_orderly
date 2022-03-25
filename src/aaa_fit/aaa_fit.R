@@ -108,7 +108,7 @@ validate_model_frame(mf, areas)
 
 # TMB::compile("src/aaa_fit/models/model6.cpp", flags = "-w")               # Compile the C++ file
 # TMB::compile("models/model6.cpp", flags = "-w")               # Compile the C++ file
-dyn.load(dynlib("models/model6"))
+# dyn.load(dynlib("models/model6"))
 
 tmb_int <- list()
 
@@ -221,10 +221,10 @@ tmb_int$par <- list(
   # u_period = rep(0, ncol(mf$Z$Z_period)),
   u_period = rep(0, ncol(spline_mat)),
   log_prec_rw_period = 0,
-  # logit_phi_period = 0,
+  logit_phi_period = 0,
   # lag_logit_phi_period = 0,
-  lag_logit_phi_arima_period = 0,
-  beta_period = 0,
+  # lag_logit_phi_arima_period = 0,
+  # beta_period = 0,
 
   log_prec_smooth_iid = 0,
   u_smooth_iid = rep(0, ncol(R_smooth_iid)),
@@ -262,7 +262,7 @@ tmb_int$random <- c("beta_0",
                     "u_age",
                     "u_period",
                     "u_smooth_iid",
-                    "beta_period",
+                    # "beta_period",
                     # "beta_tips_dummy",
                     "beta_tips_dummy_5",
                     "beta_tips_fe",
@@ -302,7 +302,7 @@ if(mf$mics_toggle) {
 
 f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
                                parameters = tmb_int$par,
-                               DLL = "model6",
+                               DLL = "model7",
                                silent=0,
                                checkParameterOrder=FALSE)
 })
@@ -313,7 +313,7 @@ if(is.null(parallel::mccollect(f)[[1]])) {
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                        parameters = tmb_int$par,
-                       DLL = "model6",
+                       DLL = "model7",
                        random = tmb_int$random,
                        hessian = FALSE)
 
