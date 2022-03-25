@@ -51,6 +51,7 @@ if(dhs_flag == 1 & mics_flag == 1){
 } else {
   asfr <- mics_fr$mics_asfr
   plot_dat <- mics_fr$mics_plot
+  saveRDS(data.frame(), "nrow_ir.rds")
 }
 
 write_csv(asfr, "asfr.csv")
