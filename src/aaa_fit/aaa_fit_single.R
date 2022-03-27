@@ -297,7 +297,7 @@ if(!iso3 %in% c("MWI", "RWA")) {
   tmb_int$par <- c(tmb_int$par,
                    "beta_spike_2000" = 0,
                    "beta_spike_1999" = 0,
-                   "beta_spike_2001" = 0,
+                   "beta_spike_2001" = 0
   )
   
   tmb_int$random <- c(tmb_int$random,                     
