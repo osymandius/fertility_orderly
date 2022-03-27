@@ -368,10 +368,10 @@ data.frame(matrix(filter(sd_report, hyper == "eta2")$Estimate, nrow=11, byrow = 
 
 ############
 
-id <- lapply(ssa_iso3[!ssa_iso3 %in% c("BWA", "GNQ", "MLI", "ETH", "MWI", "RWA")], function(x){
+id <- lapply(ssa_iso3[!ssa_iso3 %in% c("BWA", "GNQ")], function(x){
   orderly::orderly_search(name = "aaa_fit", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
   }) %>%
-  setNames(ssa_iso3[!ssa_iso3 %in% c("BWA", "GNQ", "MLI", "ETH", "MWI", "RWA")])
+  setNames(c("ZAF", "SLE", "SEN", "TGO", "NER", "LBR", "GIN", "GHA", "GMB", "GAB", "CIV", "COG", "TCD", "BDI", "BFA", "BEN", "ZWE", "ZMB", "NAM", "MOZ", "LSO", "KEN", "SWZ", "AGO"))
 
 id2 <- lapply(c("MWI", "RWA"), function(x){
   orderly::orderly_search(name = "aaa_mwi_rwa_fit", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
@@ -496,4 +496,47 @@ dev.off()
 
 ###
 
+tips_fe <- sd_report %>%
+  bind_rows() %>%
+  filter(hyper %in% c("beta_tips_dummy_5", "beta_tips_dummy_6", "beta_tips_dummy_10")) %>%
+  mutate(idx = str_remove(hyper, "beta_tips_dummy_")) %>%
+  type_convert() %>%
+  select(est_fe = Estimate, iso3 = iso, idx)
 
+sd_report %>%
+  bind_rows() %>%
+  filter(!iso %in% c("CAF", "GNB")) %>%
+  filter(hyper == "u_tips") %>%
+  left_join(sd_report %>%
+              bind_rows() %>%
+              filter(hyper == "log_prec_rw_tips") %>%
+              rename(log_prec_rw_tips = Estimate) %>%
+              select(iso, log_prec_rw_tips)
+  ) %>%
+  mutate(sd = sqrt(1/exp(log_prec_rw_tips)),
+         scaled = Estimate * sd) %>%
+  rename(iso3 = iso) %>%
+  group_by(iso3) %>%
+  mutate(idx = row_number()-1) %>%
+  left_join(tips_fe) %>%
+  mutate(scaled = ifelse(!is.na(est_fe), scaled + est_fe, scaled),
+         iso3 = paste0(iso3, " | ", round(sd, 2))) %>%
+  ggplot(aes(x=idx, y=scaled)) +
+    geom_line() +
+    geom_point() +
+    facet_wrap(~iso3) +
+    labs(title = "Scaled TIPS RW coefficients + FE") +
+  standard_theme()
+
+
+
+sd_report %>%
+  bind_rows() %>%
+  filter(hyper == "log_prec_rw_tips",
+         !iso %in% c("CAF", "GNB")) %>%
+  View()
+  rename(log_prec_rw_tips = Estimate) %>%
+  select(iso, log_prec_rw_tips) %>%
+  mutate(sd = sqrt(1/exp(log_prec_rw_tips)))
+
+         
