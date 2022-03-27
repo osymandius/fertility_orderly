@@ -1,4 +1,4 @@
-script: aaa_fit.R
+script: aaa_fit_single.R
 
 artefacts:
   - data:
