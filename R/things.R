@@ -368,33 +368,29 @@ data.frame(matrix(filter(sd_report, hyper == "eta2")$Estimate, nrow=11, byrow = 
 
 ############
 
-id <- lapply(ssa_iso3[!ssa_iso3 %in% c("BWA", "GNQ")], function(x){
+
+id <- lapply(ssa_iso3[!ssa_iso3 %in% c("SSD", "ETH", "GNQ", "BWA", "MWI", "RWA", "GNB", "CAF","SSD", "COD")], function(x){
   orderly::orderly_search(name = "aaa_fit", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
-  }) %>%
-  setNames(c("ZAF", "SLE", "SEN", "TGO", "NER", "LBR", "GIN", "GHA", "GMB", "GAB", "CIV", "COG", "TCD", "BDI", "BFA", "BEN", "ZWE", "ZMB", "NAM", "MOZ", "LSO", "KEN", "SWZ", "AGO"))
+}) 
 
-id2 <- lapply(c("MWI", "RWA"), function(x){
+id2 <- lapply(c("RWA", "MWI"), function(x){
   orderly::orderly_search(name = "aaa_mwi_rwa_fit", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
-}) %>%
-  setNames(c("MWI", "RWA"))
+})
 
-dat <- lapply(paste0("archive/aaa_fit/", id, "/fr.csv"), read_csv, show_col_types = FALSE) %>%
-  setNames(names(id))
+id3 <- lapply("ETH", function(x){
+  orderly::orderly_search(name = "aaa_eth_fit", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
+})
 
-dat2 <- lapply(paste0("archive/aaa_mwi_rwa_fit/", id2, "/fr.csv"), read_csv, show_col_types = FALSE) %>%
-  setNames(names(id2))
+dat <- lapply(paste0("archive/aaa_fit/", id, "/fr.csv"), read_csv, show_col_types = FALSE)
+dat2 <- lapply(paste0("archive/aaa_mwi_rwa_fit/", id2, "/fr.csv"), read_csv, show_col_types = FALSE)
+dat3 <- lapply(paste0("archive/aaa_eth_fit/", id3, "/fr.csv"), read_csv, show_col_types = FALSE)
+dat <- c(dat, dat2, dat3) %>%
+  setNames(c(ssa_iso3[!ssa_iso3 %in% c("SSD", "ETH", "GNQ", "BWA", "MWI", "RWA", "GNB", "CAF","SSD", "COD")], "RWA", "MWI", "ETH"))
 
-dat <- c(dat, dat2)
-
-possibly_read <- purrr::possibly(read_csv, otherwise = NULL)
-
-fr_plot <- lapply(paste0("archive/aaa_fit/", id[!id %in% c("AGO")], "/depends/fr_plot.csv"), possibly_read, show_col_types = FALSE) %>%
-  setNames(names(id[!id %in% c("AGO")]))
-
-fr_plot2 <- lapply(paste0("archive/aaa_mwi_rwa_fit/", id2, "/depends/fr_plot.csv"), possibly_read, show_col_types = FALSE) %>%
-  setNames(names(id2))
-
-fr_plot <- c(fr_plot, fr_plot2)
+fr_plot <- lapply(file.path("archive/aaa_fit", id, "depends/fr_plot.csv"), read.csv)
+fr_plot2 <- lapply(file.path("archive/aaa_mwi_rwa_fit", id2, "depends/fr_plot.csv"), read.csv)
+fr_plot3 <- lapply(file.path("archive/aaa_eth_fit", id3, "depends/fr_plot.csv"), read.csv)
+fr_plot <- c(fr_plot, fr_plot2, fr_plot3)
 
 name_key <- dat %>%
   bind_rows() %>%
@@ -409,8 +405,17 @@ fr_plot <- fr_plot %>%
               select(-tips) %>%
               separate(survey_id, into=c("iso3", NA), sep=3, remove=FALSE) %>%
               mutate(area_id = iso3,
-                     area_level =0)
+                     area_level =0,
+                     variable = "tfr")
             )%>%
+  bind_rows(read.csv("global/phia_asfr_admin0.csv") %>%
+              rename(value = asfr) %>%
+              select(-tips) %>%
+              separate(survey_id, into=c("iso3", NA), sep=3, remove=FALSE) %>%
+              mutate(area_id = iso3,
+                     area_level =0,
+                     variable = "asfr")
+  )%>%
   separate(survey_id, into=c("iso3", NA), sep=3, remove=FALSE) %>%
   arrange(iso3) %>%
   left_join(name_key) %>%
@@ -424,6 +429,8 @@ fr_plot <- fr_plot %>%
   setNames(unique(fr_plot$iso3))
 
 comparison_fr <- read.csv("global/comparison_fr.csv") %>%
+  left_join(naomi::get_age_groups() %>% select(age_group, age_group_label)) %>%
+  filter(iso3 %in% names(fr_plot)) %>%
   arrange(iso3) %>%
   group_by(iso3)
 
@@ -431,8 +438,8 @@ comparison_plot <- comparison_fr %>%
   group_split() %>%
   setNames(unique(comparison_fr$iso3))
 
-dat <- dat[names(dat) != "AGO"]
-fr_plot <- compact(fr_plot)
+# dat <- dat[names(dat) != "AGO"]
+# fr_plot <- compact(fr_plot)
 
 get_plot_limits <- function(plot) {
   gb = ggplot_build(plot)
@@ -443,7 +450,7 @@ get_plot_limits <- function(plot) {
   list(ymin = ymin, ymax = ymax)
 }
 
-plots <- Map(function(dat1, fr_plot, comparison_plot) {
+tfr_plots <- Map(function(dat1, fr_plot, comparison_plot) {
   iso3_c <- unique(dat1$iso3)
   cntry_name <- countrycode::countrycode(iso3_c, "iso3c", "country.name")
   
@@ -452,7 +459,7 @@ plots <- Map(function(dat1, fr_plot, comparison_plot) {
   
   fr_plot <- fr_plot %>%
     mutate(area_id = ifelse(is.na(area_id), iso3_c, area_id)) %>%
-    filter(value > 0.5, area_level ==0)
+    filter(value > 0.5, area_level ==0, variable == "tfr")
   
   tfr_plot <- dat1 %>%
     filter(area_level == 0, variable == "tfr", period > 1999) %>%
@@ -467,7 +474,9 @@ plots <- Map(function(dat1, fr_plot, comparison_plot) {
   
   limits <- get_plot_limits(tfr_plot)
   
-  comparison_plot <- dat1 %>%
+  tfr_plot <- tfr_plot + lims(y=c(limits$ymin, limits$ymax))
+  
+  comparison_tfr_plot <- dat1 %>%
     mutate(source = "dfertility") %>%
     filter(area_level == 0, variable == "tfr", period > 1999) %>%
     bind_rows(
@@ -485,13 +494,13 @@ plots <- Map(function(dat1, fr_plot, comparison_plot) {
     lims(y=c(limits$ymin, limits$ymax)) +
     moz.utils::standard_theme()
   
-  ggpubr::ggarrange(tfr_plot, comparison_plot, nrow = 1)
+  ggpubr::ggarrange(tfr_plot, comparison_tfr_plot, nrow = 1)
   
 }, dat, fr_plot[names(dat)], comparison_plot[names(dat)])
 
 
-pdf(paste0("~/Downloads/fr_comparison.pdf"), h = 6, w = 12)
-plots
+pdf(paste0("~/Downloads/tfr_comparison.pdf"), h = 6, w = 16)
+tfr_plots
 dev.off()
 
 ###
@@ -540,3 +549,57 @@ sd_report %>%
   mutate(sd = sqrt(1/exp(log_prec_rw_tips)))
 
          
+asfr_plots <- Map(function(dat1, fr_plot, comparison_plot) {
+  iso3_c <- unique(dat1$iso3)
+  cntry_name <- countrycode::countrycode(iso3_c, "iso3c", "country.name")
+  
+  remove_survey <- c("CIV2005AIS", "MLI2009MICS", "MLI2015MICS", "SLE2010MICS", "TGO2006MICS", "BEN1996DHS", "KEN2009MICS", "COD2017MICS", "TZA2007AIS", "TZA2012AIS")
+  
+  
+  fr_plot <- fr_plot %>%
+    mutate(area_id = ifelse(is.na(area_id), iso3_c, area_id)) %>%
+    filter(variable == "asfr", area_level ==0) %>%
+    left_join(naomi::get_age_groups() %>% select(age_group, age_group_label))
+  
+  asfr_plot <- dat1 %>%
+    filter(area_level == 0, variable == "asfr", period > 1999) %>%
+    left_join(naomi::get_age_groups() %>% select(age_group, age_group_label)) %>%
+    ggplot(aes(x=period, y=median)) +
+    geom_line(size=1) +
+    geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
+    geom_point(data = fr_plot %>% filter(variable == "asfr", value <0.5, period > 1999, !survey_id %in% remove_survey), aes(y=value, color=survey_id)) +
+    geom_point(data = fr_plot %>% filter(variable == "asfr", value <0.5, period > 1999, survey_id %in% remove_survey), aes(y=value, color=survey_id), shape=22, fill=NA) +
+    facet_wrap(~age_group_label, nrow = 1) +
+    labs(y="ASFR", x=element_blank(), title=paste(iso3_c, "| National ASFR")) +
+    moz.utils::standard_theme()
+  
+  limits <- get_plot_limits(asfr_plot)
+  
+  asfr_plot <- asfr_plot + lims(y=c(limits$ymin, limits$ymax))
+  
+  comparison_asfr_plot <- dat1 %>%
+    mutate(source = "dfertility") %>%
+    left_join(naomi::get_age_groups() %>% select(age_group, age_group_label)) %>%
+    filter(area_level == 0, variable == "asfr", period > 1999) %>%
+    bind_rows(
+      comparison_plot %>% 
+        filter(area_level == 0, 
+               variable == "asfr", 
+               source == "GBD2019") %>%
+        rename(median = val)
+    ) %>%
+    ggplot(aes(x=period, y=median)) +
+    geom_line(size=1, aes(color=source)) +
+    geom_ribbon(aes(ymin=lower, ymax=upper, fill=source), alpha=0.5, show.legend = FALSE) +
+    geom_step(data = comparison_plot %>% filter(area_level == 0, variable == "asfr", source == "WPP2019", val < 0.5), aes(y=val, color=source), size=1) +
+    labs(y="ASFR", x=element_blank(), title=paste(iso3_c, "| National ASFR")) +
+    facet_wrap(~age_group_label, nrow=1) +
+    moz.utils::standard_theme()
+  
+  ggpubr::ggarrange(asfr_plot, comparison_asfr_plot, nrow = 2)
+  
+}, dat, fr_plot[names(dat)], comparison_plot[names(dat)])
+
+pdf(paste0("~/Downloads/asfr_comparison.pdf"), h = 10, w = 18)
+asfr_plots
+dev.off()

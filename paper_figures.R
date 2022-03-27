@@ -6,8 +6,6 @@ ssa_iso3 <- countrycode::countrycode(ssa_names, "country.name", "iso3c")
 
 mapping <- read.csv("global/iso_mapping_fit.csv")
 
-lapply(ssa_iso3[!ssa_iso3 %in% c("SSD", "ETH", "GNQ", "BWA", "MWI", "RWA", "GNB", "CAF","SSD", "COD")], function(x) orderly_pull_oli("aaa_fit", x))
-
 id <- lapply(ssa_iso3[!ssa_iso3 %in% c("SSD", "ETH", "GNQ", "BWA", "MWI", "RWA", "GNB", "CAF","SSD", "COD")], function(x){
   orderly::orderly_search(name = "aaa_fit", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
 }) 
@@ -64,13 +62,13 @@ lvls <- fr %>%
   arrange(iso3) %>%
   .$area_level
 
-id_input <- lapply(names(fr_list), function(x){
+id_input <- lapply(c(names(fr_list), "GNB", "SSD", "CAF"), function(x){
   orderly::orderly_search(name = "aaa_areas_pull", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
 }) %>% 
-  setNames(names(fr_list))
+  setNames(c(names(fr_list), "GNB", "SSD", "CAF"))
 
 areas_list <- lapply(file.path("archive/aaa_areas_pull", id_input, "naomi_areas.geojson"), sf::read_sf) %>%
-  setNames(names(fr_list))
+  setNames(c(names(fr_list), "GNB", "SSD", "CAF"))
 
 # areas_list <- c(areas_list, "COD" = list(read_sf("archive/cod_data_areas/20201112-171234-2710c17f/cod_areas.geojson")))
 
@@ -103,6 +101,8 @@ dist_fr <- fr_list %>%
   
 }, fr = ., areas_list[names(.)], lvls)
 
+pal <- wesanderson::wes_palette("Zissou1", 100, type = "continuous")
+
 age_dist <- fr %>%
   left_join(mapping) %>% 
   filter(area_level == admin1_level,
@@ -111,7 +111,7 @@ age_dist <- fr %>%
   group_by(area_id) %>%
   mutate(median = median/median[age_group == "Y020_024"]) %>%
   filter(age_group == "Y025_029") %>%
-  left_join(areas_list %>% bind_rows() %>% select(area_id)) %>%
+  left_join(areas_list %>% lapply(select, -any_of("spectrum_region_code")) %>% bind_rows() %>% select(area_id)) %>%
   group_by(iso3) %>%
   group_split() %>%
   lapply(function(x) {
@@ -119,10 +119,10 @@ age_dist <- fr %>%
     x %>%
       ggplot() +
         geom_sf(aes(geometry = geometry, fill=median)) +
-        scale_fill_gradient2(breaks = seq(0.9, 1.4, 0.1), 
-                             labels = as.character(seq(0.9, 1.4, 0.1)), 
-                             # limits = c(0.9, 1.5),
-                             midpoint=1) +
+        scale_fill_gradient2(midpoint=1, low =  wesanderson::wes_palette("Zissou1")[1],
+                             high = wesanderson::wes_palette("Zissou1")[5],
+                             breaks = seq(0.9, 1.4, 0.1), 
+                             labels = as.character(seq(0.9, 1.4, 0.1))) +
         labs(title = c)
       
   }) %>% setNames(unique(fr$iso3))
@@ -133,20 +133,25 @@ fr %>%
          variable == "asfr",
          period == 2015) %>%
   group_by(area_id) %>%
-  mutate(median = median/median[age_group == "Y020_024"]) %>%
-  filter(age_group == "Y025_029") %>%
-  ggplot(aes(x=iso3, y=median)) +
+  mutate(median = median/median[age_group == "Y025_029"]) %>%
+  filter(age_group == "Y020_024") %>%
+  ggplot(aes(x=fct_rev(countrycode::countrycode(iso3, "iso3c", "country.name")), y=1-median)) +
     geom_jitter(aes(color=region), shape=20, width =0.1, alpha = 0.5) +
     geom_point(data=nat_15 %>% filter(variable == "asfr") %>% group_by(iso3) %>%
-                 mutate(median = median/median[age_group == "Y020_024"]) %>% filter(age_group == "Y025_029"), shape = 21, size = 3, fill = "white", col = "black", alpha = 0.9) +
+                 mutate(median = median/median[age_group == "Y025_029"]) %>%
+                 filter(age_group == "Y020_024"), shape = 21, size = 3, fill = "white", col = "black", alpha = 0.9) +
     scale_color_manual(values = wesanderson::wes_palette("Zissou1")[c(1,4)]) +
-    scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
-    geom_hline(yintercept = 1, color="red", linetype = 3) +
-    labs(y="25-29 ASFR relative to 20-24", x=element_blank()) +
-    standard_theme()
+    scale_y_continuous(labels = scales::label_percent())+
+    # scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+    geom_hline(yintercept = 0, color="red", linetype = 3) +
+    labs(y="20-24 ASFR relative to 25-29", x=element_blank()) +
+    standard_theme() +
+    coord_flip()
   
+pal <- wesanderson::wes_palette("Zissou1", 100, type = "continuous")
 
-p1a <- dist_fr %>%
+
+dist_fr %>%
   bind_rows() %>%
   filter(period == 2015) %>%
   ggplot() +
@@ -154,8 +159,13 @@ p1a <- dist_fr %>%
   geom_sf(data = foo, aes(geometry = geometry), fill="grey", size=0.3) +
   geom_sf(data = nat_geom, aes(geometry = geometry), fill=NA, size=0.3) +
   labs(fill = "TFR")+
-  viridis::scale_fill_viridis() +
+  scale_fill_gradientn(colours = pal, breaks = seq(2,10,2), labels = as.character(seq(2,10,2))) +
   theme_minimal() +
+  theme(legend.position = "bottom",
+        legend.key.width = unit(1.5, "cm"),
+        legend.text = element_text(size=12),
+        legend.title = element_text(size=12),
+        legend.title.align = 0.5) +
   coord_sf(datum = NA)
 
 dist_15 <- dist_fr %>%
@@ -172,13 +182,16 @@ dist_15 %>%
   left_join(pop %>% ungroup() %>% select(area_id, population)) %>%
   group_by(iso3) %>%
   mutate(population = population/sum(population)) %>%
-  ggplot(aes(x=iso3, y=median)) +
+  ggplot(aes(x=fct_rev(countrycode::countrycode(iso3, "iso3c", "country.name")), y=median)) +
     geom_jitter(aes(color=region, size = population), shape=20, width =0.1, alpha = 0.5) +
     geom_point(data=nat_15 %>% filter(variable == "tfr"), shape = 21, size = 3, fill = "white", col = "black", alpha = 0.9) +
   standard_theme() +
-    labs(y="TFR", x=element_blank()) +
+    scale_size_continuous(labels = scales::label_percent()) +
+    labs(y="TFR", x=element_blank(), size = "District population\nas proportion of\nnational population", color = "Region") +
     scale_color_manual(values = wesanderson::wes_palette("Zissou1")[c(1,4)]) +
-  scale_x_discrete(guide = guide_axis(n.dodge = 2))
+    theme(legend.title.align = 0.5) +
+  # scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  coord_flip()
 
 ###
 

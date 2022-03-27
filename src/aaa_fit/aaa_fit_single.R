@@ -63,16 +63,30 @@ mf$observations$full_obs <- mf$observations$full_obs %>%
            tips == 10 ~ 3,
            TRUE ~ 0
          ))
-         ) %>%
-  ungroup() %>%
-  group_by(tips_fe, survey_id) %>%
-  mutate(id.zeta2 = factor(cur_group_id()),
-         id.zeta2 = factor(ifelse(iso3 %in% c("GNB", "CAF", "SSD"), 
-                           forcats::fct_expand(id.zeta2, as.character(1:(length(unique(mf$observations$full_obs$survey_id))*3))),
-                           forcats::fct_expand(id.zeta2, as.character(1:(length(unique(mf$observations$full_obs$survey_id))*4)))
-                           )
-  )) %>%
+  ) %>%
   ungroup()
+
+if(iso3 %in% c("CAF", "GNB", "SSD")) {
+  
+  zeta2_combinations <- length(unique(mf$observations$full_obs$survey_id))*3
+  
+  mf$observations$full_obs <- mf$observations$full_obs %>%
+    group_by(tips_fe, survey_id) %>%
+    mutate(
+      id.zeta2 = as.character(cur_group_id()),
+      id.zeta2 = fct_expand(id.zeta2, as.character(1:zeta2_combinations))) %>%
+    ungroup()
+} else {
+  
+  zeta2_combinations <- length(unique(mf$observations$full_obs$survey_id))*4
+  
+  mf$observations$full_obs <- mf$observations$full_obs %>%
+    group_by(tips_fe, survey_id) %>%
+    mutate(
+      id.zeta2 = as.character(cur_group_id()),
+      id.zeta2 = fct_expand(id.zeta2, as.character(1:zeta2_combinations))) %>%
+    ungroup()
+}
 
 clear_col <- as.integer(unique(filter(mf$observations$full_obs, tips_fe == 0)$id.zeta2))
 mf$Z$Z_zeta2 <- sparse.model.matrix(~0 + id.zeta2, mf$observations$full_obs)
@@ -97,6 +111,10 @@ mf$Z$X_tips_dummy_5 <- model.matrix(~0 + tips_dummy_5, mf$observations$full_obs 
 # R_smooth_iid <- as(diag(nrow = nrow(mf$observations$full_obs)), "sparseMatrix")
 R_smooth_iid <- sparseMatrix(i = 1:nrow(mf$observations$full_obs), j = 1:nrow(mf$observations$full_obs), x = 1)
 
+mf$Z$X_spike_2010 <- sparse.model.matrix(~0 + spike_2010*parent_area_id - spike_2010 - parent_area_id, mf$mf_model %>% 
+                                           left_join(areas %>% st_drop_geometry() %>% select(area_id, parent_area_id)) %>%
+                                           mutate(spike_2010 = as.integer(period == 2010)))
+
 x <- 0:25
 k <- seq(-15, 40, by = 5)
 spline_mat <- splines::splineDesign(k, x, ord = 4)
@@ -108,7 +126,7 @@ validate_model_frame(mf, areas)
 
 # TMB::compile("src/aaa_fit/models/model6.cpp", flags = "-w")               # Compile the C++ file
 # TMB::compile("models/model6.cpp", flags = "-w")               # Compile the C++ file
-dyn.load(dynlib("models/model6"))
+# dyn.load(dynlib("models/model6"))
 
 tmb_int <- list()
 
@@ -116,13 +134,8 @@ tmb_int$data <- list(
   M_naomi_obs = mf$M_naomi_obs,
   M_full_obs = mf$M_full_obs,
   X_tips_dummy = mf$Z$X_tips_dummy,
-  # X_tips_dummy_10 = mf$Z$X_tips_dummy_10,
   X_tips_dummy_9_11 = mf$Z$X_tips_dummy_9_11,
   X_tips_dummy_5 = mf$Z$X_tips_dummy_5,
-  # X_tips_dummy_6 = mf$Z$X_tips_dummy_6,
-  # X_tips_dummy_7 = mf$Z$X_tips_dummy_7,
-  # X_tips_dummy_8 = mf$Z$X_tips_dummy_8,
-  # X_tips_dummy_0 = mf$Z$X_tips_dummy_0,
   X_tips_fe = mf$Z$X_tips_fe,
   X_period = mf$Z$X_period,
   X_urban_dummy = mf$Z$X_urban_dummy,
@@ -183,6 +196,8 @@ tmb_int$data <- list(
 
   mics_toggle = mf$mics_toggle,
   
+  X_spike_2010 = mf$Z$X_spike_2010,
+  
   X_spike_2000 = model.matrix(~0 + spike_2000, mf$observations$full_obs),
   X_spike_1999 = model.matrix(~0 + spike_1999, mf$observations$full_obs),
   X_spike_2001 = model.matrix(~0 + spike_2001, mf$observations$full_obs)
@@ -222,9 +237,9 @@ tmb_int$par <- list(
   u_period = rep(0, ncol(spline_mat)),
   log_prec_rw_period = 0,
   # logit_phi_period = 0,
-  # lag_logit_phi_period = 0,
-  lag_logit_phi_arima_period = 0,
-  beta_period = 0,
+  lag_logit_phi_period = 0,
+  # lag_logit_phi_arima_period = 0,
+  # beta_period = 0,
 
   log_prec_smooth_iid = 0,
   u_smooth_iid = rep(0, ncol(R_smooth_iid)),
@@ -232,9 +247,6 @@ tmb_int$par <- list(
   u_spatial_str = rep(0, ncol(mf$Z$Z_spatial)),
   log_prec_spatial = 0,
 
-  beta_spike_2000 = 0,
-  beta_spike_1999 = 0,
-  beta_spike_2001 = 0,
   # log_overdispersion = 0,
 
   eta1 = array(0, c(ncol(mf$Z$Z_country), ncol(mf$Z$Z_period), ncol(mf$Z$Z_age))),
@@ -263,21 +275,13 @@ tmb_int$random <- c("beta_0",
                     "u_period",
                     "u_smooth_iid",
                     "beta_period",
-                    # "beta_tips_dummy",
                     "beta_tips_dummy_5",
                     "beta_tips_fe",
-                    # "beta_urban_dummy",
                     "u_tips",
-                    # "zeta1",
                     "zeta2",
-                    "beta_spike_2000",
-                    "beta_spike_1999",
-                    "beta_spike_2001",
                     "eta1",
                     "eta2",
                     "eta3"
-                    # "omega1",
-                    # "omega2"
 )
 
 if(mf$mics_toggle) {
@@ -286,36 +290,84 @@ if(mf$mics_toggle) {
                     "R_tips_mics" = mf$R$R_tips_mics,
                     "log_offset_mics" = list(log(filter(mf$observations$full_obs, survtype == "MICS")$pys)),
                     "births_obs_mics" = list(filter(mf$observations$full_obs, survtype == "MICS")$births)
-
-                    # "X_spike_2000_mics" = list(model.matrix(~0 + spike_2000, mf$observations$full_obs %>% filter(survtype == "MICS"))),
-                    # "X_spike_1999_mics" = list(model.matrix(~0 + spike_1999, mf$observations$full_obs %>% filter(survtype == "MICS"))),
-                    # "X_spike_2001_mics" = list(model.matrix(~0 + spike_2001, mf$observations$full_obs %>% filter(survtype == "MICS")))
-
-                    # "Z_smooth_iid_mics" = sparse.model.matrix(~0 + id.smooth, mf$observations$full_obs %>% filter(survtype == "MICS"))
   )
-  # tmb_int$par <- c(tmb_int$par,
-  #                  "u_tips_mics" = list(rep(0, ncol(mf$Z$Z_tips_mics)))
-  # )
-  # tmb_int$random <- c(tmb_int$random, "u_tips_mics")
+}
+
+if(!iso3 %in% c("MWI", "RWA")) {
+  tmb_int$par <- c(tmb_int$par,
+                   "beta_spike_2000" = 0,
+                   "beta_spike_1999" = 0,
+                   "beta_spike_2001" = 0,
+  )
+  
+  tmb_int$random <- c(tmb_int$random,                     
+                      "beta_spike_2000",
+                      "beta_spike_1999",
+                      "beta_spike_2001")
+  
+  obj <-  TMB::MakeADFun(data = tmb_int$data,
+                         parameters = tmb_int$par,
+                         DLL = "model7",
+                         random = tmb_int$random,
+                         hessian = FALSE)
+}
+
+if(iso3 == "ETH") {
+  tmb_int$par <- c(tmb_int$par,
+                   "beta_urban_dummy" = 0
+  )
+  
+  tmb_int$random <- c(tmb_int$random,                     
+                      "beta_urban_dummy")
+  
+  obj <-  TMB::MakeADFun(data = tmb_int$data,
+                         parameters = tmb_int$par,
+                         DLL = "model7_eth",
+                         random = tmb_int$random,
+                         hessian = FALSE)
+}
+
+if(iso3 == "ZWE") {
+  tmb_int$par <- c(tmb_int$par,
+                   "beta_spike_2010" = rep(0, ncol(mf$Z$X_spike_2010))
+  )
+  
+  tmb_int$random <- c(tmb_int$random,                     
+                      "beta_spike_2010")
+  
+  obj <-  TMB::MakeADFun(data = tmb_int$data,
+                         parameters = tmb_int$par,
+                         DLL = "model7_zwe",
+                         random = tmb_int$random,
+                         hessian = FALSE)
+}
+
+if(iso3 %in% c("MWI", "RWA")) {
+
+  obj <-  TMB::MakeADFun(data = tmb_int$data,
+                         parameters = tmb_int$par,
+                         DLL = "model7_mwi_rwa",
+                         random = tmb_int$random,
+                         hessian = FALSE)
 }
 
 
-f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
-                               parameters = tmb_int$par,
-                               DLL = "model6",
-                               silent=0,
-                               checkParameterOrder=FALSE)
-})
-
-if(is.null(parallel::mccollect(f)[[1]])) {
-  stop("TMB model is invalid. This is most likely an indexing error e.g. iterating over dimensions in an array that do not exist. Check mf model object")
-}
-
-obj <-  TMB::MakeADFun(data = tmb_int$data,
-                       parameters = tmb_int$par,
-                       DLL = "model6",
-                       random = tmb_int$random,
-                       hessian = FALSE)
+# f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
+#                                parameters = tmb_int$par,
+#                                DLL = "model6",
+#                                silent=0,
+#                                checkParameterOrder=FALSE)
+# })
+# 
+# if(is.null(parallel::mccollect(f)[[1]])) {
+#   stop("TMB model is invalid. This is most likely an indexing error e.g. iterating over dimensions in an array that do not exist. Check mf model object")
+# }
+# 
+# obj <-  TMB::MakeADFun(data = tmb_int$data,
+#                        parameters = tmb_int$par,
+#                        DLL = "model6",
+#                        random = tmb_int$random,
+#                        hessian = FALSE)
 
 f <- stats::nlminb(obj$par, obj$fn, obj$gr)
 f$par.fixed <- f$par
