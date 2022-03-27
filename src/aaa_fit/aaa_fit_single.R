@@ -329,7 +329,7 @@ if(iso3 == "ETH") {
 
 if(iso3 == "ZWE") {
   tmb_int$par <- c(tmb_int$par,
-                   "beta_spike_2010" = rep(0, ncol(mf$Z$X_spike_2010))
+                   "beta_spike_2010" = list(rep(0, ncol(mf$Z$X_spike_2010)))
   )
   
   tmb_int$random <- c(tmb_int$random,                     
