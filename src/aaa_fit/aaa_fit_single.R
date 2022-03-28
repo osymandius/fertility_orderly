@@ -111,9 +111,14 @@ mf$Z$X_tips_dummy_5 <- model.matrix(~0 + tips_dummy_5, mf$observations$full_obs 
 # R_smooth_iid <- as(diag(nrow = nrow(mf$observations$full_obs)), "sparseMatrix")
 R_smooth_iid <- sparseMatrix(i = 1:nrow(mf$observations$full_obs), j = 1:nrow(mf$observations$full_obs), x = 1)
 
-mf$Z$X_spike_2010 <- sparse.model.matrix(~0 + spike_2010*parent_area_id - spike_2010 - parent_area_id, mf$mf_model %>% 
-                                           left_join(areas %>% st_drop_geometry() %>% select(area_id, parent_area_id)) %>%
-                                           mutate(spike_2010 = as.integer(period == 2010)))
+if(iso3 == "ZWE") {
+  mf$Z$X_spike_2010 <- sparse.model.matrix(~0 + spike_2010*parent_area_id - spike_2010 - parent_area_id, mf$mf_model %>% 
+                                             left_join(areas %>% st_drop_geometry() %>% select(area_id, parent_area_id)) %>%
+                                             mutate(spike_2010 = as.integer(period == 2010)))
+  
+} else {
+  mf$Z$X_spike_2010 <- as(diag(0,1), "dgTMatrix")
+}
 
 x <- 0:25
 k <- seq(-15, 40, by = 5)
