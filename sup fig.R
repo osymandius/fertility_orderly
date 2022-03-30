@@ -3,7 +3,7 @@ area_label_df <- areas_list %>%
   bind_rows() %>% 
   st_drop_geometry() %>% 
   separate(area_id, into=c("iso3", NA), sep=3) %>% 
-  distinct(iso3, area_level, area_level_label)
+  count(iso3, area_level, area_level_label)
 
 area_label_df %>%
   left_join(mapping %>%
@@ -11,16 +11,101 @@ area_label_df %>%
   pivot_longer(-iso3, values_to = "area_level")
   ) %>%
   filter(!is.na(name)) %>%
+  mutate(area_level_label = paste0(area_level_label, " (", n, ")")) %>%
+  select(-c(area_level, n)) %>%
+  pivot_wider(names_from=name, values_from = area_level_label) %>%
   mutate(country = countrycode::countrycode(iso3, "iso3c", "country.name")) %>%
-  write.csv("~/Downloads/admin_level_label.csv")
+  select(iso3, country, everything()) %>%
+  write_csv("~/Downloads/admin_level_label.csv")
+
+####
+
+mwi_15_dhs <- fr_plot[["MWI"]] %>%
+  filter(area_level ==0, survey_id == "MWI2015DHS", variable == "tfr") %>%
+  arrange(desc(period)) %>%
+  mutate(tips = as.integer(row_number()-1),
+         tips = ifelse(tips %in% c(5,6), tips, NA_integer_))
+
+tips_overlap1 <- mwi_15_dhs %>%
+  filter(period > 2004) %>%
+  ggplot(aes(x=period, y=value)) +
+    geom_line(size =1) +
+    geom_point(size=2) +
+    ggrepel::geom_label_repel(aes(label = tips), 
+                              min.segment.length = 0,
+                              segment.linetype = 2,
+                              point.size=1, nudge_y = 0.5, 
+                              nudge_x = 0.5, show.legend = FALSE) +
+    standard_theme() +
+    scale_x_continuous(breaks = seq(2005, 2015, 2), labels = as.character(seq(2005, 2015, 2))) +
+    expand_limits(y=c(2, 8)) +
+    labs(y="TFR", x=element_blank(), title = "Malawi | 2015 DHS")
+
+tips_overlap2 <- fr_plot[["MWI"]] %>%
+  filter(area_level ==0, survey_id != "MWI2015DHS", variable == "tfr", value > 4) %>%
+  ggplot(aes(x=period, y=value, group=survey_id)) +
+  geom_line(size =1, alpha =0.3) +
+  geom_point(size=2, alpha = 0.3) +
+  geom_line(data = mwi_15_dhs,
+            size =1, color="red") +
+  geom_point(data = mwi_15_dhs,
+            size =2, color="red") +
+  ggrepel::geom_label_repel(data = mwi_15_dhs, aes(label = tips), 
+                            min.segment.length = 0,
+                            segment.linetype = 2,
+                            point.size=1, nudge_y = 1, 
+                            nudge_x = 1, show.legend = FALSE, color="red") +
+  standard_theme() +
+  # scale_x_continuous(breaks = seq(2005, 2015, 2), labels = as.character(seq(2005, 2015, 2))) +
+  expand_limits(y=c(2, 8)) +
+  labs(y="TFR", x=element_blank(), title = "Malawi | All surveys")
+
+ggpubr::ggarrange(tips_overlap1, tips_overlap2)
 
 ###
 
-fe <- fr_plot %>%
+fr_plot %>%
   lapply(ungroup) %>%
   bind_rows() %>%
-  filter(iso3 %in% c("NER", "GIN"), variable == "tfr", area_level ==0) %>% 
+  separate(area_id, into=c(NA, "area_level", NA), sep=c(4,5), remove=FALSE, convert=TRUE) %>%
+  separate(area_id, into=c("iso3", NA), sep=3, remove= FALSE) %>%
   separate(survey_id, into=c(NA, "survtype"), sep=7, remove=FALSE) %>%
+  filter(survey_id %in% c("NER2006DHS", "NER2012DHS",
+                          "BFA2010DHS",
+                          "COD2013DHS",
+                          # "ETH2019DHS",
+                          "GHA2014DHS",
+                          "MOZ2008MICS",
+                          "NGA2018DHS",
+                          "TGO2013DHS",
+                          "SWZ2006DHS",
+                          "NAM2006DHS"),
+         area_id == iso3,
+         variable == "tfr") %>%
+  group_by(survey_id) %>%
+  arrange(desc(period), survey_id, .by_group = TRUE) %>% 
+  mutate(tips = as.integer(row_number()-1),
+         tips = case_when(
+           survey_id == "BFA2010DHS" & tips %in% c(5,6) ~ tips,
+           survey_id == "COD2013DHS" & tips %in% c(10) ~ tips,
+           survey_id == "GHA2014DHS" & tips %in% c(5,6, 10) ~ tips,
+           survey_id == "NAM2006DHS" & tips %in% c(5,6) ~ tips,
+           survey_id == "NER2012DHS" & tips %in% c(0, 5, 6) ~ tips,
+           survey_id == "NGA2018DHS" & tips %in% c(10) ~ tips,
+           survey_id == "SWZ2006DHS" & tips %in% c(5,6) ~ tips,
+           survey_id == "MOZ2008MICS" & tips %in% c(10) ~ tips,
+           survey_id == "NER2006DHS" & tips %in% c(0,5,6) ~ tips,
+           survey_id == "TGO2013DHS" & tips %in% c(5,6) ~ tips,
+           TRUE ~ NA_integer_
+         )) %>%
+  ggplot(aes(x=period, y=value, color=survey_id)) + 
+  geom_point(show.legend = FALSE) + 
+  geom_line(size=1, show.legend = FALSE) +
+  moz.utils::standard_theme() +
+  ggrepel::geom_label_repel(aes(label = tips), min.segment.length = 0,segment.linetype = 2,  point.size=1, nudge_y = 3, nudge_x = 1.5, show.legend = FALSE) +
+  facet_wrap(~survey_id, nrow=2) +
+  labs(y="TFR", x=element_blank())
+
   group_by(iso3) %>%
   group_split() %>%
   lapply(function(x) {
@@ -39,7 +124,10 @@ fe <- fr_plot %>%
       facet_wrap(~survey_id) +
       labs(y="TFR", x=element_blank(), title = cntry_name)
   })
-  
+
+pdf(paste0("~/Downloads/fe.pdf"), h = 12, w = 20)
+fe
+dev.off()
 ###
 
 asfr_id <- lapply(ssa_iso3, function(x){
@@ -125,7 +213,7 @@ long_mics <- asfr %>%
   mutate(tips = 15)
 
 
-data.frame(
+survey_summary <- data.frame(
   survey_id = names(nrow_ir),
   n = as.integer(nrow_ir)
 ) %>%
@@ -153,3 +241,21 @@ data.frame(
          `Number of births` = births, `Person-years` = pys) %>%
   
   write.csv("~/Downloads/survey_summary.csv")
+
+surv <- read.csv("~/Downloads/Book3.csv")
+
+surv %>%
+  group_by(Country) %>%
+  filter(Survey.Year == max(Survey.Year)) %>%
+  ungroup() %>%
+  summarise(quantile(Survey.Year, c(0.25, 0.5, 0.75)))
+
+surv %>%
+  group_by(Country) %>%
+  summarise(n=n()) %>%
+  summarise(quantile(n, c(0.25, 0.5, 0.75)))
+
+surv %>%
+  group_by(Country) %>%
+  summarise(n=n()) %>%
+  arrange(desc(n))

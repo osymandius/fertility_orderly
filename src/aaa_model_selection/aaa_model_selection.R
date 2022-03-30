@@ -1987,10 +1987,11 @@ ar1_trend_ppd <- ar1_trend_ppd %>%
          upper = qtls[3,],
          source = "ar1_trend")
 
-pred <- bind_rows(rw_ppd, rw2_ppd, arima_ppd, arima_trend_ppd, ar1_ppd, ar1_trend_ppd)
-elpd <- bind_rows(rw_elpd, rw2_elpd, arima_elpd, arima_trend_elpd, ar1_elpd, ar1_trend_elpd)
+pred <- bind_rows(rw_ppd, rw2_ppd, rw_trend_ppd, arima_ppd, arima_trend_ppd, ar1_ppd, ar1_trend_ppd)
+elpd <- bind_rows(rw_elpd, rw2_elpd, rw_trend_elpd, arima_elpd, arima_trend_elpd, ar1_elpd, ar1_trend_elpd)
 crps <- data.frame("rw" = rw_crps,
                    "rw2" = rw2_crps,
+                   "rw_trend" = rw_trend_crps,
                    "arima" = arima_crps,
                    "arima_trend" = arima_trend_crps,
                    "ar1" = ar1_crps,

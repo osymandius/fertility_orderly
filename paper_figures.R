@@ -6,32 +6,15 @@ ssa_iso3 <- countrycode::countrycode(ssa_names, "country.name", "iso3c")
 
 mapping <- read.csv("global/iso_mapping_fit.csv")
 
-id <- lapply(ssa_iso3[!ssa_iso3 %in% c("SSD", "ETH", "GNQ", "BWA", "MWI", "RWA", "GNB", "CAF","SSD", "COD")], function(x){
+id <- lapply(ssa_iso3[!ssa_iso3 %in% c("GNQ", "BWA")], function(x){
   orderly::orderly_search(name = "aaa_fit", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
 }) 
 
-id2 <- lapply(c("RWA", "MWI"), function(x){
-  orderly::orderly_search(name = "aaa_mwi_rwa_fit", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
-})
-
-id3 <- lapply("ETH", function(x){
-  orderly::orderly_search(name = "aaa_eth_fit", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
-})
-
 dat <- lapply(paste0("archive/aaa_fit/", id, "/fr.csv"), read_csv, show_col_types = FALSE)
-dat2 <- lapply(paste0("archive/aaa_mwi_rwa_fit/", id2, "/fr.csv"), read_csv, show_col_types = FALSE)
-dat3 <- lapply(paste0("archive/aaa_eth_fit/", id3, "/fr.csv"), read_csv, show_col_types = FALSE)
-dat <- c(dat, dat2, dat3)
 
 fr_plot <- lapply(file.path("archive/aaa_fit", id, "depends/fr_plot.csv"), read.csv)
-fr_plot2 <- lapply(file.path("archive/aaa_mwi_rwa_fit", id2, "depends/fr_plot.csv"), read.csv)
-fr_plot3 <- lapply(file.path("archive/aaa_eth_fit", id3, "depends/fr_plot.csv"), read.csv)
-fr_plot <- c(fr_plot, fr_plot2, fr_plot3)
 
 pop <- lapply(file.path("archive/aaa_fit", id, "depends/interpolated_population.csv"), read.csv)
-pop2 <- lapply(file.path("archive/aaa_mwi_rwa_fit", id2, "depends/interpolated_population.csv"), read.csv)
-pop3 <- lapply(file.path("archive/aaa_eth_fit", id3, "depends/interpolated_population.csv"), read.csv)
-pop <- c(pop, pop2, pop3)
 
 pop <- pop %>% 
   bind_rows() %>%
@@ -62,13 +45,13 @@ lvls <- fr %>%
   arrange(iso3) %>%
   .$area_level
 
-id_input <- lapply(c(names(fr_list), "GNB", "SSD", "CAF"), function(x){
+id_input <- lapply(names(fr_list), function(x){
   orderly::orderly_search(name = "aaa_areas_pull", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
 }) %>% 
-  setNames(c(names(fr_list), "GNB", "SSD", "CAF"))
+  setNames(names(fr_list))
 
 areas_list <- lapply(file.path("archive/aaa_areas_pull", id_input, "naomi_areas.geojson"), sf::read_sf) %>%
-  setNames(c(names(fr_list), "GNB", "SSD", "CAF"))
+  setNames(names(fr_list))
 
 # areas_list <- c(areas_list, "COD" = list(read_sf("archive/cod_data_areas/20201112-171234-2710c17f/cod_areas.geojson")))
 
@@ -109,45 +92,137 @@ age_dist <- fr %>%
          variable == "asfr",
          period == 2015) %>%
   group_by(area_id) %>%
-  mutate(median = median/median[age_group == "Y020_024"]) %>%
-  filter(age_group == "Y025_029") %>%
+  mutate(median = median/median[age_group == "Y025_029"]) %>%
+  filter(age_group == "Y020_024") %>%
   left_join(areas_list %>% lapply(select, -any_of("spectrum_region_code")) %>% bind_rows() %>% select(area_id)) %>%
   group_by(iso3) %>%
   group_split() %>%
   lapply(function(x) {
-    c <- unique(x$iso3)
+    c <- countrycode::countrycode(unique(x$iso3), "iso3c", "country.name")
     x %>%
       ggplot() +
-        geom_sf(aes(geometry = geometry, fill=median)) +
-        scale_fill_gradient2(midpoint=1, low =  wesanderson::wes_palette("Zissou1")[1],
+        geom_sf(aes(geometry = geometry, fill=1-median)) +
+        scale_fill_gradient2(midpoint=0, low =  wesanderson::wes_palette("Zissou1")[1],
                              high = wesanderson::wes_palette("Zissou1")[5],
-                             breaks = seq(0.9, 1.4, 0.1), 
-                             labels = as.character(seq(0.9, 1.4, 0.1))) +
-        labs(title = c)
+                             breaks = seq(-0.1, 0.3, 0.1), 
+                             labels = scales::label_percent(prefix = "+")) +
+        labs(title = c, fill="25-29 ASFR relative to 20-24") +
+      theme_minimal()+
+      coord_sf(datum=NA)
       
   }) %>% setNames(unique(fr$iso3))
 
-fr %>%
+gmb_sen <- fr %>%
   left_join(mapping) %>% 
-  filter(area_level == fertility_fit_level,
+  filter(area_level == admin1_level,
          variable == "asfr",
          period == 2015) %>%
   group_by(area_id) %>%
   mutate(median = median/median[age_group == "Y025_029"]) %>%
   filter(age_group == "Y020_024") %>%
-  ggplot(aes(x=fct_rev(countrycode::countrycode(iso3, "iso3c", "country.name")), y=1-median)) +
+  left_join(areas_list %>% lapply(select, -any_of("spectrum_region_code")) %>% bind_rows() %>% select(area_id)) %>%
+  filter(iso3 %in% c("SEN", "GMB")) %>%
+  ggplot() +
+    geom_sf(aes(geometry = geometry, fill=1-median)) +
+    scale_fill_gradient2(midpoint=0, low =  wesanderson::wes_palette("Zissou1")[1],
+                         high = wesanderson::wes_palette("Zissou1")[5],
+                         breaks = seq(-0.1, 0.3, 0.1), 
+                         labels = scales::label_percent(prefix = "+")) +
+    labs(title = "Senegal and Gambia", fill="25-29 ASFR relative to 20-24") +
+    theme_minimal()+
+    coord_sf(datum=NA)
+
+ggpubr::ggarrange(age_dist[["TZA"]], age_dist[["NGA"]], gmb_sen, nrow=1, common.legend = TRUE, legend="bottom")
+
+plot_order <- c("SEN", "GMB", "GNB", "GIN", "SLE", "LBR", "MLI", "BFA", "CIV", "GHA", "TGO", "BEN", "NER", "NGA", "CMR", "TCD", "CAF", "SSD", "ETH", "GAB", "COG", "COD", "UGA", "KEN", "RWA", "BDI", "TZA", "AGO", "ZMB", "MWI", "MOZ", "ZWE", "NAM", "SWZ", "LSO", "ZAF")
+
+pl <- fr %>%
+  left_join(mapping) %>% 
+  filter(area_level == fertility_fit_level,
+         variable == "asfr",
+         period == 2015) %>%
+  group_by(area_id) %>%
+  mutate(median = median/median[age_group == "Y020_024"]) %>%
+  filter(age_group == "Y025_029") %>%
+  filter(median < 1.8) %>%
+  ggplot(aes(x=fct_rev(fct_relevel(iso3, levels = plot_order)), y=median-1)) +
     geom_jitter(aes(color=region), shape=20, width =0.1, alpha = 0.5) +
     geom_point(data=nat_15 %>% filter(variable == "asfr") %>% group_by(iso3) %>%
-                 mutate(median = median/median[age_group == "Y025_029"]) %>%
-                 filter(age_group == "Y020_024"), shape = 21, size = 3, fill = "white", col = "black", alpha = 0.9) +
+                 mutate(median = median/median[age_group == "Y020_024"]) %>%
+                 filter(age_group == "Y025_029"), shape = 21, size = 3, fill = "white", col = "black", alpha = 0.9) +
     scale_color_manual(values = wesanderson::wes_palette("Zissou1")[c(1,4)]) +
     scale_y_continuous(labels = scales::label_percent())+
-    # scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+    scale_x_discrete(labels = ~countrycode::countrycode(.x, "iso3c", "country.name")) +
     geom_hline(yintercept = 0, color="red", linetype = 3) +
-    labs(y="20-24 ASFR relative to 25-29", x=element_blank()) +
+    labs(x=element_blank(), y=element_blank()) +
     standard_theme() +
-    coord_flip()
+    theme(legend.position = "right",
+          plot.margin = unit(c(1,0,5,0), "lines")) +
+    coord_flip(clip = "off", xlim = c(0, 36), ylim = c(-0.3, .8))
+
+
+pl + 
+  annotate("segment", x=-3, xend=-3, y=-0.01, yend=-.35, arrow = arrow(length = unit(0.3, "cm"))) +
+  annotate("label", label = "Older age\ndistribution", x=-5, y=0.375, label.size=NA) +
+  annotate("segment", x=-3, xend=-3, y=0.01, yend=.75, arrow = arrow(length = unit(0.3, "cm"))) +
+  annotate("label", label = "Younger age\ndistribution", x=-5, y=-0.17255, label.size=NA)
+
+fr %>%
+  left_join(mapping) %>%
+  filter(area_level == fertility_fit_level, period == 2016, variable == "asfr") %>%
+  left_join(naomi::get_age_groups()) %>%
+  mutate(age_mid_point = (age_group_start + age_group_start + age_group_span)/2) %>%
+  group_by(iso3, area_id) %>%
+  summarise(af = sum(median * age_mid_point),
+            f = sum(median),
+            macb = af/f) %>%
+  left_join(region) %>%
+  ggplot(aes(x=fct_rev(fct_relevel(iso3, levels = plot_order)), y=macb)) +
+    geom_jitter(aes(color=region), shape=20, width =0.1, alpha = 0.5) +
+    # geom_point(data=nat_15 %>% filter(variable == "asfr") %>% group_by(iso3) %>%
+    #              mutate(median = median/median[age_group == "Y020_024"]) %>%
+    #              filter(age_group == "Y025_029"), shape = 21, size = 3, fill = "white", col = "black", alpha = 0.9) +
+    scale_color_manual(values = wesanderson::wes_palette("Zissou1")[c(1,4)]) +
+    # scale_y_continuous(labels = scales::label_percent())+
+    scale_x_discrete(labels = ~countrycode::countrycode(.x, "iso3c", "country.name")) +
+    labs(y="Mean age of childbearing", x=element_blank()) +
+    standard_theme() +
+    theme(legend.position = "right") +
+          # plot.margin = unit(c(1,0,5,0), "lines")) +
+    coord_flip(clip = "off", xlim = c(0, 36))
+
+fr %>%
+  left_join(mapping) %>%
+  filter(area_level == 0, period == 2016, variable == "asfr") %>%
+  left_join(naomi::get_age_groups()) %>%
+  mutate(age_mid_point = (age_group_start + age_group_start + age_group_span)/2) %>%
+  group_by(iso3, area_id) %>%
+  summarise(af = sum(median * age_mid_point),
+            f = sum(median),
+            macb = af/f) %>%
+  left_join(region) %>%
+  left_join(fr %>% filter(area_level == 0, period == 2016, variable == "tfr")) %>%
+  ggplot(aes(x=macb, y=median)) +
+    geom_point() +
+    geom_smooth(method = "lm", se=FALSE) +
+    standard_theme() +
+    labs(y="TFR", x="Mean age of child bearing")
   
+fr %>%
+  left_join(mapping) %>%
+  filter(area_level == 0, variable == "asfr") %>%
+  left_join(naomi::get_age_groups()) %>%
+  mutate(age_mid_point = (age_group_start + age_group_start + age_group_span)/2) %>%
+  group_by(iso3, period,region, area_id) %>%
+  summarise(af = sum(median * age_mid_point),
+            f = sum(median),
+            macb = af/f) %>%
+  ggplot(aes(x=period, y=macb, group =period)) +
+    geom_boxplot() +
+    standard_theme() +
+    labs(x=element_blank(), y="MACB") +
+    facet_wrap(~region)
+
 pal <- wesanderson::wes_palette("Zissou1", 100, type = "continuous")
 
 
@@ -176,18 +251,22 @@ nat_15 <- fr %>%
   filter(area_level ==0, period == 2015) %>%
   mutate(country = countrycode::countrycode(iso3, "iso3c", "country.name")) 
 
+c("SEN",
+  )
+
 dist_15 %>%
   mutate(country = countrycode::countrycode(iso3, "iso3c", "country.name")) %>%
   left_join(region) %>%
   left_join(pop %>% ungroup() %>% select(area_id, population)) %>%
   group_by(iso3) %>%
-  mutate(population = population/sum(population)) %>%
-  ggplot(aes(x=fct_rev(countrycode::countrycode(iso3, "iso3c", "country.name")), y=median)) +
+  mutate(population = population/median(population)) %>%
+  ggplot(aes(x=fct_rev(fct_relevel(iso3, levels = plot_order)), y=median)) +
     geom_jitter(aes(color=region, size = population), shape=20, width =0.1, alpha = 0.5) +
     geom_point(data=nat_15 %>% filter(variable == "tfr"), shape = 21, size = 3, fill = "white", col = "black", alpha = 0.9) +
   standard_theme() +
-    scale_size_continuous(labels = scales::label_percent()) +
-    labs(y="TFR", x=element_blank(), size = "District population\nas proportion of\nnational population", color = "Region") +
+  scale_x_discrete(labels = ~countrycode::countrycode(.x, "iso3c", "country.name")) +
+    scale_size_continuous(breaks = c(0.5, 1, 10, 20, 100), labels=paste0(c(0.5, 1, 10, 20, 100), "x")) +
+    labs(y="TFR", x=element_blank(), size = "District population relative\nto median district size", color = "Region") +
     scale_color_manual(values = wesanderson::wes_palette("Zissou1")[c(1,4)]) +
     theme(legend.title.align = 0.5) +
   # scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
@@ -262,34 +341,16 @@ p <- fr %>%
     
   })
 
-fr %>%
-  filter(iso3 == "UGA",
-         variable == "tfr",
-         area_level == 3,
-         area_id != "UGA_3_022") %>%
-  ggplot(aes(x=period, y=median, group = area_id)) +
-    geom_line(alpha = 0.3) +
-    geom_line(data = fr %>%
-                filter(iso3 == "UGA",
-                       variable == "tfr",
-                       area_level == 0),
-              size=2) +
-  geom_line(data = fr %>%
-              filter(variable == "tfr",
-                     area_id == "UGA_3_022"),
-            color="red",
-            size=1)
-
 #TZA SEN RWA MWI ETH
-fr %>%
+IIaa <- fr %>%
   filter(iso3 == "TZA",
          variable == "tfr",
          area_level == 4,
          # str_detect(area_id, "TZA_4_12|4_14"),
-         !area_id %in% c("TZA_4_072dv", "TZA_4_048rr", "TZA_4_122um", "TZA_4_145tt")
+         !area_id %in% c("TZA_4_072dv", "TZA_4_048rr", "TZA_4_122um", "TZA_4_146me")
          ) %>%
   ggplot(aes(x=period, y=median, group = area_id)) +
-  geom_line(alpha = 0.2) +
+  geom_line(alpha = 0.15) +
   geom_line(data = fr %>%
               filter(iso3 == "TZA",
                      variable == "tfr",
@@ -297,21 +358,100 @@ fr %>%
             size=2) +
   geom_line(data = fr %>%
               filter(variable == "tfr",
-                     area_id %in% c("TZA_4_072dv", "TZA_4_048rr", "TZA_4_122um", "TZA_4_145tt")),
+                     area_id %in% c("TZA_4_072dv", "TZA_4_048rr", "TZA_4_122um", "TZA_4_146me")),
             aes(color=area_id),
-            size=1.5)
+            size=1.3) +
+  scale_color_manual(values = c(wesanderson::wes_palette("Zissou1")[c(1,4,5)], wesanderson::wes_palette("Rushmore1")[3])) +
+  scale_y_continuous(labels = scales::label_number(accuracy = 1)) +
+  standard_theme() +    
+  expand_limits(y=c(0, 10)) +
+  theme(legend.position = "none",
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank()) +
+  labs(y="TFR", x=element_blank(), title="Tanzania")
 
-
+IIab <- fr %>%
+  filter(iso3 == "SEN",
+         variable == "tfr",
+         area_level == 2,
+         # str_detect(area_id, "TZA_4_12|4_14"),
+         !area_name %in% c("Diamniadio", "Koungueul", "Thilogne")
+  ) %>%
+  ggplot(aes(x=period, y=median, group = area_id)) +
+  geom_line(alpha = 0.2) +
   geom_line(data = fr %>%
-              filter(iso3 == "UGA",
+              filter(iso3 == "SEN",
                      variable == "tfr",
                      area_level == 0),
             size=2) +
   geom_line(data = fr %>%
               filter(variable == "tfr",
-                     area_id == "UGA_3_022"),
-            color="red",
-            size=1)
+                     area_name %in% c("Diamniadio", "Koungueul", "Thilogne")),
+            aes(color=area_id),
+            size=1.3) +
+  scale_color_manual(values = c(wesanderson::wes_palette("Zissou1")[c(1,4,5)])) +
+  scale_y_continuous(labels = scales::label_number(accuracy = 1)) +
+  standard_theme() +  
+  expand_limits(y=c(0, 10)) +
+  theme(legend.position = "none",
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank()) +
+  labs(y=element_blank(), x=element_blank(), title = "Senegal")
+
+IIac <- fr %>%
+  filter(iso3 == "GHA",
+         variable == "tfr",
+         area_level == 2,
+         # str_detect(area_id, "TZA_4_12|4_14"),
+         !area_name %in% c("Ellembelle", "Shama", "Tarkwa-Nsuaem")
+  ) %>%
+  ggplot(aes(x=period, y=median, group = area_id)) +
+  geom_line(alpha = 0.1) +
+  geom_line(data = fr %>%
+              filter(iso3 == "GHA",
+                     variable == "tfr",
+                     area_level == 0),
+            size=2) +
+  geom_line(data = fr %>%
+              filter(variable == "tfr",
+                     area_name %in% c("Ellembelle", "Shama", "Tarkwa-Nsuaem")),
+            aes(color=area_id),
+            size=1.3) +
+  scale_color_manual(values = c(wesanderson::wes_palette("Zissou1")[c(1,4,5)])) +
+  scale_y_continuous(labels = scales::label_number(accuracy = 1)) +
+  standard_theme() +
+  expand_limits(y=c(0, 10)) +
+  theme(legend.position = "none",
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank()) +
+  labs(y=element_blank(), x=element_blank(), title="Ghana")
+
+ggpubr::ggarrange(IIaa, IIab, IIac, nrow=1)
+
+fr %>%
+  filter(area_level == 1, variable == "tfr", iso3 == "ETH", period >1999) %>%
+  ggplot(aes(x=period, y=median)) +
+    geom_line(aes(color=area_name), size=1.1) +
+    ggrepel::geom_label_repel(data = fr %>%
+                                filter(area_level == 1, variable == "tfr", iso3 == "ETH", period == 2020),
+                              aes(x=2020, label=area_name, color=area_name),
+                              direction = "y",
+                              xlim = c(-Inf, Inf), ylim = c(-Inf, Inf),
+                              segment.linetype=2,
+                              nudge_x = 5) +
+    geom_line(data = fr %>%
+                filter(area_id == "ETH", variable == "tfr", period >1999),
+              size=2
+    ) +
+  standard_theme() +
+  expand_limits(y=0) +
+  coord_cartesian(clip="off") +
+  theme(legend.position = "none",
+    panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+    plot.margin = unit(c(0,10,0,0), "lines")) +
+  labs(y="TFR", x=element_blank(), title="Ethiopia")
+ 
     
 
 p3a <- fr %>%
@@ -329,34 +469,15 @@ p3a <- fr %>%
          name = paste0(region, " | ", time)) %>%
   ggplot(aes(x=age_group_label, y=value-1)) +
     geom_boxplot() +
-    scale_y_continuous(labels = scales::label_percent(), name = "Fertility reduction") +
+    scale_y_continuous(labels = scales::label_percent(), name = "Fertility reduction", limits=c(-.5, .5)) +
     geom_hline(aes(yintercept = 0), linetype=3) +
-    facet_wrap(~time) +
+    facet_wrap(~region) +
     theme_minimal() +
-    labs(x=element_blank(), title = "(A)") +
+    labs(x=element_blank()) +
     theme(strip.text = element_text(size=12),
           axis.text = element_text(size=12),
           axis.title = element_text(size=14),
           panel.background = element_rect(fill=NA, color="black"))
-
-fr %>%
-  filter(area_level == 0,
-         variable == "asfr",
-         period %in% c(2000, 2010, 2020)) %>%
-  group_by(region, area_id, area_name, age_group) %>%
-  summarise(`2000` = 1,
-            `2010` = median[period == 2010]/median[period == 2000],
-            `2020` = median[period == 2020]/median[period == 2000]) %>%
-  pivot_longer(-c(region, area_id, area_name, age_group)) %>%
-  type.convert() %>%
-  # mutate(name = factor(name, labels=c("2000-2010", "2010-2020")) %>%
-  ggplot(aes(x=name, y=value-1, group=age_group, color=age_group))+
-  geom_line() +
-  geom_point() +
-  scale_y_continuous(labels = scales::label_percent(), name = "Fertility reduction") +
-  scale_color_manual(values=c("red", rep("grey", 6))) +
-  geom_hline(aes(yintercept = 0), linetype=3) +
-  facet_wrap(~area_name)
 
 
 ## 15-19 flatlining between 2010-2020
@@ -379,54 +500,6 @@ fr %>%
   geom_hline(aes(yintercept = 0), linetype=3) +
   facet_wrap(~area_name, ncol=5)
 
-fr %>%
-  filter(area_level == 0,
-         variable == "asfr",
-         period %in% c(2000, 2005, 2010, 2015, 2020)) %>%
-  group_by(region, area_id, area_name, age_group) %>%
-  summarise(`2005` = 1,
-            `2020` = median[period == 2015]/median[period == 2005]) %>%
-  pivot_longer(-c(region, area_id, area_name, age_group)) %>%
-  type.convert() %>%
-  filter(name == 2020) %>%
-  group_by(area_id) %>%
-  arrange(value, .by_group = TRUE) %>%
-  mutate(n = row_number()) %>%
-  filter(age_group == "Y015_019") %>%
-  left_join(nat_geom) %>%
-  ggplot() +
-    geom_sf(aes(geometry = geometry, fill=n))
-
-fr %>%
-  filter(area_level == 0,
-         variable == "tfr",
-         iso3 != "GMB") %>%
-  group_by(region, area_id, area_name) %>%
-  mutate(rel_tfr = median/median[period==2000]) %>%
-  filter(period >1999) %>%
-  select(area_id, area_name, period, rel_tfr) %>%
-  ggplot(aes(x=period, y=rel_tfr, group=area_name)) +
-    geom_line(show.legend = FALSE, alpha=0.6) +
-    geom_hline(aes(yintercept=1), linetype=2, color="red")+
-    scale_y_continuous(labels = scales::label_percent()) +
-    labs(y="Relative change in TFR", x=element_blank())+
-    moz.utils::standard_theme()
-
-
-# fr %>%
-#   filter(area_level == 0,
-#          variable == "tfr",
-#          period %in% c(2000, 2010, 2020)) %>%
-#   group_by(area_id, area_name) %>%
-#   summarise(ratio_10 = median[period == 2010]/median[period == 2000],
-#             ratio_20 = median[period == 2020]/median[period == 2010]) %>%
-#   pivot_longer(-c(area_id, area_name)) %>%
-#   mutate(name = factor(name, labels=c("2000-2010", "2010-2020"))) %>%
-#   ggplot(aes(x=name, y=value-1)) +
-#   geom_boxplot() +
-#   geom_point(position = position_jitter(width=0.05)) +
-#   scale_y_continuous(labels = scales::label_percent(), name = "Fertility reduction") +
-#   geom_hline(aes(yintercept = 0), linetype=3)
 
 
 
@@ -441,28 +514,7 @@ age_distribution_plots <- lapply(fr_list, function(fr) {
     coord_flip()
 })
 # 
-# pdf(paste0("~/Downloads/age_distribution.pdf"), h = 12, w = 20)
-# age_distribution_plots
-# dev.off()
-
-
-fr_list[["TZA"]] %>%
-  filter(variable == "asfr",
-         area_level == 1) %>%
-  ggplot(aes(x=period, y=median, color=area_name)) +
-    geom_line() +
-    facet_wrap(~age_group)
-
-asfr_time <- lapply(fr_list, function(fr) {
-  fr %>%
-    filter(variable == "asfr",
-           area_level == 1) %>%
-    ggplot(aes(x=period, y=median, color=age_group)) +
-      geom_line() +
-      facet_wrap(~area_name)
-})
-
-p3b <- fr_list[["LSO"]] %>%
+p3b <- fr_list[["LBR"]] %>%
   filter(variable == "asfr",
          area_level == 0,
          period > 1999) %>%
@@ -470,15 +522,32 @@ p3b <- fr_list[["LSO"]] %>%
   ggplot(aes(x=period, y=median)) +
     geom_line(show.legend = FALSE, size=1.1, aes(color=age_group_label)) +
     geom_ribbon(aes(ymin = lower, ymax = upper, fill = age_group_label), alpha = 0.5, show.legend = FALSE) +
-    geom_label(data = . %>% filter(period == max(period)), aes(color =age_group_label, label = age_group_label), nudge_x = 2, size=5, show.legend = FALSE) +
+    geom_label(data = . %>% filter(period == max(period)), aes(color =age_group_label, label = age_group_label), nudge_x = 3, size=5, show.legend = FALSE) +
     moz.utils::standard_theme() +
-    labs(y = "ASFR", x=element_blank(), title="(B)") +
-  coord_cartesian(clip="off") +
+    labs(y = "ASFR", x=element_blank(), title="Liberia") +
+  coord_cartesian(clip="off", xlim=c(2000, 2020)) +
   theme(axis.text = element_text(size = 12),
         axis.title = element_text(size = 14),
-        plot.margin = unit(c(1,1,1,0), "lines"))
+        plot.margin = unit(c(1,5,1,0), "lines"))
 
-ggarrange(p3a, p3b, widths = c(2,1))
+p3c <- fr_list[["KEN"]] %>%
+  filter(area_level ==1, age_group == "Y020_024", period >1999) %>%
+  group_by(area_id) %>%
+  mutate(median = median/median[period==2000]) %>%
+  ggplot(aes(x=period, y=median, color=area_name)) +
+    geom_line(size=1, show.legend = FALSE) +
+    ggrepel::geom_label_repel(data = . %>% filter(period == max(period)), aes(color =area_name, label = area_name), 
+                              xlim = c(-Inf, Inf), nudge_x = 5, size=4, segment.linetype = 2, show.legend = FALSE, direction="y") +
+    standard_theme() +
+    coord_cartesian(clip="off", xlim=c(2000, 2020)) +
+    labs(x=element_blank(), y="ASFR normalised to 2000", title="Kenya | Provincial 20-24 ASFR") +
+    theme(plot.margin = unit(c(1,7,1,0), "lines"))
+
+gridExtra::grid.arrange(p3a, p3b, p3c, nrow=2, widths=c(2,1))
+
+p3i <- gridExtra::grid.arrange(p3b, p3c, nrow=1)
+
+gridExtra::grid.arrange(p3a, p3i)
 
 plots <- Map(function(fr, areas, level) {
   
@@ -608,15 +677,6 @@ pdf(paste0("~/Downloads/dist_fr_change_00_20.pdf"), h = 12, w = 20)
 dist_fr_change
 dev.off()
 
-ggpubr::ggarrange(tfr_2020_map[["ZWE"]], dist_fr_change[["ZWE"]])
-
-ggpubr::ggarrange(dist_fr_change[["ETH"]], dist_fr_change[["MOZ"]])
-ggpubr::ggarrange(admin1_fr_change[["ETH"]], admin1_fr_change[["MOZ"]])
-
-dist_fr[["ETH"]] %>%
-  ggplot(aes(x=period, y=median, color=area_id)) +
-    geom_line()
-
 
 lvl_df <- read.csv("global/iso_mapping_fit.csv") %>%
   select(iso3, fertility_fit_level, admin1_level)
@@ -689,112 +749,3 @@ int %>%
          diff = upper-lower)  %>%
   filter(iso3 %in% c("GHA", "COG", "ETH"))
 
-############
-
-fig2a <- dist_fr_change[["BEN"]] + 
-  labs(fill = "Proportion change", title = "(A)") +
-  facet_wrap(~name, nrow=1) +
-  theme_minimal() +
-  theme(legend.position = "bottom") +
-  coord_sf(datum = NA) +
-  theme(strip.text = element_text(size = 12),
-        plot.margin = unit(c(1,0,0,0), "lines"))
-
-fig2b <- dist_fr[["ETH"]] %>%
-  group_by(area_id) %>%
-  filter(period > 1999) %>%
-  mutate(increase = ifelse(median[period == 2010] > median[period == 2000], 1, 0)) %>%
-  ggplot(aes(x=period, y=median, group = area_id, color=factor(increase))) + 
-    geom_line(show.legend = FALSE, aes(size = factor(increase), alpha = factor(increase))) +
-    scale_size_manual(values = c(0.7, 1.3)) +
-    scale_alpha_manual(values = c(0.3, 1)) +
-    theme_minimal() +
-    labs(y="TFR", x=element_blank(), title = "(B)") +
-    theme(axis.text = element_text(size = 12),
-          axis.title = element_text(size = 12),
-          plot.margin = unit(c(1,1,1,0), "lines"))
-
-fig2c <- dist_fr[["ETH"]] %>%
-  group_by(area_id) %>%
-  filter(period > 1999) %>%
-  mutate(increase = ifelse(median[period == 2020] > median[period == 2010], 1, 0)) %>%
-  ggplot(aes(x=period, y=median, group = area_id, color=factor(increase))) + 
-  geom_line(show.legend = FALSE, aes(size = factor(increase), alpha = factor(increase))) +
-  scale_size_manual(values = c(0.7, 1.3)) +
-  scale_alpha_manual(values = c(0.3, 1)) +
-  theme_minimal() +
-  labs(y="TFR", x=element_blank(), title = "(C)") +
-  theme(axis.text = element_text(size = 12),
-        axis.title = element_text(size = 12),
-        plot.margin = unit(c(1,1,1,0), "lines"))
-
-ggpubr::ggarrange(fig2a, ggpubr::ggarrange(fig2b, fig2c, ncol=1))  
-
-#################
-
-dist_fr_change[["ETH"]] + 
-  labs(fill = "Proportion change", title = "(A)") +
-  facet_wrap(~name, nrow=1) +
-  theme_minimal() +
-  theme(legend.position = "bottom") +
-  coord_sf(datum = NA) +
-  theme(strip.text = element_text(size = 12),
-        plot.margin = unit(c(1,0,0,0), "lines"))
-
-fr %>% 
-  filter(iso3 == "ETH", variable == "tfr", area_level == 2, period %in% c(2000,2010,2020)) %>% 
-  group_by(area_id) %>% 
-  summarise(ratio_10 = median[period == 2020]/median[period==2010]) %>% 
-  filter(ratio_10 == max(ratio_10) |ratio_10 == min(ratio_10))
-
-fr %>% 
-  filter(area_id == "ETH", variable == "tfr",period %in% c(2000,2010,2020)) %>% 
-  group_by(area_id) %>% 
-  summarise(ratio_10 = median[period == 2020]/median[period==2010]) %>% 
-  filter(ratio_10 == max(ratio_10) |ratio_10 == min(ratio_10))
-
-####################
-
-fr %>%
-  filter(area_level == 0, variable == "tfr") %>%
-  group_by(area_id) %>%
-  summarise(change = median[period == 2015]/median[period==2000]) %>%
-  ungroup() %>%
-  summarise(median = median(change),
-            lower = quantile(change, 0.25),
-            upper = quantile(change, 0.75)
-  )
-
-fr %>%
-  filter(area_level == 0,
-         variable == "asfr",
-         period %in% c(2000, 2010, 2020),
-         !iso3 %in% c("NER", "GAB", "GIN", "MWI")) %>%
-  group_by(region, area_id, area_name, age_group) %>%
-  summarise(ratio_10 = median[period == 2010]/median[period == 2000],
-            ratio_20 = median[period == 2020]/median[period == 2010]) %>%
-  left_join(get_age_groups() %>% select(age_group, age_group_label)) %>%
-  pivot_longer(-c(region, area_id, area_name, age_group, age_group_label)) %>%
-  group_by(name, age_group_label) %>%
-  summarise(median = median(value),
-            lower = quantile(value, 0.25),
-            upper = quantile(value, 0.75)
-  )
-
-##############
-
-sd_report <- lapply(paste0("archive/aaa_fit/", id, "/sd_report.csv"), read_csv, show_col_types = FALSE)
-sd_report2 <- lapply(paste0("archive/aaa_mwi_rwa_fit/", id2, "/sd_report.csv"), read_csv, show_col_types = FALSE)
-sd_report3 <- lapply(paste0("archive/aaa_eth_fit/", id3, "/sd_report.csv"), read_csv, show_col_types = FALSE)
-sd_report <- c(sd_report, sd_report2, sd_report3)
-
-sd_report %>%
-  bind_rows() %>%
-  filter(str_detect(hyper, "beta_tips"),
-         !iso %in% c("UGA","TZA")) %>%
-  rename(iso3 = iso) %>%
-  group_by(iso3) %>%
-  mutate(fe = c(5,NA, 0,6,10)) %>%
-  filter(!is.na(fe)) %>%
-  ggplot(aes(x=fe, y=Estimate, group=fe)) +
-    geom_boxplot()
