@@ -9,6 +9,10 @@
 
 dir.create("check")
 
+x <- data.frame(y = c(1, 2, 3))
+y <- x %>%
+	mutate(z = y)
+
 #' Authenticate SharePoint login
 sharepoint <- spud::sharepoint$new("https://imperiallondon.sharepoint.com/")
 
