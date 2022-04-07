@@ -15,12 +15,6 @@ artefacts:
 displayname: Make area hierarchy dataset
 
 packages:
-  - spud
-  - dplyr
-  - sf
-  - pryr
-  - naomi.utils
-  - naomi
   - tidyverse
   - ggplot2
   - rmapshaper
