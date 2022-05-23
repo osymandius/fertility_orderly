@@ -46,7 +46,7 @@ lvl <- lvl_map$fertility_fit_level[lvl_map$iso3 == iso3]
 admin1_lvl <- lvl_map$admin1_level[lvl_map$iso3 == iso3]
 
 programme_births <- read_csv("programme_births_district.csv")
-anc <- read_csv("~/OneDrive - Imperial College London/Mozambique/2022 Estimates/Naomi/anc_test.csv") %>%
+anc <- read_csv("anc_test.csv") %>%
   select(area_id, year, anc_clients)
 
 mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level = lvl, project=2020)

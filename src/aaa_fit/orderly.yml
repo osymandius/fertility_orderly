@@ -44,6 +44,8 @@ resources:
   # - models/model6.cpp
   # - models/model6.so
   # - models/model6.o
+  - programme_births_district.csv
+  - anc_test.csv
 
 
 
