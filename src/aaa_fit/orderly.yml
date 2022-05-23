@@ -41,9 +41,9 @@ resources:
   # - no_tips.cpp
   # - no_tips.o
   # - no_tips.so
-  # - models/model6.cpp
-  # - models/model6.so
-  # - models/model6.o
+  - models/model6_births.cpp
+  - models/model6_births.so
+  - models/model6_births.o
   - programme_births_district.csv
   - anc_test.csv
 
