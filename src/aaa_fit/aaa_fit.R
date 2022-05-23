@@ -45,7 +45,33 @@ lvl_map <- read.csv("resources/iso_mapping_fit.csv")
 lvl <- lvl_map$fertility_fit_level[lvl_map$iso3 == iso3]
 admin1_lvl <- lvl_map$admin1_level[lvl_map$iso3 == iso3]
 
+programme_births <- read_csv("programme_births_district.csv")
+anc <- read_csv("~/OneDrive - Imperial College London/Mozambique/2022 Estimates/Naomi/anc_test.csv") %>%
+  select(area_id, year, anc_clients)
+
 mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level = lvl, project=2020)
+
+births_programme <- mf[["out"]][["mf_out"]] %>%
+  filter(variable == "tfr") %>%
+  mutate(idx_row = row_number(),
+         period = as.numeric(as.character(period))) %>%
+  left_join(programme_births %>% rename(period = year)) %>%
+  filter(!is.na(value))
+
+A_births_aggr <- mf$out$A_tfr_out
+A_births_aggr[A_births_aggr == 5] <- 1
+A_births_aggr <- A_births_aggr[births_programme$idx_row, ]
+
+anc <- mf[["out"]][["mf_out"]] %>%
+  filter(variable == "tfr") %>%
+  mutate(idx_row = row_number(),
+         period = as.numeric(as.character(period))) %>%
+  left_join(anc %>% rename(period = year)) %>%
+  filter(!is.na(anc_clients))
+
+A_anc_aggr <- mf$out$A_tfr_out
+A_anc_aggr[A_anc_aggr == 5] <- 1
+A_anc_aggr <- A_anc_aggr[anc$idx_row, ]
 
 mf$observations$full_obs <- mf$observations$full_obs %>%
   ungroup() %>%
@@ -123,8 +149,8 @@ mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
 validate_model_frame(mf, areas)
 
 # TMB::compile("~/Documents/GitHub/dfertility/backup_src/model6.cpp", flags = "-w")               # Compile the C++ file
-# TMB::compile("models/model6.cpp", flags = "-w")               # Compile the C++ file
-# dyn.load(dynlib("~/Documents/GitHub/dfertility/backup_src/model6"))
+TMB::compile("models/model6_births.cpp", flags = "-w")               # Compile the C++ file
+dyn.load(dynlib("models/model6_births"))
 
 tmb_int <- list()
 
@@ -194,6 +220,10 @@ tmb_int$data <- list(
   pop = mf$mf_model$population,
   # A_asfr_out = mf$out$A_asfr_out,
   A_tfr_out = mf$out$A_tfr_out,
+  A_births_aggr = A_births_aggr,
+  A_anc_aggr = A_anc_aggr,
+  births_programme = births_programme$value,
+  anc = anc$anc_clients,
 
   A_full_obs = mf$observations$A_full_obs,
 
@@ -237,9 +267,9 @@ tmb_int$par <- list(
   # u_period = rep(0, ncol(mf$Z$Z_period)),
   u_period = rep(0, ncol(spline_mat)),
   log_prec_rw_period = 0,
-  lag_logit_phi_period = 0,
-  # lag_logit_phi_arima_period = 0,
-  # beta_period = 0,
+  # lag_logit_phi_period = 0,
+  lag_logit_phi_arima_period = 0,
+  beta_period = 0,
 
   log_prec_smooth_iid = 0,
   u_smooth_iid = rep(0, ncol(R_smooth_iid)),
@@ -269,7 +299,10 @@ tmb_int$par <- list(
                      ncol(mf$Z$X_tips_fe)
                      )
                 ),
-  log_prec_zeta2 = 0
+  log_prec_zeta2 = 0,
+  
+  # logit_beta_facility_births = 0,
+  log_beta_anc = 0
 )
 
 tmb_int$random <- c("beta_0",
@@ -277,7 +310,7 @@ tmb_int$random <- c("beta_0",
                     "u_age",
                     "u_period",
                     "u_smooth_iid",
-                    # "beta_period",
+                    "beta_period",
                     # "beta_tips_dummy",
                     "beta_tips_dummy_5",
                     "beta_tips_fe",
@@ -288,6 +321,8 @@ tmb_int$random <- c("beta_0",
                     "beta_spike_2000",
                     "beta_spike_1999",
                     "beta_spike_2001",
+                    # "logit_beta_facility_births",
+                    "log_beta_anc",
                     "eta1",
                     "eta2",
                     "eta3"
@@ -317,7 +352,7 @@ if(mf$mics_toggle) {
 
 f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
                                parameters = tmb_int$par,
-                               DLL = "model7",
+                               DLL = "model6_births",
                                silent=0,
                                checkParameterOrder=FALSE)
 })
@@ -328,7 +363,7 @@ if(is.null(parallel::mccollect(f)[[1]])) {
 
 obj <-  TMB::MakeADFun(data = tmb_int$data,
                        parameters = tmb_int$par,
-                       DLL = "model7",
+                       DLL = "model6_births",
                        random = tmb_int$random,
                        hessian = FALSE)
 
@@ -396,6 +431,47 @@ tfr_plot <- plot_prep %>%
     legend.position = "bottom",
     text = element_text(size=14)
   )
+
+p2 <- tmb_results %>%
+  filter(variable == "asfr", area_level == 1) %>%
+  left_join(population) %>%
+  mutate(median = median*population) %>%
+  group_by(area_id, period) %>%
+  summarise(median = sum(median)) %>%
+  ggplot(aes(x=period, y=median, color=source)) +
+    geom_line(aes(x=period, y=median), size=1, inherit.aes = FALSE) +
+    geom_point(data = programme_births %>% aggregate_to_admin("year", "value", 1, areas) %>%
+                 mutate(source = "Programme births"), aes(x=year, y=value)) +
+    geom_point(data = programme_births %>% aggregate_to_admin("year", "value", 1, areas) %>%
+               mutate(value = value/0.71,
+                      source = "Adjusted programme births"), aes(x=year, y=value)) +
+    geom_point(data = anc %>% aggregate_to_admin("period", "anc_clients", 1, areas) %>%
+               mutate(source = "ANC clients"), aes(y=anc_clients)) +
+    # geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
+    facet_wrap(~area_id) +
+    standard_theme()
+
+ggpubr::ggarrange(tfr_plot, p2)
+
+births_full <- tmb_results %>%
+  filter(variable == "asfr") %>%
+  left_join(population) %>%
+  mutate(median = median*population) %>%
+  .$median
+
+tmb_results %>%
+  filter(variable == "asfr") %>%
+  left_join(population) %>%
+  mutate(median = median*population) %>%
+  filter(area_id %in% unique(births_programme$area_id), period %in% unique(births_programme$period)) %>%
+  group_by(area_id, period) %>%
+  summarise(median = sum(median))
+
+births_programme %>%
+  bind_cols(est_births = as.vector(A_births_aggr %*% births_full)) %>%
+  View()
+
+A_births_aggr %*% births_full
 
 district_tfr <- tmb_results %>%
   filter(area_level == lvl, variable == "tfr") %>%

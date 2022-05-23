@@ -36,11 +36,11 @@ fail_id <- id %>%
   keep(is.null)
 
 fail### SEARCH
-orderly::orderly_search(name = 'aaa_scale_pop', query = paste0('latest(parameter:iso3 == "', "COD", '")'), draft = FALSE)
+orderly::orderly_search(name = 'aaa_scale_pop', query = paste0('latest(parameter:iso3 == "', "MLI", '")'), draft = FALSE)
 orderly::orderly_search(name = 'aaa_inputs_orderly_pull', query = paste0('latest(parameter:iso3 == "', "GNB", '")'), draft = FALSE)
 
-id <- lapply(c("GHA", "SEN", "NGA", "MOZ", "TGO", "SLE", "NER", "LBR", "GNB", "GIN", "GMB", "GAB", "CIV", "TCD", "CAF", "BDI", "BFA", "BEN", "ZWE", "ZMB", "NAM", "LSO", "SWZ"), function(x){
-  orderly::orderly_search(name = "aaa_fit", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
+id <- lapply(ssa_iso3, function(x){
+  orderly::orderly_search(name = "aaa_scale_pop", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
 })
 
 id <- map(c("COD", "TZA", "COG"), ~possibly_pull("aaa_fit", id = paste0('latest(parameter:iso3 == "', .x, '")'), recursive = FALSE))

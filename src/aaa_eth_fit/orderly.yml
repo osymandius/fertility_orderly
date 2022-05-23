@@ -41,6 +41,8 @@ resources:
   # - no_tips_eth.cpp
   # - no_tips_eth.o
   # - no_tips_eth.so
+  - model2.o
+  - model2.so
 
 
 
