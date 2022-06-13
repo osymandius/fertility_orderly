@@ -22,6 +22,9 @@ packages:
 parameters:
   iso3:
     default: ~
+  version:
+    default: 2021
+
 
 # global_resources:
 #   resources/iso_mapping_fit.csv: iso_mapping_fit.csv

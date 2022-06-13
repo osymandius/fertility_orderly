@@ -10,6 +10,8 @@ areas <- read_sf("depends/naomi_areas.geojson") %>%
   st_make_valid() %>%
   st_collection_extract("POLYGON")
 
+
+
 asfr <- read.csv("depends/asfr.csv")
 
 phia_asfr <- read.csv("resources/phia_asfr.csv") %>%
@@ -51,12 +53,30 @@ anc <- read_csv("anc_test.csv") %>%
 
 mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level = lvl, project=2020)
 
+###############
+
+birth_loc <- data.frame(area_id1 = c("MOZ_1_03",
+                                    "MOZ_1_04",
+                                    "MOZ_1_05",
+                                    "MOZ_1_06",
+                                    "MOZ_1_07",
+                                    "MOZ_1_08",
+                                    "MOZ_1_09",
+                                    "MOZ_1_10",
+                                    "MOZ_1_11",
+                                    "MOZ_1_12"),
+                        birth_loc = c(0.8813203, 0.8705988, 0.886547, 0.7357595, 0.5970718, 0.4358709, 0.6631273, 0.7279695, 0.8211848, 0.95)
+)
+
 births_programme <- mf[["out"]][["mf_out"]] %>%
   filter(variable == "tfr") %>%
   mutate(idx_row = row_number(),
          period = as.numeric(as.character(period))) %>%
   left_join(programme_births %>% rename(period = year)) %>%
-  filter(!is.na(value))
+  filter(!is.na(value)) %>%
+  left_join(spread_areas(areas) %>% select(area_id, area_id1) %>% st_drop_geometry()) %>%
+  left_join(birth_loc) %>%
+  mutate(value = value/birth_loc)
 
 A_births_aggr <- mf$out$A_tfr_out
 A_births_aggr[A_births_aggr == 5] <- 1
@@ -72,6 +92,27 @@ anc <- mf[["out"]][["mf_out"]] %>%
 A_anc_aggr <- mf$out$A_tfr_out
 A_anc_aggr[A_anc_aggr == 5] <- 1
 A_anc_aggr <- A_anc_aggr[anc$idx_row, ]
+
+# area_id	survey_id	birth_location	se
+# MOZ_1_03	MOZ2015AIS	0.8813203	0.02766157
+# MOZ_1_04	MOZ2015AIS	0.8705988	0.02500133
+# MOZ_1_05	MOZ2015AIS	0.886547	0.04132692
+# MOZ_1_06	MOZ2015AIS	0.7357595	0.04923417
+# MOZ_1_07	MOZ2015AIS	0.5970718	0.06153326
+# MOZ_1_08	MOZ2015AIS	0.4358709	0.05541844
+# MOZ_1_09	MOZ2015AIS	0.6631273	0.04571233
+# MOZ_1_10	MOZ2015AIS	0.7279695	0.05096366
+# MOZ_1_11	MOZ2015AIS	0.8211848	0.03547287
+# MOZ_1_12  MOZ2015AIS  0.95
+
+# foo <- births_programme %>%
+#   left_join(spread_areas(areas) %>% select(area_id, area_id1) %>% st_drop_geometry()) %>%
+#   group_by(area_id1) %>%
+#   mutate(parent_idx = factor(cur_group_id()))
+# 
+# m <- sparse.model.matrix(~0 + parent_idx, data = foo)
+
+
 
 mf$observations$full_obs <- mf$observations$full_obs %>%
   ungroup() %>%
@@ -237,13 +278,12 @@ tmb_int$data <- list(
 tmb_int$par <- list(
   beta_0 = 0,
 
-  # beta_tips_dummy = rep(0, ncol(mf$Z$X_tips_dummy)),
-  beta_tips_dummy_5 = rep(0, ncol(mf$Z$X_tips_dummy_5)),
-  beta_tips_fe = rep(0, ncol(mf$Z$X_tips_fe)),
+  # beta_tips_dummy_5 = rep(0, ncol(mf$Z$X_tips_dummy_5)),
+  # beta_tips_fe = rep(0, ncol(mf$Z$X_tips_fe)),
   # beta_urban_dummy = rep(0, ncol(mf$Z$X_urban_dummy)),
-  u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
-  log_prec_rw_tips = 0,
-  lag_logit_phi_tips = 0,
+  # u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
+  # log_prec_rw_tips = 0,
+  # lag_logit_phi_tips = 0,
 
   u_age = rep(0, ncol(mf$Z$Z_age)),
   log_prec_rw_age = 0,
@@ -271,21 +311,21 @@ tmb_int$par <- list(
   lag_logit_phi_arima_period = 0,
   beta_period = 0,
 
-  log_prec_smooth_iid = 0,
-  u_smooth_iid = rep(0, ncol(R_smooth_iid)),
+  # log_prec_smooth_iid = 0,
+  # u_smooth_iid = rep(0, ncol(R_smooth_iid)),
 
   u_spatial_str = rep(0, ncol(mf$Z$Z_spatial)),
   log_prec_spatial = 0,
 
-  beta_spike_2000 = 0,
-  beta_spike_1999 = 0,
-  beta_spike_2001 = 0,
+  # beta_spike_2000 = 0,
+  # beta_spike_1999 = 0,
+  # beta_spike_2001 = 0,
   # log_overdispersion = 0,
 
-  eta1 = array(0, c(ncol(mf$Z$Z_country), ncol(mf$Z$Z_period), ncol(mf$Z$Z_age))),
-  log_prec_eta1 = 0,
-  logit_eta1_phi_age = 0,
-  logit_eta1_phi_period = 0,
+  # eta1 = array(0, c(ncol(mf$Z$Z_country), ncol(mf$Z$Z_period), ncol(mf$Z$Z_age))),
+  # log_prec_eta1 = 0,
+  # logit_eta1_phi_age = 0,
+  # logit_eta1_phi_period = 0,
 
   eta2 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_period))),
   log_prec_eta2 = 0,
@@ -295,11 +335,11 @@ tmb_int$par <- list(
   log_prec_eta3 = 0,
   logit_eta3_phi_age = 0,
   
-  zeta2 = array(0, c(ncol(as(diag(1, length(unique(mf$observations$full_obs$survey_id))), "dgTMatrix")),
-                     ncol(mf$Z$X_tips_fe)
-                     )
-                ),
-  log_prec_zeta2 = 0,
+  # zeta2 = array(0, c(ncol(as(diag(1, length(unique(mf$observations$full_obs$survey_id))), "dgTMatrix")),
+  #                    ncol(mf$Z$X_tips_fe)
+  #                    )
+  #               ),
+  # log_prec_zeta2 = 0,
   
   # logit_beta_facility_births = 0,
   log_beta_anc = 0
@@ -309,21 +349,20 @@ tmb_int$random <- c("beta_0",
                     "u_spatial_str",
                     "u_age",
                     "u_period",
-                    "u_smooth_iid",
+                    # "u_smooth_iid",
                     "beta_period",
-                    # "beta_tips_dummy",
-                    "beta_tips_dummy_5",
-                    "beta_tips_fe",
+                    # "beta_tips_dummy_5",
+                    # "beta_tips_fe",
                     # "beta_urban_dummy",
-                    "u_tips",
+                    # "u_tips",
                     # "zeta1",
-                    "zeta2",
-                    "beta_spike_2000",
-                    "beta_spike_1999",
-                    "beta_spike_2001",
+                    # "zeta2",
+                    # "beta_spike_2000",
+                    # "beta_spike_1999",
+                    # "beta_spike_2001",
                     # "logit_beta_facility_births",
                     "log_beta_anc",
-                    "eta1",
+                    # "eta1",
                     "eta2",
                     "eta3"
                     # "omega1",
@@ -415,28 +454,24 @@ fr_plot <- fr_plot %>%
 cntry_name <- countrycode::countrycode(iso3, "iso3c", "country.name")
 
 plot_prep <- tmb_results %>%
-  filter(area_level %in% c(0, admin1_lvl), variable == "tfr")
-  # filter(area_level ==0, variable == "tfr")
+  # filter(area_level %in% c(0, admin1_lvl), variable == "tfr")
+  filter(area_level ==1, variable == "tfr")
 
 tfr_plot <- plot_prep %>%
   ggplot(aes(x=period, y=median)) +
   geom_line(size=1) +
   geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
-  geom_point(data = fr_plot %>% filter(variable == "tfr", value <10, !survey_id %in% remove_survey), aes(y=value, color=survey_id)) +
-  geom_point(data = fr_plot %>% filter(variable == "tfr", value <10, survey_id %in% remove_survey), aes(y=value, color=survey_id), shape=22, fill=NA) +
+  geom_point(data = fr_plot %>% filter(variable == "tfr", str_detect(area_id, "_1_"), value <10, !survey_id %in% remove_survey), aes(y=value, color=survey_id)) +
+  geom_point(data = fr_plot %>% filter(variable == "tfr", str_detect(area_id, "_1_"), value <10, survey_id %in% remove_survey), aes(y=value, color=survey_id), shape=22, fill=NA) +
   facet_wrap(~fct_relevel(area_name, levels=c(cntry_name, unique(plot_prep$area_name)[!unique(plot_prep$area_name) == cntry_name])), ncol=5) +
   labs(y="TFR", x=element_blank(), color="Survey ID", title=paste(iso3, "| Provincial TFR")) +
-  theme_minimal() +
-  theme(
-    legend.position = "bottom",
-    text = element_text(size=14)
-  )
+  standard_theme()
 
 p2 <- tmb_results %>%
-  filter(variable == "asfr", area_level == 1) %>%
+  filter(variable == "asfr", area_level %in% c(1)) %>%
   left_join(population) %>%
   mutate(median = median*population) %>%
-  group_by(area_id, period) %>%
+  group_by(area_id, area_name, period) %>%
   summarise(median = sum(median)) %>%
   ggplot(aes(x=period, y=median, color=source)) +
     geom_line(aes(x=period, y=median), size=1, inherit.aes = FALSE) +
@@ -447,9 +482,9 @@ p2 <- tmb_results %>%
                       source = "Adjusted programme births"), aes(x=year, y=value)) +
     geom_point(data = anc %>% aggregate_to_admin("period", "anc_clients", 1, areas) %>%
                mutate(source = "ANC clients"), aes(y=anc_clients)) +
-    # geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
-    facet_wrap(~area_id) +
-    standard_theme()
+    labs(x=element_blank(), y="Births") +
+  facet_wrap(~fct_relevel(area_name, levels=c(cntry_name, unique(plot_prep$area_name)[!unique(plot_prep$area_name) == cntry_name])), ncol=5) +
+  standard_theme()
 
 ggpubr::ggarrange(tfr_plot, p2)
 

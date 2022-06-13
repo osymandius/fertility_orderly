@@ -27,6 +27,9 @@ displayname: Parameterised ASFR
 parameters:
   iso3:
     default: ~
+  version:
+    default: 2021
+
 
 packages:
   - dplyr

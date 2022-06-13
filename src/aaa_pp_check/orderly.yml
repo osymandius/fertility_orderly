@@ -27,6 +27,9 @@ displayname: Fertility model fit
 parameters:
   iso3:
     default: ~
+  version:
+    default: 2021
+
 
 packages:
   - dplyr

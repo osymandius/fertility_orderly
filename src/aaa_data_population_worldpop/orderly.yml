@@ -18,6 +18,9 @@ packages:
 parameters:
   iso3:
     default: ~
+  version:
+    default: 2021
+
 
 ## To add a new country to this task, add it to the dependency below and
 ## ensure the imported file is named 'depends/<iso3>_areas.geojson'
