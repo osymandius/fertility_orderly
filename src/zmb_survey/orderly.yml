@@ -1,5 +1,9 @@
 script: zmb_survey.R
 
+parameters:
+  version:
+    default: 2021
+
 artefacts:
   - data:
       description: survey indicator dataset
@@ -23,6 +27,6 @@ packages:
 
 depends:
   zmb_data_areas:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/zmb_areas.geojson: zmb_areas.geojson

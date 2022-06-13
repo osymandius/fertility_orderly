@@ -1,5 +1,9 @@
 script: uga_survey.R
 
+parameters:
+  version:
+    default: 2021
+
 artefacts:
   - data:
       description: survey indicator dataset
@@ -23,6 +27,6 @@ packages:
 
 depends:
   uga_data_areas:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/uga_areas.geojson: uga_areas.geojson

@@ -1,5 +1,9 @@
 script: ago_survey.R
 
+parameters:
+  version:
+    default: 2021
+
 artefacts:
   - data:
       description: survey indicator dataset
@@ -27,6 +31,6 @@ packages:
 
 depends:
   ago_data_areas:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/ago_areas.geojson: ago_areas.geojson

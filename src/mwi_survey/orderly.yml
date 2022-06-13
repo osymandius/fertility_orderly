@@ -1,5 +1,9 @@
 script: mwi_survey.R
 
+parameters:
+  version:
+    default: 2021
+
 artefacts:
   - data:
       description: survey indicator dataset
@@ -32,6 +36,6 @@ global_resources:
 
 depends:
   mwi_data_areas:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/mwi_areas.geojson: mwi_areas.geojson

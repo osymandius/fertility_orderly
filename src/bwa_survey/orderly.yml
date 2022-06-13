@@ -1,5 +1,9 @@
 script: bwa_survey.R
 
+parameters:
+  version:
+    default: 2021
+
 artefacts:
   - data:
       description: survey indicator dataset
@@ -24,6 +28,6 @@ packages:
 
 depends:
   bwa_data_areas:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/bwa_areas.geojson: bwa_areas.geojson

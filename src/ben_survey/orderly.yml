@@ -1,5 +1,9 @@
 script: ben_survey.R
 
+parameters:
+  version:
+    default: 2021
+
 artefacts:
   - data:
       description: survey indicator dataset
@@ -32,6 +36,6 @@ global_resources:
 
 depends:
   ben_data_areas:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/ben_areas.geojson: ben_areas.geojson

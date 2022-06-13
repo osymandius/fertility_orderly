@@ -1,5 +1,9 @@
 script: rwa_survey.R
 
+parameters:
+  version:
+    default: 2021
+
 artefacts:
   - data:
       description: survey indicator dataset
@@ -24,6 +28,6 @@ packages:
 
 depends:
   rwa_data_areas:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/rwa_areas.geojson: rwa_areas.geojson

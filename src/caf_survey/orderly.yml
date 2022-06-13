@@ -1,5 +1,9 @@
 script: caf_survey.R
 
+parameters:
+  version:
+    default: 2021
+
 artefacts:
   - data:
       description: survey indicator dataset
@@ -27,6 +31,6 @@ global_resources:
 
 depends:
   caf_data_areas:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/caf_areas.geojson: caf_areas.geojson

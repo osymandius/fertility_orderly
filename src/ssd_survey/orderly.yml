@@ -1,5 +1,9 @@
 script: ssd_survey.R
 
+parameters:
+  version:
+    default: 2021
+
 artefacts:
   - data:
       description: survey indicator dataset
@@ -27,6 +31,6 @@ global_resources:
 
 depends:
   ssd_data_areas:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/ssd_areas.geojson: ssd_areas.geojson

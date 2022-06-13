@@ -1,5 +1,9 @@
 script: eth_survey.R
 
+parameters:
+  version:
+    default: 2021
+
 artefacts:
   - data:
       description: survey indicator dataset
@@ -23,6 +27,6 @@ packages:
 
 depends:
   eth_data_areas:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/eth_areas.geojson: eth_areas.geojson

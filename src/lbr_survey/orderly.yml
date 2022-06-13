@@ -1,5 +1,9 @@
 script: lbr_survey.R
 
+parameters:
+  version:
+    default: 2021
+
 artefacts:
   - data:
       description: survey indicator dataset
@@ -27,6 +31,6 @@ packages:
 
 depends:
   lbr_data_areas:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/lbr_areas.geojson: lbr_areas.geojson

@@ -1,5 +1,9 @@
 script: sle_survey.R
 
+parameters:
+  version:
+    default: 2021
+
 artefacts:
   - data:
       description: survey indicator dataset
@@ -31,6 +35,6 @@ global_resources:
 
 depends:
   sle_data_areas:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/sle_areas.geojson: sle_areas.geojson

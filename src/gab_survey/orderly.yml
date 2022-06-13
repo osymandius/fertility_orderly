@@ -1,5 +1,9 @@
 script: gab_survey.R
 
+parameters:
+  version:
+    default: 2021
+
 artefacts:
   - data:
       description: survey indicator dataset
@@ -27,6 +31,6 @@ packages:
 
 depends:
   gab_data_areas:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/gab_areas.geojson: gab_areas.geojson

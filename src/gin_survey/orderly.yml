@@ -1,5 +1,9 @@
 script: gin_survey.R
 
+parameters:
+  version:
+    default: 2021
+
 artefacts:
   - data:
       description: survey indicator dataset
@@ -28,6 +32,6 @@ global_resources:
 
 depends:
   gin_data_areas:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/gin_areas.geojson: gin_areas.geojson

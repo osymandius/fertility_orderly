@@ -1,5 +1,9 @@
 script: gnb_survey.R
 
+parameters:
+  version:
+    default: 2021
+
 artefacts:
   - data:
       description: survey indicator dataset
@@ -31,6 +35,6 @@ global_resources:
 
 depends:
   gnb_data_areas:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/gnb_areas.geojson: gnb_areas.geojson

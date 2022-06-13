@@ -1,5 +1,9 @@
 script: nga_survey.R
 
+parameters:
+  version:
+    default: 2021
+
 artefacts:
   - data:
       description: survey indicator dataset
@@ -32,6 +36,6 @@ global_resources:
 
 depends:
   nga_data_areas:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/nga_areas.geojson: nga_areas.geojson

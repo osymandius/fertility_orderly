@@ -1,5 +1,9 @@
 script: ner_survey.R
 
+parameters:
+  version:
+    default: 2021
+
 artefacts:
   - data:
       description: survey indicator dataset
@@ -27,6 +31,6 @@ packages:
 
 depends:
   ner_data_areas:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/ner_areas.geojson: ner_areas.geojson

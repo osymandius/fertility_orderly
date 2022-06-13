@@ -1,5 +1,9 @@
 script: tgo_survey.R
 
+parameters:
+  version:
+    default: 2021
+
 artefacts:
   - data:
       description: survey indicator dataset
@@ -32,6 +36,6 @@ global_resources:
 
 depends:
   tgo_data_areas:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/tgo_areas.geojson: tgo_areas.geojson

@@ -1,5 +1,9 @@
 script: ken_survey.R
 
+parameters:
+  version:
+    default: 2021
+
 artefacts:
   - data:
       description: survey indicator dataset
@@ -35,6 +39,6 @@ global_resources:
 
 depends:
   ken_data_areas:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/ken_areas.geojson: ken_areas.geojson
