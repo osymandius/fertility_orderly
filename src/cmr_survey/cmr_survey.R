@@ -75,17 +75,17 @@ fertility_mics_data$hh <- fertility_mics_data$hh %>%
       #' The 2000 survey groups the admin1 areas into 5 regions. When we can aggregate to any area of choice, coming back and improve this mapping
       survey_id == "CMR2000MICS" ~ "Cameroon",
       
-      survey_id == "CMR2006MICS" & mics_area_name_label == "Centre" ~ "Centre (sans Yaoundé)",
+      survey_id == "CMR2006MICS" & mics_area_name_label == "Centre" ~ "Centre (sans YaoundÃ©)",
       survey_id == "CMR2006MICS" & mics_area_name_label == "Extreme Nord" ~ "Extreme-Nord",
       survey_id == "CMR2006MICS" & mics_area_name_label == "Littoral" ~ "Littoral (sans Douala)",
       survey_id == "CMR2006MICS" & mics_area_name_label == "Nord Ouest" ~ "Nord-Ouest",
       survey_id == "CMR2006MICS" & mics_area_name_label == "Sud Ouest" ~ "Sud-Ouest",
-      survey_id == "CMR2006MICS" & mics_area_name_label == "Yaounde" ~ "Yaoundé",
+      survey_id == "CMR2006MICS" & mics_area_name_label == "Yaounde" ~ "Centre (sans YaoundÃ©)",
       
-      survey_id == "CMR2014MICS" & mics_area_name_label == "Centre (Sans Yaoundã©)" ~ "Centre (sans Yaoundé)",
+      survey_id == "CMR2014MICS" & mics_area_name_label == "Centre (Sans Yaoundã©)" ~ "Centre (sans YaoundÃ©)",
       survey_id == "CMR2014MICS" & mics_area_name_label == "Littoral (Sans Douala)" ~ "Littoral (sans Douala)",
       survey_id == "CMR2014MICS" & mics_area_name_label == "Extrãªme-Nord" ~ "Extreme-Nord",
-      survey_id == "CMR2014MICS" & mics_area_name_label == "Yaoundã©" ~ "Yaoundé",
+      survey_id == "CMR2014MICS" & mics_area_name_label == "Yaoundã©" ~ "Centre (sans YaoundÃ©)",
       
       TRUE ~ mics_area_name_label
     )

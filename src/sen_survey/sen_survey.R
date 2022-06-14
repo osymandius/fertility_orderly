@@ -8,7 +8,8 @@ areas_wide <- spread_areas(areas)
 
 surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%
   filter(as.numeric(SurveyYear) > 1994,
-         SurveyId != "SN2018DHS")
+         SurveyId != "SN2018DHS",
+         survey_id != "SEN2020MIS") ## REMOVE THIS!!
 
 survey_meta <- create_survey_meta_dhs(surveys)
 

@@ -7,7 +7,8 @@ areas <- read_sf("depends/gin_areas.geojson") %>%
 areas_wide <- spread_areas(areas)
 
 surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%
-  filter(as.numeric(SurveyYear) > 1994)
+  filter(as.numeric(SurveyYear) > 1994,
+         survey_id != "GIN2021MIS") ## REMOVE LATER!!
 
 survey_meta <- create_survey_meta_dhs(surveys)
 
@@ -55,12 +56,12 @@ fertility_mics_data <- transform_mics(mics_survey_data, mics_indicators)
 fertility_mics_data$hh <- fertility_mics_data$hh %>%
   mutate(
     mics_area_name_label = case_when(
-      mics_area_name_label == "Bokã©" ~ "Boké",
-      mics_area_name_label == "Labã©" ~ "Labé",
-      mics_area_name_label == "N'zã©Rã©Korã©" ~ "Nzérékoré",
-      mics_area_name_label == "BokÃ©" ~ "Boké",
-      mics_area_name_label == "LabÃ©" ~ "Labé",
-      mics_area_name_label == "NzÃ©rÃ©korÃ©" ~ "Nzérékoré",
+      mics_area_name_label == "Bokã©" ~ "BokÃ©",
+      mics_area_name_label == "Labã©" ~ "LabÃ©",
+      mics_area_name_label == "N'zã©Rã©Korã©" ~ "NzÃ©rÃ©korÃ©",
+      # mics_area_name_label == "BokÃ©" ~ "Boké",
+      # mics_area_name_label == "LabÃ©" ~ "Labé",
+      # mics_area_name_label == "NzÃ©rÃ©korÃ©" ~ "Nzérékoré",
       TRUE ~ mics_area_name_label
     )
   ) 
