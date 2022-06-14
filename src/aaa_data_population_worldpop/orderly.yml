@@ -27,7 +27,7 @@ parameters:
 ## Ideally, keep this list alphabetised for convenience
 
 depends:
-    aaa_areas_pull:
+  aaa_areas_pull:
     id: latest(parameter:iso3 == iso3 && parameter:version == 2021)
     use:
       depends/naomi_areas.geojson: naomi_areas.geojson
