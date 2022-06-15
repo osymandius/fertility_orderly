@@ -3,14 +3,14 @@ iso3_c <- iso3
 files <- list.files("depends")
 
 ## Boundary file
-area <- files[grepl(paste0(tolower(iso3), "_areas"), files)]
-area_file <- paste0("depends/", area)
+# area <- files[grepl(paste0(tolower(iso3), "_areas"), files)]
+# area_file <- paste0("depends/", area)
+# 
+# if (!basename(area_file) %in% files) {
+#   stop("Areas file not found: ", area_file)
+# }
 
-if (!basename(area_file) %in% files) {
-  stop("Areas file not found: ", area_file)
-}
-
-areas <- read_area_merged(area_file) %>%
+areas <- read_area_merged("depends/naomi_areas.geojson") %>%
   mutate(iso3 = iso3)
 
 worldpop <- read_csv("depends/population_worldpop_naomi.csv") %>%
@@ -33,6 +33,8 @@ if(iso3 == "COD") {
     select(area_id, sex, age_group, year, worldpop_population)
   
   missing_dist <- worldpop %>% filter(is.na(population) | population == 0) %>% distinct(area_id, year)
+  
+  unique(missing_dist$area_id)
   
   district_prop <- cod_pop %>%
     filter(area_id %in% unique(missing_dist$area_id)) %>%
