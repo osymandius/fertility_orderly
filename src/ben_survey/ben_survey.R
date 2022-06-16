@@ -42,10 +42,16 @@ survey_clusters <- create_survey_clusters_dhs(surveys, clear_rdhs_cache = TRUE)
 
 survey_clusters <- assign_dhs_cluster_areas(survey_clusters, survey_region_areas)
 
+#' 2006 DHS have no GPS coordinates. Assign clusters to areas using survey region id
+survey_clusters <- survey_clusters %>%
+  left_join(survey_regions %>% 
+              filter(survey_id == "BEN2006DHS")) %>%
+  mutate(geoloc_area_id = ifelse(is.na(geoloc_area_id) & !is.na(survey_region_area_id), survey_region_area_id, geoloc_area_id)) %>%
+  select(-c(survey_region_name, survey_region_area_id)) 
+  
 # Filter out 4 clusters from 2012 DHS that have been placed on ~0 lat, 0 long
 survey_clusters <- survey_clusters %>%
-  filter(geoloc_distance < 6)
-  
+  filter(geoloc_distance < 6 | is.na(geoloc_distance))
 
 p_coord_check <- plot_survey_coordinate_check(survey_clusters,
                                               survey_region_boundaries,
