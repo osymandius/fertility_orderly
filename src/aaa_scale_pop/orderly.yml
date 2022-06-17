@@ -35,7 +35,7 @@ parameters:
 
 depends:
   aaa_data_population_worldpop:
-    id: latest(parameter:iso3 == iso3)
+    id: latest(parameter:iso3 == iso3 && parameter:version == 2021)
     use:
       depends/population_worldpop_naomi.csv: population_worldpop_naomi.csv
   aaa_areas_pull:

@@ -53,6 +53,15 @@ survey_clusters <- survey_clusters %>%
 survey_clusters <- survey_clusters %>%
   filter(geoloc_distance < 6 | is.na(geoloc_distance))
 
+survey_clusters <- survey_clusters %>%
+  filter(!is.na(geoloc_area_id)) %>%
+  bind_rows(
+    survey_clusters %>%
+      filter(is.na(geoloc_area_id)) %>%
+      select(-geoloc_area_id) %>%
+      left_join(survey_regions %>% select(survey_id, survey_region_id, geoloc_area_id = survey_region_area_id))
+  )
+
 p_coord_check <- plot_survey_coordinate_check(survey_clusters,
                                               survey_region_boundaries,
                                               survey_region_areas)

@@ -6,6 +6,9 @@ artefacts:
       filenames:
         - ssd_areas.geojson
 
+parameters:
+  version:
+    default: 2021
 
 packages:
   - tidyverse
