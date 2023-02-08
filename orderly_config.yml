@@ -48,12 +48,6 @@ remote:
       site: HIVInferenceGroup-WP
       path: Shared Documents/orderly/kp-data
 
-fields:
-  requester:
-    required: false
-  author:
-    required: false
-
 vault:
   addr: https://vault.dide.ic.ac.uk:8200
 
