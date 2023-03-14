@@ -47,51 +47,51 @@ lvl_map <- read.csv("resources/iso_mapping_fit.csv")
 lvl <- lvl_map$fertility_fit_level[lvl_map$iso3 == iso3]
 admin1_lvl <- lvl_map$admin1_level[lvl_map$iso3 == iso3]
 
-programme_births <- read_csv("programme_births_district.csv")
-anc <- read_csv("anc_test.csv") %>%
-  select(area_id, year, anc_clients)
+# programme_births <- read_csv("programme_births_district.csv")
+# anc <- read_csv("anc_test.csv") %>%
+#   select(area_id, year, anc_clients)
 
 mf <- make_model_frames_dev(iso3, population, asfr,  areas, naomi_level = lvl, project=2020)
 
 ###############
 
-birth_loc <- data.frame(area_id1 = c("MOZ_1_03",
-                                    "MOZ_1_04",
-                                    "MOZ_1_05",
-                                    "MOZ_1_06",
-                                    "MOZ_1_07",
-                                    "MOZ_1_08",
-                                    "MOZ_1_09",
-                                    "MOZ_1_10",
-                                    "MOZ_1_11",
-                                    "MOZ_1_12"),
-                        birth_loc = c(0.8813203, 0.8705988, 0.886547, 0.7357595, 0.5970718, 0.4358709, 0.6631273, 0.7279695, 0.8211848, 0.95)
-)
-
-births_programme <- mf[["out"]][["mf_out"]] %>%
-  filter(variable == "tfr") %>%
-  mutate(idx_row = row_number(),
-         period = as.numeric(as.character(period))) %>%
-  left_join(programme_births %>% rename(period = year)) %>%
-  filter(!is.na(value)) %>%
-  left_join(spread_areas(areas) %>% select(area_id, area_id1) %>% st_drop_geometry()) %>%
-  left_join(birth_loc) %>%
-  mutate(value = value/birth_loc)
-
-A_births_aggr <- mf$out$A_tfr_out
-A_births_aggr[A_births_aggr == 5] <- 1
-A_births_aggr <- A_births_aggr[births_programme$idx_row, ]
-
-anc <- mf[["out"]][["mf_out"]] %>%
-  filter(variable == "tfr") %>%
-  mutate(idx_row = row_number(),
-         period = as.numeric(as.character(period))) %>%
-  left_join(anc %>% rename(period = year)) %>%
-  filter(!is.na(anc_clients))
-
-A_anc_aggr <- mf$out$A_tfr_out
-A_anc_aggr[A_anc_aggr == 5] <- 1
-A_anc_aggr <- A_anc_aggr[anc$idx_row, ]
+# birth_loc <- data.frame(area_id1 = c("MOZ_1_03",
+#                                     "MOZ_1_04",
+#                                     "MOZ_1_05",
+#                                     "MOZ_1_06",
+#                                     "MOZ_1_07",
+#                                     "MOZ_1_08",
+#                                     "MOZ_1_09",
+#                                     "MOZ_1_10",
+#                                     "MOZ_1_11",
+#                                     "MOZ_1_12"),
+#                         birth_loc = c(0.8813203, 0.8705988, 0.886547, 0.7357595, 0.5970718, 0.4358709, 0.6631273, 0.7279695, 0.8211848, 0.95)
+# )
+# 
+# births_programme <- mf[["out"]][["mf_out"]] %>%
+#   filter(variable == "tfr") %>%
+#   mutate(idx_row = row_number(),
+#          period = as.numeric(as.character(period))) %>%
+#   left_join(programme_births %>% rename(period = year)) %>%
+#   filter(!is.na(value)) %>%
+#   left_join(spread_areas(areas) %>% select(area_id, area_id1) %>% st_drop_geometry()) %>%
+#   left_join(birth_loc) %>%
+#   mutate(value = value/birth_loc)
+# 
+# A_births_aggr <- mf$out$A_tfr_out
+# A_births_aggr[A_births_aggr == 5] <- 1
+# A_births_aggr <- A_births_aggr[births_programme$idx_row, ]
+# 
+# anc <- mf[["out"]][["mf_out"]] %>%
+#   filter(variable == "tfr") %>%
+#   mutate(idx_row = row_number(),
+#          period = as.numeric(as.character(period))) %>%
+#   left_join(anc %>% rename(period = year)) %>%
+#   filter(!is.na(anc_clients))
+# 
+# A_anc_aggr <- mf$out$A_tfr_out
+# A_anc_aggr[A_anc_aggr == 5] <- 1
+# A_anc_aggr <- A_anc_aggr[anc$idx_row, ]
 
 # area_id	survey_id	birth_location	se
 # MOZ_1_03	MOZ2015AIS	0.8813203	0.02766157
@@ -190,8 +190,8 @@ mf$Z$Z_period <- mf$Z$Z_period %*% spline_mat
 validate_model_frame(mf, areas)
 
 # TMB::compile("~/Documents/GitHub/dfertility/backup_src/model6.cpp", flags = "-w")               # Compile the C++ file
-TMB::compile("models/model6_births.cpp", flags = "-w")               # Compile the C++ file
-dyn.load(dynlib("models/model6_births"))
+TMB::compile("models/model6.cpp", flags = "-w")               # Compile the C++ file
+dyn.load(dynlib("models/model6"))
 
 tmb_int <- list()
 
@@ -261,10 +261,10 @@ tmb_int$data <- list(
   pop = mf$mf_model$population,
   # A_asfr_out = mf$out$A_asfr_out,
   A_tfr_out = mf$out$A_tfr_out,
-  A_births_aggr = A_births_aggr,
-  A_anc_aggr = A_anc_aggr,
-  births_programme = births_programme$value,
-  anc = anc$anc_clients,
+  # A_births_aggr = A_births_aggr,
+  # A_anc_aggr = A_anc_aggr,
+  # births_programme = births_programme$value,
+  # anc = anc$anc_clients,
 
   A_full_obs = mf$observations$A_full_obs,
 
@@ -278,20 +278,20 @@ tmb_int$data <- list(
 tmb_int$par <- list(
   beta_0 = 0,
 
-  # beta_tips_dummy_5 = rep(0, ncol(mf$Z$X_tips_dummy_5)),
-  # beta_tips_fe = rep(0, ncol(mf$Z$X_tips_fe)),
+  beta_tips_dummy_5 = rep(0, ncol(mf$Z$X_tips_dummy_5)),
+  beta_tips_fe = rep(0, ncol(mf$Z$X_tips_fe)),
   # beta_urban_dummy = rep(0, ncol(mf$Z$X_urban_dummy)),
-  # u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
-  # log_prec_rw_tips = 0,
-  # lag_logit_phi_tips = 0,
+  u_tips = rep(0, ncol(mf$Z$Z_tips_dhs)),
+  log_prec_rw_tips = 0,
+  lag_logit_phi_tips = 0,
 
   u_age = rep(0, ncol(mf$Z$Z_age)),
   log_prec_rw_age = 0,
   lag_logit_phi_age = 0,
   
-  # zeta1 = array(0, c(length(unique(mf$observations$full_obs$survey_id)), ncol(mf$Z$Z_tips_dhs))),
-  # log_prec_zeta1 = 0,
-  # lag_logit_zeta1_phi_tips = 0,
+  zeta1 = array(0, c(length(unique(mf$observations$full_obs$survey_id)), ncol(mf$Z$Z_tips_dhs))),
+  log_prec_zeta1 = 0,
+  lag_logit_zeta1_phi_tips = 0,
 
   # u_country = rep(0, ncol(mf$Z$Z_country)),
   # log_prec_country = 0,
@@ -311,21 +311,21 @@ tmb_int$par <- list(
   lag_logit_phi_arima_period = 0,
   beta_period = 0,
 
-  # log_prec_smooth_iid = 0,
-  # u_smooth_iid = rep(0, ncol(R_smooth_iid)),
+  log_prec_smooth_iid = 0,
+  u_smooth_iid = rep(0, ncol(R_smooth_iid)),
 
   u_spatial_str = rep(0, ncol(mf$Z$Z_spatial)),
   log_prec_spatial = 0,
 
-  # beta_spike_2000 = 0,
-  # beta_spike_1999 = 0,
-  # beta_spike_2001 = 0,
+  beta_spike_2000 = 0,
+  beta_spike_1999 = 0,
+  beta_spike_2001 = 0,
   # log_overdispersion = 0,
 
-  # eta1 = array(0, c(ncol(mf$Z$Z_country), ncol(mf$Z$Z_period), ncol(mf$Z$Z_age))),
-  # log_prec_eta1 = 0,
-  # logit_eta1_phi_age = 0,
-  # logit_eta1_phi_period = 0,
+  eta1 = array(0, c(ncol(mf$Z$Z_country), ncol(mf$Z$Z_period), ncol(mf$Z$Z_age))),
+  log_prec_eta1 = 0,
+  logit_eta1_phi_age = 0,
+  logit_eta1_phi_period = 0,
 
   eta2 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_period))),
   log_prec_eta2 = 0,
@@ -335,34 +335,34 @@ tmb_int$par <- list(
   log_prec_eta3 = 0,
   logit_eta3_phi_age = 0,
   
-  # zeta2 = array(0, c(ncol(as(diag(1, length(unique(mf$observations$full_obs$survey_id))), "dgTMatrix")),
-  #                    ncol(mf$Z$X_tips_fe)
-  #                    )
-  #               ),
-  # log_prec_zeta2 = 0,
+  zeta2 = array(0, c(ncol(as(diag(1, length(unique(mf$observations$full_obs$survey_id))), "dgTMatrix")),
+                     ncol(mf$Z$X_tips_fe)
+                     )
+                ),
+  log_prec_zeta2 = 0,
   
   # logit_beta_facility_births = 0,
-  log_beta_anc = 0
+  # log_beta_anc = 0
 )
 
 tmb_int$random <- c("beta_0",
                     "u_spatial_str",
                     "u_age",
                     "u_period",
-                    # "u_smooth_iid",
+                    "u_smooth_iid",
                     "beta_period",
-                    # "beta_tips_dummy_5",
-                    # "beta_tips_fe",
+                    "beta_tips_dummy_5",
+                    "beta_tips_fe",
                     # "beta_urban_dummy",
-                    # "u_tips",
-                    # "zeta1",
-                    # "zeta2",
-                    # "beta_spike_2000",
-                    # "beta_spike_1999",
-                    # "beta_spike_2001",
+                    "u_tips",
+                    "zeta1",
+                    "zeta2",
+                    "beta_spike_2000",
+                    "beta_spike_1999",
+                    "beta_spike_2001",
                     # "logit_beta_facility_births",
-                    "log_beta_anc",
-                    # "eta1",
+                    # "log_beta_anc",
+                    "eta1",
                     "eta2",
                     "eta3"
                     # "omega1",
@@ -391,7 +391,7 @@ if(mf$mics_toggle) {
 
 f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
                                parameters = tmb_int$par,
-                               DLL = "model6_births",
+                               DLL = "model6",
                                silent=0,
                                checkParameterOrder=FALSE)
 })
@@ -478,7 +478,7 @@ p2 <- tmb_results %>%
     geom_point(data = programme_births %>% aggregate_to_admin("year", "value", 1, areas) %>%
                  mutate(source = "Programme births"), aes(x=year, y=value)) +
     geom_point(data = programme_births %>% aggregate_to_admin("year", "value", 1, areas) %>%
-               mutate(value = value/0.71,
+               mutate(value = value,
                       source = "Adjusted programme births"), aes(x=year, y=value)) +
     geom_point(data = anc %>% aggregate_to_admin("period", "anc_clients", 1, areas) %>%
                mutate(source = "ANC clients"), aes(y=anc_clients)) +

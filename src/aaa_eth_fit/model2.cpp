@@ -1,6 +1,19 @@
 #include <TMB.hpp>                                // Links in the TMB libraries
 
 template<class Type>
+Type dunif(const Type x,
+                           const Type a,
+                           const Type b,
+                           int give_log = 0) {
+
+  if(x < a) return 0;
+  if(x > b) return 0;
+  Type ans = 10/(b-a);
+  if(give_log) return log(ans); else return ans;
+}
+VECTORIZE4_ttti(dunif)
+
+template<class Type>
 Type objective_function<Type>::operator() ()
 
 {
@@ -77,8 +90,8 @@ Type objective_function<Type>::operator() ()
   DATA_SPARSE_MATRIX(A_full_obs);
   DATA_SPARSE_MATRIX(A_tfr_out);
 
-  // DATA_MATRIX(X_urban_dummy);
-  // PARAMETER_VECTOR(beta_urban_dummy);
+  DATA_MATRIX(X_urban_dummy);
+  PARAMETER_VECTOR(beta_urban_dummy);
 
   nll -= dnorm(beta_0, Type(0), Type(sqrt(1/0.001)), true);
 
@@ -91,27 +104,26 @@ Type objective_function<Type>::operator() ()
   // nll -= dnorm(beta_tips_dummy, Type(0), Type(sqrt(1/0.001)), true).sum();
   // nll -= dnorm(beta_tips_dummy, Type(0.05), Type(0.1), true).sum();
   // nll -= dnorm(beta_tips_dummy, Type(0.13), Type(5.899), true).sum();
-  
+
   PARAMETER_VECTOR(beta_tips_dummy_5);
   nll -= dnorm(beta_tips_dummy_5, Type(-0.05), Type(0.1), true).sum();
-  
+
   PARAMETER_VECTOR(beta_tips_dummy_6);
   nll -= dnorm(beta_tips_dummy_6, Type(0.05), Type(0.1), true).sum();
-  
+
 
   PARAMETER_VECTOR(beta_tips_dummy_10);
   nll -= dnorm(beta_tips_dummy_10, Type(0.05), Type(0.1), true).sum();
-  
+
   // PARAMETER_VECTOR(beta_tips_dummy_9_11);
   // nll -= dnorm(beta_tips_dummy_9_11, Type(-0.05), Type(0.1), true).sum();
 
-  // nll -= dlgamma(log_prec_rw_tips, Type(1), Type(20000), true);
-  nll -= dnorm(log_prec_rw_tips, Type(6), Type(0.6), true);
-  
-
+  nll -= dnorm(log_prec_rw_tips, Type(7), Type(0.2), true);
+  //
+  //
   Type prec_rw_tips = exp(log_prec_rw_tips);
   // nll -= dgamma(prec_rw_tips, Type(1), Type(2000), true);
-  //
+  // //
   nll -= Type(-0.5) * (u_tips * (R_tips * u_tips)).sum();
   nll -= dnorm(u_tips.sum(), Type(0), Type(0.01) * u_tips.size(), true);
 
@@ -119,7 +131,7 @@ Type objective_function<Type>::operator() ()
 
   /////////////////
 
-  // nll -= dnorm(beta_urban_dummy, Type(0), Type(sqrt(1/0.001)), true).sum();
+  nll -= dnorm(beta_urban_dummy, Type(0), Type(sqrt(1/0.001)), true).sum();
 
   ///////////////////
 
@@ -363,7 +375,7 @@ Type objective_function<Type>::operator() ()
                      + X_period * beta_period
                      // + Z_spatial * spatial
                      + Z_spatial * u_spatial_str * sqrt(1/prec_spatial)
-                     // + X_urban_dummy * beta_urban_dummy
+                     + X_urban_dummy * beta_urban_dummy
                      // + Z_country * u_country * sqrt(1/prec_country)
                      // + Z_omega1 * omega1_v * sqrt(1/prec_omega1)
                      // + Z_omega2 * omega2_v * sqrt(1/prec_omega2)
@@ -402,9 +414,9 @@ Type objective_function<Type>::operator() ()
   vector<Type> births_full(A_full_obs * births);
   vector<Type> pop_full(A_full_obs * pop);
   vector<Type> lambda_out(births_full/pop_full);
-  
+
   vector<Type> tfr_out(A_tfr_out * lambda_out);
-  
+
   // nll -= dunif(tfr_out, Type(0), Type(10), true).sum();
 
   vector<Type> u_smooth_lh(Z_smooth_iid * u_smooth_iid * sqrt(1/prec_smooth_iid));
@@ -429,7 +441,7 @@ Type objective_function<Type>::operator() ()
                 );
 
   vector<Type> mu_obs_pred_ais(X_extract_ais * (M_full_obs * log(lambda_out))
-                                + X_extract_ais * tips_lh
+                                // + X_extract_ais * tips_lh
                                 + X_extract_ais * spike_1999_lh
                                 + X_extract_ais * spike_2000_lh
                                 + X_extract_ais * spike_2001_lh
@@ -540,7 +552,7 @@ Type objective_function<Type>::operator() ()
   REPORT(beta_tips_dummy_5);
   REPORT(beta_tips_dummy_6);
   // REPORT(beta_tips_dummy_9_11);
-  // // REPORT(beta_urban_dummy);
+  REPORT(beta_urban_dummy);
 
   // REPORT(u_period);
   // REPORT(u_age);

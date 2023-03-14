@@ -7,8 +7,17 @@ remote:
       prefix: fertility
       token: $ORDERLYWEB_GITHUB_TOKEN
     primary: true
-    master_only: true
-    
+    default_branch: main
+    default_branch_only: true
+  inference-web:
+    driver: orderlyweb::orderlyweb_remote
+    args:
+      host: hiv-orderly.dide.ic.ac.uk
+      port: 443
+      prefix: inference-data
+      token: $ORDERLYWEB_GITHUB_TOKEN
+    # primary: true
+    default_branch: main  
   real:
     driver: orderly.sharepoint::orderly_remote_sharepoint
     args:

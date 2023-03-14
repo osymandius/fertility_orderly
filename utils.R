@@ -39,7 +39,7 @@ fail### SEARCH
 orderly::orderly_search(name = 'aaa_scale_pop', query = paste0('latest(parameter:iso3 == "', "MLI", '")'), draft = FALSE)
 orderly::orderly_search(name = 'aaa_inputs_orderly_pull', query = paste0('latest(parameter:iso3 == "', "GNB", '")'), draft = FALSE)
 
-id <- lapply(ssa_iso3, function(x){
+id <- lapply("COD", function(x){
   orderly::orderly_search(name = "aaa_scale_pop", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
 })
 
@@ -61,4 +61,18 @@ map(ssa_iso3, ~possibly_remote("aaa_data_population_worldpop", parameters = list
 orderly_run_remote("aaa_data_population_worldpop", parameters = list(iso3 = "AGO"))
 
 
-map(grep("phia", list.files("src", "survey"), invert = TRUE, value = TRUE), ~possibly_remote(.x))
+id <- lapply(ssa_iso3, function(x){
+  orderly::orderly_search(name = "aaa_data_population_worldpop", query = paste0('latest(parameter:iso3 == "', x, '" && parameter:version == 2021)'), draft = FALSE)
+})
+
+names(id) <- ssa_iso3
+
+names(id %>% keep(~is.na(.x)))
+
+lapply(id$id[id$success == TRUE], function(x) orderly_push_archive("aaa_data_population_worldpop", id = x, remote = "real"))
+
+id <- map(paste0(tolower(ssa_iso3), "_survey"), ~possibly_run(.x))
+
+map(ssa_iso3, ~possibly_push("aaa_data_population_worldpop", remote = "real"))
+
+id <- map(ssa_iso3, ~possibly_pull("aaa_areas_pull", id = paste0('latest(parameter:iso3 == "', .x, '" && parameter:version == 2021)'), recursive = FALSE))

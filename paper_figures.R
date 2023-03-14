@@ -341,6 +341,34 @@ p <- fr %>%
     
   })
 
+###
+# Rwanda, Tanzania, Mozambique, Zambia, Angola, Zimbabwe, and Lesotho
+
+ntl_asfr <- fr %>%
+  filter(area_level == 0, 
+         variable == "asfr",
+         iso3 %in% c("RWA", "TZA", "MOZ", "ZMB", "ZWE", "LSO", "MWI")
+         )
+
+ntl_asfr %>%
+  left_join(naomi::get_age_groups()) %>%
+  ggplot(aes(x=period, y=median)) +
+    geom_line(aes(color=age_group_label)) +
+    geom_ribbon(aes(ymin = lower, ymax = upper, fill=age_group_label), alpha = 0.3) +
+    facet_wrap(~area_name) +
+    standard_theme() +
+    labs(x=element_blank(), y="ASFR", color=element_blank(), fill=element_blank())
+
+dist_fr %>%
+  bind_rows() %>%
+  # filter(variable == "tfr") %>%
+  group_by(iso3) %>%
+  filter(period == 2015) %>%
+  summarise(median = median(median)) %>%
+  left_join(nat_15 %>% filter(variable == "tfr") %>% rename(nat_median = median)) %>%
+  mutate(nat_lower = as.integer(nat_median < median)) %>%
+  count(nat_lower)
+
 #TZA SEN RWA MWI ETH
 IIaa <- fr %>%
   filter(iso3 == "TZA",
@@ -469,7 +497,7 @@ p3a <- fr %>%
          name = paste0(region, " | ", time)) %>%
   ggplot(aes(x=age_group_label, y=value-1)) +
     geom_boxplot() +
-    scale_y_continuous(labels = scales::label_percent(), name = "Fertility reduction", limits=c(-.5, .5)) +
+    scale_y_continuous(labels = scales::label_percent(), name = "% ASFR change 2000-2020", limits=c(-.5, .5)) +
     geom_hline(aes(yintercept = 0), linetype=3) +
     facet_wrap(~region) +
     theme_minimal() +

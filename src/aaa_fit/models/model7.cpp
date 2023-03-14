@@ -1,6 +1,19 @@
 #include <TMB.hpp>                                // Links in the TMB libraries
 
 template<class Type>
+Type dunif(const Type x,
+                           const Type a,
+                           const Type b,
+                           int give_log = 0) {
+
+  if(x < a) return 0;
+  if(x > b) return 0;
+  Type ans = 10/(b-a);
+  if(give_log) return log(ans); else return ans;
+}
+VECTORIZE4_ttti(dunif)
+
+template<class Type>
 Type objective_function<Type>::operator() ()
 
 {
@@ -17,15 +30,18 @@ Type objective_function<Type>::operator() ()
   // DATA_SPARSE_MATRIX(M_aggregated_obs);
 
   DATA_MATRIX(X_tips_dummy);
-  DATA_MATRIX(X_tips_dummy_10);
+  // DATA_MATRIX(X_tips_dummy_10);
   DATA_MATRIX(X_tips_dummy_9_11);
+  // DATA_MATRIX(X_tips_dummy_0);
   DATA_MATRIX(X_tips_dummy_5);
-  DATA_MATRIX(X_tips_dummy_6);
+  // DATA_MATRIX(X_tips_dummy_6);
+  DATA_SPARSE_MATRIX(X_tips_fe)
 
   DATA_SPARSE_MATRIX(Z_tips);
   // DATA_SPARSE_MATRIX(Z_tips_dhs);
   // DATA_SPARSE_MATRIX(Z_tips_ais);
   DATA_SPARSE_MATRIX(R_tips);
+  DATA_SPARSE_MATRIX(Z_zeta2);
 
   DATA_SPARSE_MATRIX(X_extract_dhs);
   DATA_SPARSE_MATRIX(X_extract_ais);
@@ -91,29 +107,53 @@ Type objective_function<Type>::operator() ()
   // nll -= dnorm(beta_tips_dummy, Type(0), Type(sqrt(1/0.001)), true).sum();
   // nll -= dnorm(beta_tips_dummy, Type(0.05), Type(0.1), true).sum();
   // nll -= dnorm(beta_tips_dummy, Type(0.13), Type(5.899), true).sum();
-  
+
+  // PARAMETER_VECTOR(beta_tips_dummy_0);
+  // nll -= dnorm(beta_tips_dummy_0, Type(0.05), Type(0.1), true).sum();
+
   PARAMETER_VECTOR(beta_tips_dummy_5);
   nll -= dnorm(beta_tips_dummy_5, Type(-0.05), Type(0.1), true).sum();
-  
-  PARAMETER_VECTOR(beta_tips_dummy_6);
-  nll -= dnorm(beta_tips_dummy_6, Type(0.05), Type(0.1), true).sum();
-  
 
-  PARAMETER_VECTOR(beta_tips_dummy_10);
-  nll -= dnorm(beta_tips_dummy_10, Type(0.05), Type(0.1), true).sum();
-  
-  // PARAMETER_VECTOR(beta_tips_dummy_9_11);
-  // nll -= dnorm(beta_tips_dummy_9_11, Type(-0.05), Type(0.1), true).sum();
+  // PARAMETER_VECTOR(beta_tips_dummy_6);
+  // nll -= dnorm(beta_tips_dummy_6, Type(0.05), Type(0.1), true).sum();
+  //
+  // PARAMETER_VECTOR(beta_tips_dummy_10);
+  // nll -= dnorm(beta_tips_dummy_10, Type(0.05), Type(0.1), true).sum();
 
-  // nll -= dlgamma(log_prec_rw_tips, Type(1), Type(20000), true);
-  nll -= dnorm(log_prec_rw_tips, Type(6), Type(0.6), true);
-  
+  PARAMETER_VECTOR(beta_tips_fe);
+  nll -= dnorm(beta_tips_fe, Type(0.05), Type(0.1), true).sum();
+
+  PARAMETER_ARRAY(zeta2);
+  PARAMETER(log_prec_zeta2);
+  DATA_SPARSE_MATRIX(R_zeta2);
+  DATA_SPARSE_MATRIX(R_survey);
+
+  Type prec_zeta2 = exp(log_prec_zeta2);
+  // nll -= dgamma(log_prec_zeta2, Type(1), Type(2000), true);
+  nll -= dnorm(log_prec_zeta2, Type(5), Type(1), true);
+
+  nll += SEPARABLE(GMRF(R_zeta2), GMRF(R_survey))(zeta2);
+
+  for (int i = 0; i < zeta2.cols(); i++) {
+    nll -= dnorm(zeta2.col(i).sum(), Type(0), Type(0.01) * zeta2.col(i).size(), true);}
+
+  for (int i = 0; i < zeta2.transpose().cols(); i++) {
+    nll -= dnorm(zeta2.transpose().col(i).sum(), Type(0), Type(0.01) * zeta2.transpose().col(i).size(), true);}
+
+  vector<Type> zeta2_v(zeta2);
+
+  // nll -= dnorm(log_prec_rw_tips, Type(7), Type(0.2), true);
 
   Type prec_rw_tips = exp(log_prec_rw_tips);
-  // nll -= dgamma(prec_rw_tips, Type(1), Type(2000), true);
-  //
-  nll -= Type(-0.5) * (u_tips * (R_tips * u_tips)).sum();
-  nll -= dnorm(u_tips.sum(), Type(0), Type(0.01) * u_tips.size(), true);
+  nll -= dgamma(prec_rw_tips, Type(1), Type(2000), true);
+  // nll -= Type(-0.5) * (u_tips * (R_tips * u_tips)).sum();
+  // nll -= dnorm(u_tips.sum(), Type(0), Type(0.01) * u_tips.size(), true);
+
+  PARAMETER(lag_logit_phi_tips);
+
+  nll -= dnorm(lag_logit_phi_tips, Type(0), Type(sqrt(1/0.15)), true);
+  Type phi_tips = 2*exp(lag_logit_phi_tips)/(1+exp(lag_logit_phi_tips))-1;
+  nll += AR1(Type(phi_tips))(u_tips);
 
   vector<Type> u_tips_constr = u_tips - u_tips[3];
 
@@ -156,8 +196,13 @@ Type objective_function<Type>::operator() ()
   Type prec_rw_age = exp(log_prec_rw_age);
   nll -= dgamma(prec_rw_age, Type(1), Type(2000), true);
 
-  nll += GMRF(R_age)(u_age);
-  nll -= dnorm(u_age.sum(), Type(0), Type(0.01) * u_age.size(), true);
+  // nll += GMRF(R_age)(u_age);
+  // nll -= dnorm(u_age.sum(), Type(0), Type(0.01) * u_age.size(), true);
+
+  PARAMETER(lag_logit_phi_age);
+  nll -= dnorm(lag_logit_phi_age, Type(0), Type(sqrt(1/0.15)), true);
+  Type phi_age = 2*exp(lag_logit_phi_age)/(1+exp(lag_logit_phi_age))-1;
+  nll += AR1(Type(phi_age))(u_age);
 
   ///
 
@@ -402,13 +447,16 @@ Type objective_function<Type>::operator() ()
   vector<Type> births_full(A_full_obs * births);
   vector<Type> pop_full(A_full_obs * pop);
   vector<Type> lambda_out(births_full/pop_full);
-  
+
   vector<Type> tfr_out(A_tfr_out * lambda_out);
-  
+
   // nll -= dunif(tfr_out, Type(0), Type(10), true).sum();
 
   vector<Type> u_smooth_lh(Z_smooth_iid * u_smooth_iid * sqrt(1/prec_smooth_iid));
   vector<Type> tips_lh(Z_tips * u_tips_constr * sqrt(1/prec_rw_tips));
+  vector<Type> tips_fe_lh(X_tips_fe * beta_tips_fe);
+  vector<Type> zeta2_lh(Z_zeta2  * zeta2_v * sqrt(1/prec_zeta2));
+
   vector<Type> spike_1999_lh(X_spike_1999 * beta_spike_1999);
   vector<Type> spike_2000_lh(X_spike_2000 * beta_spike_2000);
   vector<Type> spike_2001_lh(X_spike_2001 * beta_spike_2001);
@@ -416,9 +464,12 @@ Type objective_function<Type>::operator() ()
   vector<Type> mu_obs_pred_dhs(X_extract_dhs * (M_full_obs * log(lambda_out))
                                 + X_extract_dhs * tips_lh
                                 // + X_tips_dummy * beta_tips_dummy          // TIPS fixed effect
-                                + X_tips_dummy_10 * beta_tips_dummy_10          // TIPS fixed effect
+                                // + X_tips_dummy_10 * beta_tips_dummy_10          // TIPS fixed effect
+                                // + X_extract_dhs * beta_tips_dummy_0          // TIPS fixed effect
                                 + X_tips_dummy_5 * beta_tips_dummy_5          // TIPS fixed effect
-                                + X_tips_dummy_6 * beta_tips_dummy_6          // TIPS fixed effect
+                                + X_extract_dhs * tips_fe_lh
+                                // + X_tips_dummy_6 * beta_tips_dummy_6         // TIPS fixed effect
+                                + X_extract_dhs * zeta2_lh
                                 // + X_tips_dummy_9_11 * beta_tips_dummy_9_11          // TIPS fixed effect
                                 + X_extract_dhs * spike_1999_lh
                                 + X_extract_dhs * spike_2000_lh
@@ -434,6 +485,8 @@ Type objective_function<Type>::operator() ()
                                 + X_extract_ais * spike_2000_lh
                                 + X_extract_ais * spike_2001_lh
                                 + X_extract_ais * u_smooth_lh
+                                + X_extract_ais * tips_fe_lh
+                                + X_extract_ais * zeta2_lh
                                 + log_offset_ais
 
                 );
@@ -480,11 +533,13 @@ Type objective_function<Type>::operator() ()
 
 
     vector<Type> mu_obs_pred_mics(X_extract_mics * (M_full_obs * log(lambda_out))
-                                  // + Z_tips_mics * u_tips_mics_constr * sqrt(1/prec_rw_tips)     // TIPS RW
+                                  + X_extract_mics * tips_lh
                                   + X_extract_mics * spike_1999_lh
                                   + X_extract_mics * spike_2000_lh
                                   + X_extract_mics * spike_2001_lh
                                   + X_extract_mics * u_smooth_lh
+                                  + X_extract_mics * tips_fe_lh
+                                  + X_extract_mics * zeta2_lh
                                   + log_offset_mics
 
                 );
@@ -531,14 +586,14 @@ Type objective_function<Type>::operator() ()
 
   REPORT(log_prec_smooth_iid);
 
-  REPORT(beta_period);
+  // REPORT(beta_period);
   // REPORT(phi_period);
-  REPORT(phi_arima_period);
+  // REPORT(phi_arima_period);
 
   // REPORT(beta_tips_dummy);
-  REPORT(beta_tips_dummy_10);
-  REPORT(beta_tips_dummy_5);
-  REPORT(beta_tips_dummy_6);
+  // REPORT(beta_tips_dummy_10);
+  // REPORT(beta_tips_dummy_5);
+  // REPORT(beta_tips_dummy_6);
   // REPORT(beta_tips_dummy_9_11);
   // // REPORT(beta_urban_dummy);
 
