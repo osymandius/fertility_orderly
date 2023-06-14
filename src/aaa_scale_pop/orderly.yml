@@ -23,7 +23,7 @@ parameters:
   iso3:
     default: ~
   version:
-    default: 2021
+    default: 2022
 
 
 # global_resources:

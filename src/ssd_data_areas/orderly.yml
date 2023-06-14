@@ -8,7 +8,7 @@ artefacts:
 
 parameters:
   version:
-    default: 2021
+    default: 2022
 
 packages:
   - tidyverse

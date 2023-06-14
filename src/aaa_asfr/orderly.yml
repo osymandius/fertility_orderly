@@ -28,7 +28,7 @@ parameters:
   iso3:
     default: ~
   version:
-    default: 2021
+    default: 2022
 
 
 packages:
@@ -54,7 +54,7 @@ packages:
 
 depends:
   aaa_areas_pull:
-    id: latest(parameter:iso3 == iso3)
+    id: latest(parameter:iso3 == iso3 && parameter:version == version)
     use:
       depends/naomi_areas.geojson: naomi_areas.geojson
 
@@ -62,174 +62,174 @@ depends:
 ## DHS ONLY
 
   ago_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/ago_dhs_clusters.csv: ago_dhs_clusters.csv
   eth_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/eth_dhs_clusters.csv: eth_dhs_clusters.csv
   gab_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/gab_dhs_clusters.csv: gab_dhs_clusters.csv
   gha_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/gha_dhs_clusters.csv: gha_dhs_clusters.csv
   gin_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/gin_dhs_clusters.csv: gin_dhs_clusters.csv
   lbr_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/lbr_dhs_clusters.csv: lbr_dhs_clusters.csv
   nam_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/nam_dhs_clusters.csv: nam_dhs_clusters.csv
   ner_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/ner_dhs_clusters.csv: ner_dhs_clusters.csv
   rwa_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/rwa_dhs_clusters.csv: rwa_dhs_clusters.csv
   sen_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/sen_dhs_clusters.csv: sen_dhs_clusters.csv
   tza_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/tza_dhs_clusters.csv: tza_dhs_clusters.csv
   uga_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/uga_dhs_clusters.csv: uga_dhs_clusters.csv
   zaf_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/zaf_dhs_clusters.csv: zaf_dhs_clusters.csv
   zmb_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/zmb_dhs_clusters.csv: zmb_dhs_clusters.csv
 
 ## DHS AND MICS
 
   ben_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/ben_dhs_clusters.csv: ben_dhs_clusters.csv
       depends/ben_mics_women.csv: ben_mics_women.csv
       depends/ben_mics_births_to_women.csv: ben_mics_births_to_women.csv
   bdi_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/bdi_dhs_clusters.csv: bdi_dhs_clusters.csv
       depends/bdi_mics_women.csv: bdi_mics_women.csv
       depends/bdi_mics_births_to_women.csv: bdi_mics_births_to_women.csv
   bfa_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/bfa_dhs_clusters.csv: bfa_dhs_clusters.csv
       depends/bfa_mics_women.csv: bfa_mics_women.csv
       depends/bfa_mics_births_to_women.csv: bfa_mics_births_to_women.csv
   civ_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/civ_dhs_clusters.csv: civ_dhs_clusters.csv
       depends/civ_mics_women.csv: civ_mics_women.csv
       depends/civ_mics_births_to_women.csv: civ_mics_births_to_women.csv
   cmr_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/cmr_dhs_clusters.csv: cmr_dhs_clusters.csv
       depends/cmr_mics_women.csv: cmr_mics_women.csv
       depends/cmr_mics_births_to_women.csv: cmr_mics_births_to_women.csv
   cog_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/cog_dhs_clusters.csv: cog_dhs_clusters.csv
       depends/cog_mics_women.csv: cog_mics_women.csv
       depends/cog_mics_births_to_women.csv: cog_mics_births_to_women.csv
   cod_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/cod_dhs_clusters.csv: cod_dhs_clusters.csv
       depends/cod_mics_women.csv: cod_mics_women.csv
       depends/cod_mics_births_to_women.csv: cod_mics_births_to_women.csv
   gmb_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/gmb_dhs_clusters.csv: gmb_dhs_clusters.csv
       depends/gmb_mics_women.csv: gmb_mics_women.csv
       depends/gmb_mics_births_to_women.csv: gmb_mics_births_to_women.csv
   ken_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/ken_dhs_clusters.csv: ken_dhs_clusters.csv
       depends/ken_mics_women.csv: ken_mics_women.csv
       depends/ken_mics_births_to_women.csv: ken_mics_births_to_women.csv
   lso_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/lso_dhs_clusters.csv: lso_dhs_clusters.csv
       depends/lso_mics_women.csv: lso_mics_women.csv
       depends/lso_mics_births_to_women.csv: lso_mics_births_to_women.csv
   mli_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/mli_dhs_clusters.csv: mli_dhs_clusters.csv
       depends/mli_mics_women.csv: mli_mics_women.csv
       depends/mli_mics_births_to_women.csv: mli_mics_births_to_women.csv
   moz_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/moz_dhs_clusters.csv: moz_dhs_clusters.csv
       depends/moz_mics_women.csv: moz_mics_women.csv
       depends/moz_mics_births_to_women.csv: moz_mics_births_to_women.csv
   mwi_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/mwi_dhs_clusters.csv: mwi_dhs_clusters.csv
       depends/mwi_mics_women.csv: mwi_mics_women.csv
       depends/mwi_mics_births_to_women.csv: mwi_mics_births_to_women.csv
   nga_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/nga_dhs_clusters.csv: nga_dhs_clusters.csv
       depends/nga_mics_women.csv: nga_mics_women.csv
       depends/nga_mics_births_to_women.csv: nga_mics_births_to_women.csv
   sle_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/sle_dhs_clusters.csv: sle_dhs_clusters.csv
       depends/sle_mics_women.csv: sle_mics_women.csv
       depends/sle_mics_births_to_women.csv: sle_mics_births_to_women.csv
   swz_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/swz_dhs_clusters.csv: swz_dhs_clusters.csv
       depends/swz_mics_women.csv: swz_mics_women.csv
       depends/swz_mics_births_to_women.csv: swz_mics_births_to_women.csv
   tcd_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/tcd_dhs_clusters.csv: tcd_dhs_clusters.csv
       depends/tcd_mics_women.csv: tcd_mics_women.csv
       depends/tcd_mics_births_to_women.csv: tcd_mics_births_to_women.csv
   tgo_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/tgo_dhs_clusters.csv: tgo_dhs_clusters.csv
       depends/tgo_mics_women.csv: tgo_mics_women.csv
       depends/tgo_mics_births_to_women.csv: tgo_mics_births_to_women.csv
   zwe_survey:
-    id: latest
+    id: latest(parameter:version == version)
     use:
       depends/zwe_dhs_clusters.csv: zwe_dhs_clusters.csv
       depends/zwe_mics_women.csv: zwe_mics_women.csv
@@ -238,17 +238,17 @@ depends:
 ### MICS ONLY
 
   caf_survey:
-      id: latest
+      id: latest(parameter:version == version)
       use:
         depends/caf_mics_women.csv: caf_mics_women.csv
         depends/caf_mics_births_to_women.csv: caf_mics_births_to_women.csv
   gnb_survey:
-      id: latest
+      id: latest(parameter:version == version)
       use:
         depends/gnb_mics_women.csv: gnb_mics_women.csv
         depends/gnb_mics_births_to_women.csv: gnb_mics_births_to_women.csv
   ssd_survey:
-      id: latest
+      id: latest(parameter:version == version)
       use:
         depends/ssd_mics_women.csv: ssd_mics_women.csv
         depends/ssd_mics_births_to_women.csv: ssd_mics_births_to_women.csv

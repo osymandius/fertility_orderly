@@ -2,7 +2,7 @@ script: cod_survey.R
 
 parameters:
   version:
-    default: 2021
+    default: 2022
 
 artefacts:
   - data:
