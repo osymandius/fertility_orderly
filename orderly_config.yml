@@ -18,7 +18,7 @@ remote:
       token: $ORDERLYWEB_GITHUB_TOKEN
     # primary: true
     default_branch: main  
-  real:
+  fertility-sharepoint:
     driver: orderly.sharepoint::orderly_remote_sharepoint
     args:
       url: https://imperiallondon.sharepoint.com
@@ -59,6 +59,12 @@ remote:
 
 vault:
   addr: https://vault.dide.ic.ac.uk:8200
+  
+fields:
+  requester:
+    required: false
+  author:
+    required: false
 
 global_resources:
   global
