@@ -74,15 +74,15 @@ packages:
 
 depends:
   aaa_areas_pull:
-    id: latest(parameter:iso3 == iso3)
+    id: latest(parameter:iso3 == iso3 && parameter:version == version)
     use:
       depends/naomi_areas.geojson: naomi_areas.geojson
   aaa_asfr:
-    id: latest(parameter:iso3 == iso3)
+    id: latest(parameter:iso3 == iso3 && parameter:version == version)
     use:
       depends/asfr.csv: asfr.csv
       depends/fr_plot.csv: fr_plot.csv
   aaa_scale_pop:
-    id: latest(parameter:iso3 == iso3)
+    id: latest(parameter:iso3 == iso3 && parameter:version == version && parameter:source == "WPP2022")
     use:
       depends/interpolated_population.csv: interpolated_population.csv
