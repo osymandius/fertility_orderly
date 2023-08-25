@@ -27,7 +27,7 @@ packages:
   - tidyverse
 
 depends:
-  rwa_data_areas:
-    id: latest(parameter:version == version)
+  aaa_pull_naomi_estimates:
+    id: latest(parameter:version == version && parameter:iso3 == "RWA")
     use:
-      depends/rwa_areas.geojson: rwa_areas.geojson
+      depends/rwa_areas.geojson: outputs/naomi_areas.geojson

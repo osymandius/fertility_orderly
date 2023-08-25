@@ -27,7 +27,7 @@ packages:
   - tidyverse
 
 depends:
-  bwa_data_areas:
-    id: latest(parameter:version == version)
+  aaa_pull_naomi_estimates:
+    id: latest(parameter:version == version && parameter:iso3 == "BWA")
     use:
-      depends/bwa_areas.geojson: bwa_areas.geojson
+      depends/bwa_areas.geojson: outputs/naomi_areas.geojson

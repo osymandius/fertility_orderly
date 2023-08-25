@@ -32,7 +32,7 @@ global_resources:
   resources/MICS_indicators.csv: MICS_indicators.csv
 
 depends:
-  zaf_data_areas:
-    id: latest(parameter:version == version)
+  aaa_pull_naomi_estimates:
+    id: latest(parameter:version == version && parameter:iso3 == "ZAF")
     use:
-      depends/zaf_areas.geojson: zaf_areas.geojson
+      depends/zaf_areas.geojson: outputs/naomi_areas.geojson

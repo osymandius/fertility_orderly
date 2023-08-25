@@ -1,5 +1,5 @@
 remote:
-  main:
+  fertility-web:
     driver: orderlyweb::orderlyweb_remote
     args:
       host: hiv-orderly.dide.ic.ac.uk
@@ -60,11 +60,11 @@ remote:
 vault:
   addr: https://vault.dide.ic.ac.uk:8200
   
-fields:
-  requester:
-    required: false
-  author:
-    required: false
+# fields:
+#   requester:
+#     required: false
+#   author:
+#     required: false
 
 global_resources:
   global

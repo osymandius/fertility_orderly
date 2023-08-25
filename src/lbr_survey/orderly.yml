@@ -30,7 +30,7 @@ packages:
   - stringr
 
 depends:
-  lbr_data_areas:
-    id: latest(parameter:version == version)
+  aaa_pull_naomi_estimates:
+    id: latest(parameter:version == version && parameter:iso3 == "LBR")
     use:
-      depends/lbr_areas.geojson: lbr_areas.geojson
+      depends/lbr_areas.geojson: outputs/naomi_areas.geojson

@@ -35,7 +35,7 @@ global_resources:
   resources/MICS_indicators.csv: MICS_indicators.csv
 
 depends:
-  cmr_data_areas:
-    id: latest(parameter:version == version)
+  aaa_pull_naomi_estimates:
+    id: latest(parameter:version == version && parameter:iso3 == "CMR")
     use:
-      depends/cmr_areas.geojson: cmr_areas.geojson
+      depends/cmr_areas.geojson: outputs/naomi_areas.geojson

@@ -35,8 +35,8 @@ global_resources:
   resources/MICS_indicators.csv: MICS_indicators.csv
 
 depends:
-  zwe_data_areas:
-    id: latest(parameter:version == version)
+  aaa_pull_naomi_estimates:
+    id: latest(parameter:version == version && parameter:iso3 == "ZWE")
     use:
-      depends/zwe_areas.geojson: zwe_areas.geojson
+      depends/zwe_areas.geojson: outputs/naomi_areas.geojson
 

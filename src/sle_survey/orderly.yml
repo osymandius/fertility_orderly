@@ -34,7 +34,7 @@ global_resources:
   resources/MICS_indicators.csv: MICS_indicators.csv
 
 depends:
-  sle_data_areas:
-    id: latest(parameter:version == version)
+  aaa_pull_naomi_estimates:
+    id: latest(parameter:version == version && parameter:iso3 == "SLE")
     use:
-      depends/sle_areas.geojson: sle_areas.geojson
+      depends/sle_areas.geojson: outputs/naomi_areas.geojson

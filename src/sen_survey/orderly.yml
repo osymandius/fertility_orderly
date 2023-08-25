@@ -34,7 +34,7 @@ global_resources:
   resources/MICS_indicators.csv: MICS_indicators.csv
 
 depends:
-  sen_data_areas:
-    id: latest(parameter:version == version)
+  aaa_pull_naomi_estimates:
+    id: latest(parameter:version == version && parameter:iso3 == "SEN")
     use:
-      depends/sen_areas.geojson: sen_areas.geojson
+      depends/sen_areas.geojson: outputs/naomi_areas.geojson

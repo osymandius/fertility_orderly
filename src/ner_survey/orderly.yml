@@ -30,7 +30,7 @@ packages:
   - stringr
 
 depends:
-  ner_data_areas:
-    id: latest(parameter:version == version)
+  aaa_pull_naomi_estimates:
+    id: latest(parameter:version == version && parameter:iso3 == "NER")
     use:
-      depends/ner_areas.geojson: ner_areas.geojson
+      depends/ner_areas.geojson: outputs/naomi_areas.geojson

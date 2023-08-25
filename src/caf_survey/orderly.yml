@@ -30,7 +30,7 @@ global_resources:
   resources/MICS_indicators.csv: MICS_indicators.csv
 
 depends:
-  caf_data_areas:
-    id: latest(parameter:version == version)
+  aaa_pull_naomi_estimates:
+    id: latest(parameter:version == version && parameter:iso3 == "CAF")
     use:
-      depends/caf_areas.geojson: caf_areas.geojson
+      depends/caf_areas.geojson: outputs/naomi_areas.geojson

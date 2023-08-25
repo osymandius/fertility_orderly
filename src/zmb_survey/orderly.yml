@@ -26,7 +26,7 @@ packages:
   - sf
 
 depends:
-  zmb_data_areas:
-    id: latest(parameter:version == version)
+  aaa_pull_naomi_estimates:
+    id: latest(parameter:version == version && parameter:iso3 == "ZMB")
     use:
-      depends/zmb_areas.geojson: zmb_areas.geojson
+      depends/zmb_areas.geojson: outputs/naomi_areas.geojson

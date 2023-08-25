@@ -27,7 +27,7 @@ packages:
   - tidyverse
 
 depends:
-  nam_data_areas:
-    id: latest(parameter:version == version)
+  aaa_pull_naomi_estimates:
+    id: latest(parameter:version == version && parameter:iso3 == "NAM")
     use:
-      depends/nam_areas.geojson: nam_areas.geojson
+      depends/nam_areas.geojson: outputs/naomi_areas.geojson
