@@ -21,14 +21,14 @@ lapply(id %>% compact(), orderly_commit)
 
 orderly_dev_start_oli("aaa_assign_populations", data.frame(iso3 = "SLE"))
 
-id <-  orderly_batch("aaa_fit", data.frame(iso3 = ssa_iso3[!ssa_iso3 %in% names(dat) & !ssa_iso3 %in% c("BWA", "ETH", "COD", "ZAF", "CAF")]))
+id <- orderly_batch("aaa_asfr", data.frame(iso3 = ssa_iso3[!ssa_iso3 %in% c("AGO", "COG", "GAB", "GMB", "LBR", "TZA")]))
 
-tsks <- list.files("src", pattern = "asfr") %>%
-  lapply(grep, pattern  = "nga", invert = TRUE, value = TRUE) %>%
+tsks <- list.files("src", pattern = "survey") %>%
+  lapply(grep, pattern  = "phia", invert = TRUE, value = TRUE) %>%
   unlist()
 
-id <- map(tsks, ~possibly_run(.x))
-names(id) <- tsks
+id <- map(names(fail_id), ~possibly_run(.x))
+names(id) <- names(fail_id)
 
 lapply(id %>% compact(), orderly_commit)
 

@@ -2,7 +2,8 @@
 iso3 <- "KEN"
 
 areas <- read_sf("depends/ken_areas.geojson") %>%
-  st_make_valid()
+  st_make_valid() %>%
+  filter(area_level < 3)
 areas_wide <- spread_areas(areas)
 
 surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%
@@ -34,27 +35,32 @@ survey_region_boundaries <- survey_region_boundaries %>%
       )
   )
 
-# hrd <- dhs_datasets(surveyIds = "KE2020MIS", fileType = "HR", fileFormat = "FL")
-# ke2020hr <- readRDS(get_datasets(hrd, clear_cache = TRUE)[[1]])
-# ke2020hr <- read_sf("~/Downloads/KEGE81FL/KEGE81FL.shp")
-
-temp <- tempdir()
-unzip("KEN2020MIS_boundaries.zip", exdir = temp)
-ken2020mis_geo <- read_sf(file.path(temp, "shps", "sdr_subnational_boundaries.shp"))
+#' KEN2020MIS missing a survey region name
 
 survey_region_boundaries <- survey_region_boundaries %>%
-  bind_rows(
-    ken2020mis_geo %>% 
-      select(survey_region_id = REGCODE, survey_region_name = DHSREGEN, REGVAR) %>%
-      mutate(survey_id = "KEN2020MIS")
-  )
+  mutate(survey_region_name = ifelse(survey_id == "KEN2020MIS" & survey_region_id == 1, "Highland Epidemic Prone", survey_region_name))
 
 
 surveys <- surveys_add_dhs_regvar(surveys, survey_region_boundaries)
 
-#' Allocate each area to survey region
+# KEN2014DHS survey_region_id = 13 and KEN2022DHS survey_region_id = 3 [both Kilifi] have invalid geometry that passes st_is_valid (and therefore cannot be fixed with st_make_valid)
+# Simplify the geometry and overwrite it
 
-survey_region_areas <- allocate_areas_survey_regions(areas_wide, survey_region_boundaries %>% st_make_valid())
+simp_b <- rmapshaper::ms_simplify(filter(survey_region_boundaries, 
+                                         (survey_id == "KEN2014DHS" & survey_region_id == 13) |
+                                         (survey_id == "KEN2022DHS" & survey_region_id == 3) 
+                                  )
+)
+
+survey_region_boundaries <- survey_region_boundaries %>%
+  filter(!(survey_id == "KEN2014DHS" & survey_region_id == 13),
+         !(survey_id == "KEN2022DHS" & survey_region_id == 3)) %>%
+  bind_rows(simp_b) %>%
+  arrange(survey_id, survey_region_id)
+
+#' Allocate each area to survey region
+# debugonce(allocate_areas_survey_regions)
+survey_region_areas <- allocate_areas_survey_regions(areas_wide, st_make_valid(survey_region_boundaries))
 
 validate_survey_region_areas(survey_region_areas, survey_region_boundaries)
 
@@ -65,7 +71,6 @@ survey_regions <- create_survey_regions_dhs(survey_region_areas)
 survey_clusters <- create_survey_clusters_dhs(surveys, clear_rdhs_cache = TRUE)
 
 #' Snap survey clusters to areas
-
 survey_clusters <- assign_dhs_cluster_areas(survey_clusters, survey_region_areas)
 
 #' 1998 DHS has no GPS coordinates. Assign clusters to areas using survey region id

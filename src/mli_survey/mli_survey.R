@@ -83,7 +83,7 @@ dev.off()
 write_csv(survey_clusters, paste0(tolower(iso3), "_dhs_clusters.csv"))
 
 # mics_indicators <- read_csv("global/MICS_indicators.csv") %>%
-mics_indicators <- read_csv("resources/MICS_indicators.csv") %>%
+mics_indicators <- read_csv("resources/MICS_indicators.csv", show_col_types = F) %>%
   pivot_longer(-c(label, id, filetype), names_to = "survey_id") %>%
   filter(survey_id != "CIV2000MICS")
 
@@ -96,7 +96,8 @@ fertility_mics_data$hh <- fertility_mics_data$hh %>%
     mics_area_name_label = case_when(
       mics_area_name_label == "Sã©Gou" ~ "Ségou",
       mics_area_name_label == "Segou" ~ "Ségou",
-      mics_area_name_label == "Tombouctou" ~ "Timbuktu",
+      # mics_area_name_label == "Tombouctou" ~ "Timbuktu",
+      mics_area_name_label == "Timbuktu" ~ "Tombouctou",
       TRUE ~ mics_area_name_label
     )
   ) 

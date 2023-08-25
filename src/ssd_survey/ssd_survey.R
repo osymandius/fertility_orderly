@@ -7,7 +7,7 @@ areas <- read_sf("depends/ssd_areas.geojson")
 
 ####### MICS
 
-mics_indicators <- read_csv("resources/MICS_indicators.csv") %>%
+mics_indicators <- read_csv("resources/MICS_indicators.csv", show_col_types = F) %>%
   pivot_longer(-c(label, id, filetype), names_to = "survey_id")
 
 mics_survey_data <- create_surveys_mics(iso3, mics_indicators)
@@ -18,8 +18,8 @@ fertility_mics_data$hh <- fertility_mics_data$hh %>%
   mutate(
     mics_area_name_label = case_when(
         mics_area_name_label == "Warap" ~ "Warrap",
-        mics_area_name_label == "Northern Bahr El Ghazal" ~ "Northern Bahr el Ghazal",
-        mics_area_name_label == "Western Bahr El Ghazal" ~ "Western Bahr el Ghazal",
+        mics_area_name_label == "Northern Bahr el Ghazal" ~ "Northern Bahr El Ghazal",
+        mics_area_name_label == "Western Bahr el Ghazal" ~ "Western Bahr El Ghazal",
       TRUE ~ mics_area_name_label
     )
   ) 

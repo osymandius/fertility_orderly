@@ -53,26 +53,26 @@ packages:
 
 
 depends:
-  aaa_areas_pull:
+  aaa_pull_naomi_estimates:
     id: latest(parameter:iso3 == iso3 && parameter:version == version)
     use:
-      depends/naomi_areas.geojson: naomi_areas.geojson
+      depends/naomi_areas.geojson: outputs/naomi_areas.geojson
 
 
 ## DHS ONLY
 
-  ago_survey:
-    id: latest(parameter:version == version)
-    use:
-      depends/ago_dhs_clusters.csv: ago_dhs_clusters.csv
+  # ago_survey:
+  #   id: latest(parameter:version == version)
+  #   use:
+  #     depends/ago_dhs_clusters.csv: ago_dhs_clusters.csv
   eth_survey:
     id: latest(parameter:version == version)
     use:
       depends/eth_dhs_clusters.csv: eth_dhs_clusters.csv
-  gab_survey:
-    id: latest(parameter:version == version)
-    use:
-      depends/gab_dhs_clusters.csv: gab_dhs_clusters.csv
+  # gab_survey:
+  #   id: latest(parameter:version == version)
+  #   use:
+  #     depends/gab_dhs_clusters.csv: gab_dhs_clusters.csv
   gha_survey:
     id: latest(parameter:version == version)
     use:
@@ -81,10 +81,10 @@ depends:
     id: latest(parameter:version == version)
     use:
       depends/gin_dhs_clusters.csv: gin_dhs_clusters.csv
-  lbr_survey:
-    id: latest(parameter:version == version)
-    use:
-      depends/lbr_dhs_clusters.csv: lbr_dhs_clusters.csv
+  # lbr_survey:
+  #   id: latest(parameter:version == version)
+  #   use:
+  #     depends/lbr_dhs_clusters.csv: lbr_dhs_clusters.csv
   nam_survey:
     id: latest(parameter:version == version)
     use:
@@ -150,24 +150,24 @@ depends:
       depends/cmr_dhs_clusters.csv: cmr_dhs_clusters.csv
       depends/cmr_mics_women.csv: cmr_mics_women.csv
       depends/cmr_mics_births_to_women.csv: cmr_mics_births_to_women.csv
-  cog_survey:
-    id: latest(parameter:version == version)
-    use:
-      depends/cog_dhs_clusters.csv: cog_dhs_clusters.csv
-      depends/cog_mics_women.csv: cog_mics_women.csv
-      depends/cog_mics_births_to_women.csv: cog_mics_births_to_women.csv
+  # cog_survey:
+  #   id: latest(parameter:version == version)
+  #   use:
+  #     depends/cog_dhs_clusters.csv: cog_dhs_clusters.csv
+  #     depends/cog_mics_women.csv: cog_mics_women.csv
+  #     depends/cog_mics_births_to_women.csv: cog_mics_births_to_women.csv
   cod_survey:
     id: latest(parameter:version == version)
     use:
       depends/cod_dhs_clusters.csv: cod_dhs_clusters.csv
       depends/cod_mics_women.csv: cod_mics_women.csv
       depends/cod_mics_births_to_women.csv: cod_mics_births_to_women.csv
-  gmb_survey:
-    id: latest(parameter:version == version)
-    use:
-      depends/gmb_dhs_clusters.csv: gmb_dhs_clusters.csv
-      depends/gmb_mics_women.csv: gmb_mics_women.csv
-      depends/gmb_mics_births_to_women.csv: gmb_mics_births_to_women.csv
+  # gmb_survey:
+  #   id: latest(parameter:version == version)
+  #   use:
+  #     depends/gmb_dhs_clusters.csv: gmb_dhs_clusters.csv
+  #     depends/gmb_mics_women.csv: gmb_mics_women.csv
+  #     depends/gmb_mics_births_to_women.csv: gmb_mics_births_to_women.csv
   ken_survey:
     id: latest(parameter:version == version)
     use:

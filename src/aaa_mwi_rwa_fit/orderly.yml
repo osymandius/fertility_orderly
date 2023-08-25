@@ -73,7 +73,7 @@ packages:
 
 
 depends:
-  aaa_areas_pull:
+  aaa_pull_naomi_estimates:
     id: latest(parameter:iso3 == iso3 && parameter:version == version)
     use:
       depends/naomi_areas.geojson: naomi_areas.geojson

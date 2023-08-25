@@ -20,7 +20,7 @@ survey_region_boundaries <- create_survey_boundaries_dhs(surveys)
 surveys <- surveys_add_dhs_regvar(surveys, survey_region_boundaries)
 
 #' Allocate each area to survey region
-
+debugonce(allocate_areas_survey_regions)
 survey_region_areas <- allocate_areas_survey_regions(areas_wide, survey_region_boundaries %>% st_make_valid())
 
 cog2009ais_region1_areas <- areas_wide %>%

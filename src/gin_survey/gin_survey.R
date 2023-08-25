@@ -7,8 +7,9 @@ areas <- read_sf("depends/gin_areas.geojson") %>%
 areas_wide <- spread_areas(areas)
 
 surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%
-  filter(as.numeric(SurveyYear) > 1994,
-         survey_id != "GIN2021MIS") ## REMOVE LATER!!
+  filter(as.numeric(SurveyYear) > 1994)
+         # survey_id != "GIN2021MIS"
+         # ) ## REMOVE LATER!!
 
 survey_meta <- create_survey_meta_dhs(surveys)
 
@@ -55,7 +56,7 @@ write_csv(survey_clusters, paste0(tolower(iso3), "_dhs_clusters.csv"))
 
 ####### MICS
 
-mics_indicators <- read_csv("resources/MICS_indicators.csv") %>%
+mics_indicators <- read_csv("resources/MICS_indicators.csv", show_col_types = F) %>%
   pivot_longer(-c(label, id, filetype), names_to = "survey_id")
 
 mics_survey_data <- create_surveys_mics(iso3, mics_indicators)

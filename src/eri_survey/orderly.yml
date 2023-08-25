@@ -1,0 +1,36 @@
+script: eri_survey.R
+
+parameters:
+  version:
+    default: 2022
+
+artefacts:
+  - data:
+      description: survey indicator dataset
+      filenames:
+        - eri_dhs_clusters.csv
+  - staticgraph:
+      description: Check DHS region cluster assignment
+      filenames:
+        - check/eri_dhs-cluster-check.pdf
+
+
+packages:
+  - dplyr
+  - dfertility
+  - haven
+  - tidyr
+  - rdhs
+  - ggplot2
+  - naomi
+  - naomi.utils
+  - tidyverse
+  - sf
+  - spud
+  - stringr
+
+depends:
+  aaa_pull_naomi_estimates:
+    id: latest(parameter:version == version && parameter:iso3 == "ERI")
+    use:
+      depends/eri_areas.geojson: outputs/naomi_areas.geojson

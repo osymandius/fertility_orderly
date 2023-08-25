@@ -59,7 +59,7 @@ dev.off()
 
 write_csv(survey_clusters, paste0(tolower(iso3), "_dhs_clusters.csv"))
 
-mics_indicators <- read_csv("resources/MICS_indicators.csv") %>%
+mics_indicators <- read_csv("resources/MICS_indicators.csv", show_col_types = F) %>%
   pivot_longer(-c(label, id, filetype), names_to = "survey_id")
 
 mics_survey_data <- create_surveys_mics(iso3, mics_indicators)
