@@ -1,5 +1,5 @@
 remote:
-  fertility-web:
+  main:
     driver: orderlyweb::orderlyweb_remote
     args:
       host: hiv-orderly.dide.ic.ac.uk
