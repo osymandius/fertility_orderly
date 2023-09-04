@@ -8,7 +8,7 @@ remote:
       token: $ORDERLYWEB_GITHUB_TOKEN
     primary: true
     default_branch: master 
-    default_branch_only: true
+    default_branch_only: false 
   inference-web:
     driver: orderlyweb::orderlyweb_remote
     args:
