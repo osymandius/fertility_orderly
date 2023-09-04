@@ -4,15 +4,15 @@ artefacts:
   - data:
       description: ASFR
       filenames:
-        - asfr.csv
+        - asfr.rds
   - data:
-      description: fertility indicator dataset
+      description: Aggregate TFR and ASFR for plotting
       filenames:
-        - fr_plot.csv
-  - data:
-      description: nrow ir
-      filenames:
-        - nrow_ir.rds
+        - fr_plot.rds
+  # - data:
+  #     description: nrow ir
+  #     filenames:
+  #       - nrow_ir.rds
   - staticgraph:
       description: Validate admin-1 TFRs
       filenames:

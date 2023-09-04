@@ -12,17 +12,6 @@ survey_meta <- create_survey_meta_dhs(surveys)
 
 survey_region_boundaries <- create_survey_boundaries_dhs(surveys)
 
-#' #' Action: recode survey boundaries to 2= North Buganda, 3 = South Buganda
-#' 
-#' survey_region_boundaries <- survey_region_boundaries %>%
-#'   mutate(
-#'     survey_region_id = case_when(
-#'       survey_id == "UGA2018MIS" & survey_region_name == "North Buganda" ~ 2,
-#'       survey_id == "UGA2018MIS" & survey_region_name == "South Buganda" ~ 3,
-#'       TRUE ~ survey_region_id
-#'     )
-#'   )
-
 surveys <- surveys_add_dhs_regvar(surveys, survey_region_boundaries)
 
 #' Allocate each area to survey region
