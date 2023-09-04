@@ -7,7 +7,7 @@ remote:
       prefix: fertility
       token: $ORDERLYWEB_GITHUB_TOKEN
     primary: true
-    default_branch: main
+    default_branch: master 
     default_branch_only: true
   inference-web:
     driver: orderlyweb::orderlyweb_remote
@@ -60,11 +60,5 @@ remote:
 vault:
   addr: https://vault.dide.ic.ac.uk:8200
   
-# fields:
-#   requester:
-#     required: false
-#   author:
-#     required: false
-
 global_resources:
   global
