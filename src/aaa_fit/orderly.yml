@@ -13,10 +13,14 @@ artefacts:
       description: fertility indicator dataset
       filenames:
         - fr.csv
-  # - data:
-  #     description: hyperparameters and random effect samples
-  #     filenames:
-  #       - hyper.rds
+  - data:
+      description: hyperparameters and random effect samples
+      filenames:
+        - hyper.rds
+  - data:
+      description: fixed effect samples
+      filenames:
+        - fixed.rds
   - staticgraph:
       description: Validate admin-1 TFRs
       filenames:
@@ -29,6 +33,9 @@ global_resources:
   # resources/mics_asfr.csv: mics_asfr.csv
   resources/phia_asfr.csv: phia_asfr.csv
   resources/phia_asfr_admin1.csv: phia_asfr_admin1.csv
+  resources/phia_asfr_admin0.csv: phia_asfr_admin0.csv
+  resources/phia_tfr_admin0.csv: phia_tfr_admin0.csv
+  resources/phia_tfr_admin1.csv: phia_tfr_admin1.csv
   # resources/moz_areas_maputo.geojson: moz_areas_maputo.geojson
 
 resources:
@@ -44,6 +51,8 @@ resources:
   # - models/model6_births.cpp
   # - models/model6_births.so
   # - models/model6_births.o
+  - models/model7_national.so
+  - models/model7_national.o
   - programme_births_district.csv
   - anc_test.csv
 
@@ -54,6 +63,8 @@ displayname: Fertility model fit
 parameters:
   iso3:
     default: ~
+  model_level:
+    default: "district"
   version:
     default: 2022
 
@@ -81,12 +92,12 @@ depends:
   aaa_pull_naomi_estimates:
     id: latest(parameter:iso3 == iso3 && parameter:version == version)
     use:
-      depends/naomi_areas.geojson: naomi_areas.geojson
+      depends/naomi_areas.geojson: outputs/naomi_areas.geojson
   aaa_asfr:
     id: latest(parameter:iso3 == iso3 && parameter:version == version)
     use:
-      depends/asfr.csv: asfr.csv
-      depends/fr_plot.csv: fr_plot.csv
+      depends/asfr.rds: asfr.rds
+      depends/fr_plot.rds: fr_plot.rds
   aaa_scale_pop:
     id: latest(parameter:iso3 == iso3 && parameter:version == version && parameter:source == "WPP2022")
     use:
