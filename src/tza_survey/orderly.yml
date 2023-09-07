@@ -27,7 +27,7 @@ packages:
   - sf
 
 depends:
-  aaa_pull_naomi_estimates:
-    id: latest(parameter:version == version && parameter:iso3 == "TZA")
+  aaa_areas_pull:
+    id: latest(parameter:version == 2021 && parameter:iso3 == "TZA")
     use:
-      depends/tza_areas.geojson: outputs/naomi_areas.geojson
+      depends/tza_areas.geojson: naomi_areas.geojson

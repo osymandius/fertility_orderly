@@ -53,10 +53,14 @@ packages:
 
 
 depends:
-  aaa_pull_naomi_estimates:
-    id: latest(parameter:iso3 == iso3 && parameter:version == version)
+  aaa_areas_pull:
+    id: latest(parameter:iso3 == iso3 && parameter:version == 2021)
     use:
-      depends/naomi_areas.geojson: outputs/naomi_areas.geojson
+      depends/naomi_areas.geojson: naomi_areas.geojson
+  # aaa_pull_naomi_estimates:
+  #   id: latest(parameter:iso3 == iso3 && parameter:version == version)
+  #   use:
+  #     depends/naomi_areas.geojson: outputs/naomi_areas.geojson
 
 
 ## DHS ONLY

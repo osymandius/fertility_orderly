@@ -38,7 +38,7 @@ global_resources:
   resources/MICS_indicators.csv: MICS_indicators.csv
 
 depends:
-  aaa_pull_naomi_estimates:
-    id: latest(parameter:version == version && parameter:iso3 == "KEN")
+  aaa_areas_pull:
+    id: latest(parameter:version == 2021 && parameter:iso3 == "KEN")
     use:
-      depends/ken_areas.geojson: outputs/naomi_areas.geojson
+      depends/ken_areas.geojson: naomi_areas.geojson
