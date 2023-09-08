@@ -2,7 +2,7 @@
 #' ISO3 country code
 iso3 <- "ETH"
 
-areas <- read_sf("depends/eth_areas.geojson") %>% st_make_valid()
+areas <- readRDS("resources/areas.rds")[[iso3]] %>% st_make_valid()
 areas_wide <- spread_areas(areas)
 
 surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%

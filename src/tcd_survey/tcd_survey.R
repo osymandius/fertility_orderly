@@ -1,7 +1,7 @@
 #' ISO3 country code
 iso3 <- "TCD"
 
-areas <- read_sf("depends/tcd_areas.geojson")
+areas <- readRDS("resources/areas.rds")[[iso3]]
 # areas <- read_sf("archive/tcd_data_areas/20210119-115700-2244620f/tcd_areas.geojson")
 areas_wide <- spread_areas(areas)
 

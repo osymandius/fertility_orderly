@@ -1,7 +1,7 @@
 #' ISO3 country code
 iso3 <- "GHA"
 
-areas <- read_sf("depends/gha_areas.geojson")
+areas <- readRDS("resources/areas.rds")[[iso3]]
 # areas <- read_sf("archive/gha_data_areas/20210106-153710-70b4d1a5/gha_areas.geojson")
 areas_wide <- spread_areas(areas)
 

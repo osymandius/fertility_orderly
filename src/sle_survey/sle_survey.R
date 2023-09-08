@@ -1,7 +1,7 @@
 #' ISO3 country code
 iso3 <- "SLE"
 
-areas <- read_sf("depends/sle_areas.geojson")
+areas <- readRDS("resources/areas.rds")[[iso3]]
 # areas <- read_sf("archive/sle_data_areas/20210105-223311-1cbdb398/sle_areas.geojson")
 areas_wide <- spread_areas(areas)
 

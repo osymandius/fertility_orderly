@@ -10,7 +10,7 @@ fieldwork_end <- NA
 
 
 #' ## Load area hierarchy
-areas <- read_sf("depends/cmr_areas.geojson")
+areas <- readRDS("resources/areas.rds")[[iso3]]
 
 #' ## Load PHIA datasets
 sharepoint <- spud::sharepoint$new("https://imperiallondon.sharepoint.com/")

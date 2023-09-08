@@ -1,7 +1,7 @@
 #' ISO3 country code
 iso3 <- "ERI"
 
-areas <- read_sf("depends/eri_areas.geojson")
+areas <- readRDS("resources/areas.rds")[[iso3]]
 areas_wide <- spread_areas(areas)
 
 surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%

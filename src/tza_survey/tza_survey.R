@@ -1,6 +1,6 @@
 iso3 <- "TZA"
 
-areas <- read_sf("depends/tza_areas.geojson")
+areas <- readRDS("resources/areas.rds")[[iso3]]
 areas_wide <- spread_areas(areas)
 
 surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%

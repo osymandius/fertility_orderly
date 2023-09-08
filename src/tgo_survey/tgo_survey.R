@@ -2,7 +2,7 @@
 iso3 <- "TGO"
 
 # areas <- read_sf("~/Imperial College London/HIV Inference Group - WP - Documents/Analytical datasets/naomi-data/TGO/data/tgo_areas.geojson")
-areas <- read_sf("depends/tgo_areas.geojson") %>%
+areas <- readRDS("resources/areas.rds")[[iso3]] %>%
   st_make_valid()
 areas_wide <- spread_areas(areas)
 

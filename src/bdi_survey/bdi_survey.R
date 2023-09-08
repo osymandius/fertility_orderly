@@ -1,7 +1,7 @@
 #' ISO3 country code
 iso3 <- "BDI"
 
-areas <- read_sf("depends/bdi_areas.geojson") %>%
+areas <- readRDS("resources/areas.rds")[[iso3]] %>%
   mutate(area_name = str_trim(area_name))
 areas_wide <- spread_areas(areas)
 

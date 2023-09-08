@@ -2,7 +2,7 @@
 
 iso3 <- "ZMB"
 
-areas <- read_sf("depends/zmb_areas.geojson")
+areas <- readRDS("resources/areas.rds")[[iso3]]
 areas_wide <- spread_areas(areas)
 
 surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%

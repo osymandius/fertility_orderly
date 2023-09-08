@@ -1,7 +1,7 @@
 #' ISO3 country code
 iso3 <- "ZAF"
 
-areas <- read_sf("depends/zaf_areas.geojson") %>%
+areas <- readRDS("resources/areas.rds")[[iso3]] %>%
   mutate(area_name = str_trim(area_name)) %>%
   st_make_valid() %>%
   filter(area_level < 3) ## FIX THIS BODGE

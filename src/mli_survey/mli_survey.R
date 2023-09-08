@@ -1,7 +1,7 @@
 #' ISO3 country code
 iso3 <- "MLI"
 
-areas <- read_sf("depends/mli_areas.geojson") %>%
+areas <- readRDS("resources/areas.rds")[[iso3]] %>%
   st_make_valid() %>%
   filter(area_level < 3) ## FIX THIS BODGE
 

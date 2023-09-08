@@ -1,6 +1,6 @@
 iso3 <- "SWZ"
 
-areas <- read_sf("depends/swz_areas.geojson")
+areas <- readRDS("resources/areas.rds")[[iso3]]
 areas_wide <- spread_areas(areas)
 
 surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%

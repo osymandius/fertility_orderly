@@ -1,7 +1,7 @@
 #' ISO3 country code
 iso3 <- "COG"
 
-areas <- read_sf("depends/cog_areas.geojson") %>%
+areas <- readRDS("resources/areas.rds")[[iso3]] %>%
   mutate(area_name = str_to_sentence(area_name))
 
 # areas <- read_sf("archive/cog_data_areas/20210118-064454-dc82bd12/cog_areas.geojson") %>%

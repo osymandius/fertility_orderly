@@ -1,7 +1,7 @@
 #' ISO3 country code
 iso3 <- "MWI"
 
-areas <- read_sf("depends/mwi_areas.geojson")
+areas <- readRDS("resources/areas.rds")[[iso3]]
 # areas <- read_sf("~/Imperial College London/HIV Inference Group - WP - Documents/Analytical datasets/naomi-data/MWI/data/mwi_areas.geojson")
 areas_wide <- spread_areas(areas)
 

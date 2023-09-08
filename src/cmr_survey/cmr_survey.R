@@ -2,7 +2,7 @@
 iso3 <- "CMR"
 
 # areas <- read_sf("~/Imperial College London/HIV Inference Group - WP - Documents/Analytical datasets/naomi-data/CMR/data/cmr_areas.geojson")
-areas <- read_sf("depends/cmr_areas.geojson")
+areas <- readRDS("resources/areas.rds")[[iso3]]
 areas_wide <- spread_areas(areas)
 
 surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%

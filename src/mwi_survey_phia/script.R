@@ -10,7 +10,7 @@ fieldwork_end <- "2016-08-01"
 
 
 #' ## Load area hierarchy
-areas <- read_sf("depends/mwi_areas.geojson")
+areas <- readRDS("resources/areas.rds")[[iso3]]
 
 
 #' ## Load PHIA datasets

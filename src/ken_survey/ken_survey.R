@@ -1,7 +1,7 @@
 #' ISO3 country code
 iso3 <- "KEN"
 
-areas <- read_sf("depends/ken_areas.geojson") %>%
+areas <- readRDS("resources/areas.rds")[[iso3]] %>%
   st_make_valid() %>%
   filter(area_level < 3)
 areas_wide <- spread_areas(areas)

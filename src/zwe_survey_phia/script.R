@@ -6,7 +6,7 @@ survey_mid_calendar_quarter <- "CY2016Q1"
 
 
 #' ## Load area hierarchy
-areas <- read_sf("depends/zwe_areas.geojson")
+areas <- readRDS("resources/areas.rds")[[iso3]]
 
 
 #' ## Load PHIA datasets

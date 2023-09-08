@@ -5,7 +5,7 @@ survey_id  <- "ZMB2016PHIA"
 survey_mid_calendar_quarter <- "CY2016Q2"
 
 #' ## Load area hierarchy
-areas <- read_sf("depends/zmb_areas.geojson")
+areas <- readRDS("resources/areas.rds")[[iso3]]
 
 #' ## Load PHIA datasets
 sharepoint <- spud::sharepoint$new("https://imperiallondon.sharepoint.com/")

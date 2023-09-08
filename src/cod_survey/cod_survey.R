@@ -1,7 +1,7 @@
 #' ISO3 country code
 iso3 <- "COD"
 
-areas <- read_sf("depends/cod_areas.geojson") %>%
+areas <- readRDS("resources/areas.rds")[[iso3]] %>%
   st_make_valid()
 areas_wide <- spread_areas(areas)
 

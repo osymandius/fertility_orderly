@@ -10,7 +10,7 @@ fieldwork_end <- NA
 
 
 #' ## Load area hierarchy
-areas <- read_sf("depends/lso_areas.geojson")
+areas <- readRDS("resources/areas.rds")[[iso3]]
 
 
 #' ## Load PHIA datasets
