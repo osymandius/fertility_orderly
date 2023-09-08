@@ -25,6 +25,7 @@ validate_survey_region_areas(survey_region_areas, survey_region_boundaries, warn
 #   survey_id survey_region_id     survey_region_name
 # GAB2000DHS                1             big cities
 # GAB2012DHS                1 libreville-port-gentil
+# GAB2019DHS                1             libreville
 
 #' Manually add the districts that intersect libreville-port-gentil
 #' survey region to survey_region_areas
@@ -45,8 +46,16 @@ gab2012dhs_region1_areas <- areas_wide %>%
   ) %>%
   select(all_of(names(survey_region_areas)))
 
+gab2019dhs_region1_areas <- areas_wide %>%
+  st_join(
+    survey_region_boundaries %>%
+      filter(survey_id == "GAB2019DHS", survey_region_id == 1),
+    left = FALSE
+  ) %>%
+  select(all_of(names(survey_region_areas)))
+
 survey_region_areas <- survey_region_areas %>%
-  bind_rows(gab2000dhs_region1_areas, gab2012dhs_region1_areas)
+  bind_rows(gab2000dhs_region1_areas, gab2012dhs_region1_areas, gab2019dhs_region1_areas)
 
 validate_survey_region_areas(survey_region_areas, survey_region_boundaries)
 
