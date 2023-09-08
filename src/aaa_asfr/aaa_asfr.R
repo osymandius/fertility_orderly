@@ -1,5 +1,5 @@
 iso3_c <- iso3
-areas <- read_sf("depends/naomi_areas.geojson")
+areas <- read_sf("depends/areas.rds")[[iso3_c]]
 
 areas_wide <- spread_areas(areas)
 areas_long <- areas %>% st_drop_geometry
@@ -24,7 +24,7 @@ if(dhs_flag == 1) {
   
   individual_recode_data <- get_fertility_surveys(surveys, clusters)
   
-  # debugonce(calculate_dhs_fertility)
+  debugonce(calculate_dhs_fertility)
   dhs_fr <- calculate_dhs_fertility(iso3, individual_recode_data, mapping)
   
   # saveRDS(dhs_fr$nrow_ir, "nrow_ir.rds")
