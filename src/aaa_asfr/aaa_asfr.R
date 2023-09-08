@@ -1,3 +1,5 @@
+packageVersion('dfertility')
+
 iso3_c <- iso3
 areas <- read_sf("depends/naomi_areas.geojson")
 
