@@ -31,10 +31,11 @@ packages:
   - stringr
 
 global_resources:
+  resources/areas.rds: areas.rds
   resources/MICS_indicators.csv: MICS_indicators.csv
 
 depends:
-  aaa_areas_pull:
-    id: latest(parameter:version == 2021 && parameter:iso3 == "BFA")
-    use:
-      depends/bfa_areas.geojson: naomi_areas.geojson
+  # aaa_areas_pull:
+    # id: latest(parameter:version == 2021 && parameter:iso3 == "BFA")
+    # use:
+      # depends/bfa_areas.geojson: naomi_areas.geojson

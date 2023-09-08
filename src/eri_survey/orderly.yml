@@ -29,8 +29,11 @@ packages:
   - spud
   - stringr
 
+global_resources:
+  resources/areas.rds: areas.rds
+  
 depends:
-  aaa_areas_pull:
-    id: latest(parameter:version == 2021 && parameter:iso3 == "ERI")
-    use:
-      depends/eri_areas.geojson: naomi_areas.geojson
+  # aaa_areas_pull:
+    # id: latest(parameter:version == 2021 && parameter:iso3 == "ERI")
+    # use:
+      # depends/eri_areas.geojson: naomi_areas.geojson

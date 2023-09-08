@@ -36,6 +36,7 @@ global_resources:
   resources/phia_asfr_admin0.csv: phia_asfr_admin0.csv
   resources/phia_tfr_admin0.csv: phia_tfr_admin0.csv
   resources/phia_tfr_admin1.csv: phia_tfr_admin1.csv
+  resources/areas.rds: areas.rds
   # resources/moz_areas_maputo.geojson: moz_areas_maputo.geojson
 
 resources:
@@ -89,10 +90,10 @@ packages:
 
 
 depends:
-  aaa_pull_naomi_estimates:
-    id: latest(parameter:iso3 == iso3 && parameter:version == version)
-    use:
-      depends/naomi_areas.geojson: outputs/naomi_areas.geojson
+  # aaa_pull_naomi_estimates:
+  #   id: latest(parameter:iso3 == iso3 && parameter:version == version)
+  #   use:
+  #     depends/naomi_areas.geojson: outputs/naomi_areas.geojson
   aaa_asfr:
     id: latest(parameter:iso3 == iso3 && parameter:version == version)
     use:

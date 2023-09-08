@@ -26,8 +26,11 @@ packages:
   - sf
   - tidyverse
 
+global_resources:
+  resources/areas.rds: areas.rds
+  
 depends:
-  aaa_areas_pull:
-    id: latest(parameter:version == 2021 && parameter:iso3 == "NAM")
-    use:
-      depends/nam_areas.geojson: naomi_areas.geojson
+  # aaa_areas_pull:
+    # id: latest(parameter:version == 2021 && parameter:iso3 == "NAM")
+    # use:
+      # depends/nam_areas.geojson: naomi_areas.geojson

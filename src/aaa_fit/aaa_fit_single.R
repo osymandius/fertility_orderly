@@ -47,7 +47,8 @@ population <- read.csv("depends/interpolated_population.csv") %>%
   mutate(iso3 = iso3) %>%
   filter(sex == "female")
 
-areas <- read_sf("depends/naomi_areas.geojson") %>%
+
+areas <- readRDS("resources/areas.rds")[[iso3_c]]%>%
   mutate(iso3 = iso3_c) %>%
   st_make_valid()
 
