@@ -165,12 +165,12 @@ depends:
       depends/cod_dhs_clusters.csv: cod_dhs_clusters.csv
       depends/cod_mics_women.csv: cod_mics_women.csv
       depends/cod_mics_births_to_women.csv: cod_mics_births_to_women.csv
-  gmb_survey:
-    id: latest(parameter:version == version)
-    use:
-      depends/gmb_dhs_clusters.csv: gmb_dhs_clusters.csv
-      depends/gmb_mics_women.csv: gmb_mics_women.csv
-      depends/gmb_mics_births_to_women.csv: gmb_mics_births_to_women.csv
+  # gmb_survey:
+  #   id: latest(parameter:version == version)
+  #   use:
+  #     depends/gmb_dhs_clusters.csv: gmb_dhs_clusters.csv
+  #     depends/gmb_mics_women.csv: gmb_mics_women.csv
+  #     depends/gmb_mics_births_to_women.csv: gmb_mics_births_to_women.csv
   ken_survey:
     id: latest(parameter:version == version)
     use:
