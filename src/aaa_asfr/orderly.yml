@@ -40,7 +40,6 @@ packages:
   - tidyverse
   - sf
   - stringr
-  - TMB
   - Matrix
   - rdhs
   - forcats
