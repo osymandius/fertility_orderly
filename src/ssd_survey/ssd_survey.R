@@ -18,8 +18,8 @@ fertility_mics_data$hh <- fertility_mics_data$hh %>%
   mutate(
     mics_area_name_label = case_when(
         mics_area_name_label == "Warap" ~ "Warrap",
-        mics_area_name_label == "Northern Bahr el Ghazal" ~ "Northern Bahr El Ghazal",
-        mics_area_name_label == "Western Bahr el Ghazal" ~ "Western Bahr El Ghazal",
+        # mics_area_name_label == "Northern Bahr el Ghazal" ~ "Northern Bahr El Ghazal", 
+        # mics_area_name_label == "Western Bahr el Ghazal" ~ "Western Bahr El Ghazal",
       TRUE ~ mics_area_name_label
     )
   ) 
