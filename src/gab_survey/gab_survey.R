@@ -12,6 +12,22 @@ survey_meta <- create_survey_meta_dhs(surveys)
 
 survey_region_boundaries <- create_survey_boundaries_dhs(surveys)
 
+## GAB2019DHS boundary IDs are scrambled.
+survey_region_boundaries <- survey_region_boundaries %>%
+  mutate(
+    survey_region_id = case_when(
+      survey_id == "GAB2019DHS" & survey_region_name == "estuaire" ~ 3,
+      survey_id == "GAB2019DHS" & survey_region_name == "haut-ogooue" ~ 4,
+      survey_id == "GAB2019DHS" & survey_region_name == "moyen-ogooue" ~ 5,
+      survey_id == "GAB2019DHS" & survey_region_name == "ngounié" ~ 6,
+      survey_id == "GAB2019DHS" & survey_region_name == "nyanga" ~ 7,
+      survey_id == "GAB2019DHS" & survey_region_name == "ogooue-ivindo" ~ 8,
+      survey_id == "GAB2019DHS" & survey_region_name == "ogooue-lolo" ~ 9,
+      survey_id == "GAB2019DHS" & survey_region_name == "ogooue maritime" ~ 10,
+      survey_id == "GAB2019DHS" & survey_region_name == "woleu-ntem" ~ 11,
+      TRUE ~ survey_region_id
+    )
+  )
 
 surveys <- surveys_add_dhs_regvar(surveys, survey_region_boundaries)
 
@@ -26,6 +42,7 @@ validate_survey_region_areas(survey_region_areas, survey_region_boundaries, warn
 # GAB2000DHS                1             big cities
 # GAB2012DHS                1 libreville-port-gentil
 # GAB2019DHS                1             libreville
+# GAB2019DHS                2            port-gentil
 
 #' Manually add the districts that intersect libreville-port-gentil
 #' survey region to survey_region_areas
@@ -49,7 +66,7 @@ gab2012dhs_region1_areas <- areas_wide %>%
 gab2019dhs_region1_areas <- areas_wide %>%
   st_join(
     survey_region_boundaries %>%
-      filter(survey_id == "GAB2019DHS", survey_region_id == 1),
+      filter(survey_id == "GAB2019DHS", survey_region_id %in% c(1,2)),
     left = FALSE
   ) %>%
   select(all_of(names(survey_region_areas)))
