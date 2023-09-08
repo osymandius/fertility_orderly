@@ -67,10 +67,11 @@ fertility_mics_data <- transform_mics(mics_survey_data, mics_indicators)
 fertility_mics_data$hh <- fertility_mics_data$hh %>%
   mutate(
     mics_area_name_label = case_when(
-      mics_area_name_label == "Karuzi" ~ "Karusi",
-      # mics_area_name_label == "Karusi" ~ "Karuzi",
+      # mics_area_name_label == "Karuzi" ~ "Karusi",
+      mics_area_name_label == "Karusi" ~ "Karuzi",
       mics_area_name_label == "Bururi Rural" ~ "Bururi",
-      mics_area_name_label == "Bujumbura Rural" ~ "Bujumbura",
+      # mics_area_name_label == "Bujumbura Rural" ~ "Bujumbura",
+      mics_area_name_label == "Bujumbura" ~ "Bujumbura Rural",
       TRUE ~ mics_area_name_label
     )
   ) 
