@@ -20,6 +20,8 @@ fertility_mics_data$hh <- fertility_mics_data$hh %>%
         mics_area_name_label == "Warap" ~ "Warrap",
         # mics_area_name_label == "Northern Bahr el Ghazal" ~ "Northern Bahr El Ghazal", 
         # mics_area_name_label == "Western Bahr el Ghazal" ~ "Western Bahr El Ghazal",
+        mics_area_name_label == "Northern Bahr El Ghazal" ~ "Northern Bahr el Ghazal",
+        mics_area_name_label == "Western Bahr El Ghazal" ~ "Western Bahr el Ghazal",
       TRUE ~ mics_area_name_label
     )
   ) 
