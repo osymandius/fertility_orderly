@@ -191,6 +191,7 @@ fit <- function(iso3, model_level = "national") {
     eth_toggle = as.integer(iso3_c == "ETH"),
     zwe_toggle = as.integer(iso3_c == "ZWE"),
     mwi_rwa_toggle = as.integer(iso3_c %in% c("MWI", "RWA")),
+    mwi_toggle = as.integer(iso3_c == "MWI"),
     subnational_toggle = as.integer(naomi_level > 0),
     
     X_spike_2010 = mf$Z$X_spike_2010,
@@ -340,6 +341,24 @@ fit <- function(iso3, model_level = "national") {
     
   }
   
+  if(iso3 == "MWI") {
+    
+    mf$mf_model <- mf$mf_model %>%
+      mutate(spike_famine = factor(ifelse(period %in% 2001:2002, id.period-5, 0)))
+    
+    mf$Z$X_spike_famine <- sparse.model.matrix(~0 + spike_famine, mf$mf_model)[,2:3]
+    
+    tmb_int$par <- c(tmb_int$par,
+                     "beta_spike_famine" = list(c(0,0))
+    )
+    
+    tmb_int$data <- c(tmb_int$data,
+                      "X_spike_famine" = list(mf$Z$X_spike_famine)
+    )
+    
+    tmb_int$random <- c(tmb_int$random, "beta_spike_famine")
+  }
+  
   
   # obj <- make_tmb_obj(iso3, tmb_int)
   
@@ -483,7 +502,7 @@ library(rlang)
 library(mgcv)
 
 debugonce(fit)
-fit("MWI", "district")
+fit("MWI")
 
 possibly_fit <- possibly(fit, otherwise = NULL)
 id <- map(moz.utils::ssa_iso3()[moz.utils::ssa_iso3() != "AGO"], ~possibly_fit(.x, model_level = "provincial"))
