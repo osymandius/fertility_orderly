@@ -78,7 +78,7 @@ Type objective_function<Type>::operator() ()
   DATA_SPARSE_MATRIX(A_tfr_out);
 
   DATA_MATRIX(X_urban_dummy);
-  DATA_MATRIX(X_spike_2010);
+  DATA_SPARSE_MATRIX(X_spike_2010);
 
 
   nll -= dnorm(beta_0, Type(0), Type(sqrt(1/0.001)), true);
@@ -291,6 +291,15 @@ Type objective_function<Type>::operator() ()
                      + X_period * beta_period
                      );
 
+  if(zwe_toggle) {
+
+    PARAMETER_VECTOR(beta_spike_2010);
+    nll -= dnorm(beta_spike_2010, Type(0.05), Type(0.1), true).sum();
+
+    log_lambda = log_lambda + (X_spike_2010 * beta_spike_2010);
+
+  }
+
   if(subnational_toggle) {
 
     ///////// SPATIAL MODELS
@@ -438,17 +447,6 @@ Type objective_function<Type>::operator() ()
                                 + log_offset_dhs
 
                 );
-
-  if(zwe_toggle) {
-
-    PARAMETER_VECTOR(beta_spike_2010);
-    nll -= dnorm(beta_spike_2010, Type(0.05), Type(0.1), true).sum();
-
-    spike_2010_lh = X_spike_2010 * beta_spike_2010;
-
-    mu_obs_pred_dhs = mu_obs_pred_dhs + (X_extract_dhs * spike_2010_lh);
-
-  }
 
   vector<Type> mu_obs_pred_ais(X_extract_ais * (M_full_obs * log(lambda_out))
                                 // + X_extract_ais * tips_lh
