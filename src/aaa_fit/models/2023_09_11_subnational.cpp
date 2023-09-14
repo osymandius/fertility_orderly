@@ -69,12 +69,16 @@ Type objective_function<Type>::operator() ()
 
   DATA_VECTOR(pop);
   DATA_INTEGER(mics_toggle);
+  DATA_INTEGER(eth_toggle);
+  DATA_INTEGER(zwe_toggle);
+  DATA_INTEGER(mwi_rwa_toggle);
 
   DATA_SPARSE_MATRIX(A_full_obs);
   DATA_SPARSE_MATRIX(A_tfr_out);
 
-  // DATA_MATRIX(X_urban_dummy);
-  // PARAMETER_VECTOR(beta_urban_dummy);
+  DATA_MATRIX(X_urban_dummy);
+  DATA_MATRIX(X_spike_2010);
+
 
   nll -= dnorm(beta_0, Type(0), Type(sqrt(1/0.001)), true);
 
@@ -118,9 +122,6 @@ Type objective_function<Type>::operator() ()
   // 
   // vector<Type> u_tips_constr = u_tips - u_tips[3];
 
-  /////////////////
-
-  // nll -= dnorm(beta_urban_dummy, Type(0), Type(sqrt(1/0.001)), true).sum();
 
   //////////////////////////////////////
 
@@ -364,46 +365,30 @@ Type objective_function<Type>::operator() ()
 
   nll -= Type(-0.5) * (u_smooth_iid * (R_smooth_iid * u_smooth_iid)).sum();
 
+  vector<Type> log_lambda(
+                     beta_0
+                     + Z_age * u_age * sqrt(1/prec_rw_age)
+                     + Z_period * u_period * sqrt(1/prec_rw_period)
+                     + X_period * beta_period
+                     + Z_spatial * u_spatial_str * sqrt(1/prec_spatial)
+                     // + Z_country * u_country * sqrt(1/prec_country)
+                     // + Z_omega1 * omega1_v * sqrt(1/prec_omega1)
+                     // + Z_omega2 * omega2_v * sqrt(1/prec_omega2)
+                     + Z_interaction1 * eta1_v * sqrt(1/prec_eta1)
+                     + Z_interaction2 * eta2_v * sqrt(1/prec_eta2)
+                     + Z_interaction3 * eta3_v * sqrt(1/prec_eta3)
+                     );
+
   ///////////////////////
 
-  vector<Type> log_lambda(
-                       beta_0
-                       + Z_age * u_age * sqrt(1/prec_rw_age)
-                       + Z_period * u_period * sqrt(1/prec_rw_period)
-                       + X_period * beta_period
-                       + Z_spatial * u_spatial_str * sqrt(1/prec_spatial)
-                       // + X_urban_dummy * beta_urban_dummy
-                       // + Z_country * u_country * sqrt(1/prec_country)
-                       // + Z_omega1 * omega1_v * sqrt(1/prec_omega1)
-                       // + Z_omega2 * omega2_v * sqrt(1/prec_omega2)
-                       + Z_interaction1 * eta1_v * sqrt(1/prec_eta1)
-                       + Z_interaction2 * eta2_v * sqrt(1/prec_eta2)
-                       + Z_interaction3 * eta3_v * sqrt(1/prec_eta3)
-                       );
+  if(eth_toggle) {
 
-  PARAMETER_VECTOR(beta_spike_2000);
-  PARAMETER_VECTOR(beta_spike_1999);
-  PARAMETER_VECTOR(beta_spike_2001);
-  
-  // PARAMETER_VECTOR(psi_2000);
-  // PARAMETER_VECTOR(psi_1999);
-  // PARAMETER_VECTOR(psi_2001);
+    PARAMETER_VECTOR(beta_urban_dummy);
+    nll -= dnorm(beta_urban_dummy, Type(0), Type(sqrt(1/0.001)), true).sum();
 
-  DATA_MATRIX(X_spike_2000);
-  DATA_MATRIX(X_spike_1999);
-  DATA_MATRIX(X_spike_2001);
-  
-  // DATA_MATRIX(X_psi_2000);
-  // DATA_MATRIX(X_psi_1999);
-  // DATA_MATRIX(X_psi_2001);
+    log_lambda = log_lambda + (X_urban_dummy * beta_urban_dummy);
 
-  nll -= dnorm(beta_spike_2000, Type(0.05), Type(0.2), true).sum();
-  nll -= dnorm(beta_spike_1999, Type(-0.05), Type(0.2), true).sum();
-  nll -= dnorm(beta_spike_2001, Type(-0.05), Type(0.2), true).sum();
-  
-  // nll -= dnorm(psi_2000, Type(0), Type(2.5), true).sum();
-  // nll -= dnorm(psi_1999, Type(0), Type(2.5), true).sum();
-  // nll -= dnorm(psi_2001, Type(0), Type(2.5), true).sum();
+  }
 
   vector<Type> mu_obs_pred_naomi(M_naomi_obs * log_lambda
                           + log_offset_naomi
@@ -425,21 +410,20 @@ Type objective_function<Type>::operator() ()
   vector<Type> tips_fe_lh(X_tips_fe * beta_tips_fe);
   vector<Type> zeta2_lh(Z_zeta2  * zeta2_v * sqrt(1/prec_zeta2));
 
-  vector<Type> spike_1999_lh(X_spike_1999 * beta_spike_1999);
-  vector<Type> spike_2000_lh(X_spike_2000 * beta_spike_2000);
-  vector<Type> spike_2001_lh(X_spike_2001 * beta_spike_2001);
-  // vector<Type> psi_1999_lh(X_psi_1999 * psi_1999);
-  // vector<Type> psi_2000_lh(X_psi_2000 * psi_2000);
-  // vector<Type> psi_2001_lh(X_psi_2001 * psi_2001);
+  vector<Type> spike_2010_lh;
+
+  vector<Type> spike_1999_lh;
+  vector<Type> spike_2000_lh;
+  vector<Type> spike_2001_lh;
 
   vector<Type> mu_obs_pred_dhs(X_extract_dhs * (M_full_obs * log(lambda_out))
                                 // + X_extract_dhs * tips_lh
                                 // + X_tips_dummy_5 * beta_tips_dummy_5          // TIPS fixed effect
                                 + X_extract_dhs * tips_fe_lh
                                 + X_extract_dhs * zeta2_lh
-                                + X_extract_dhs * spike_1999_lh
-                                + X_extract_dhs * spike_2000_lh
-                                + X_extract_dhs * spike_2001_lh
+                                // + X_extract_dhs * spike_1999_lh
+                                // + X_extract_dhs * spike_2000_lh
+                                // + X_extract_dhs * spike_2001_lh
                                 // + X_extract_dhs * psi_1999_lh
                                 // + X_extract_dhs * psi_2000_lh
                                 // + X_extract_dhs * psi_2001_lh
@@ -448,11 +432,22 @@ Type objective_function<Type>::operator() ()
 
                 );
 
+  if(zwe_toggle) {
+
+    PARAMETER_VECTOR(beta_spike_2010);
+    nll -= dnorm(beta_spike_2010, Type(0.05), Type(0.1), true).sum();
+
+    spike_2010_lh = X_spike_2010 * beta_spike_2010;
+
+    mu_obs_pred_dhs = mu_obs_pred_dhs + (X_extract_dhs * spike_2010_lh);
+
+  }
+
   vector<Type> mu_obs_pred_ais(X_extract_ais * (M_full_obs * log(lambda_out))
                                 // + X_extract_ais * tips_lh
-                                + X_extract_ais * spike_1999_lh
-                                + X_extract_ais * spike_2000_lh
-                                + X_extract_ais * spike_2001_lh
+                                // + X_extract_ais * spike_1999_lh
+                                // + X_extract_ais * spike_2000_lh
+                                // + X_extract_ais * spike_2001_lh
                                 // + X_extract_ais * psi_1999_lh
                                 // + X_extract_ais * psi_2000_lh
                                 // + X_extract_ais * psi_2001_lh
@@ -468,15 +463,50 @@ Type objective_function<Type>::operator() ()
 
   );
 
-  // PARAMETER(log_overdispersion);
-  // nll -= dnorm(log_overdispersion, Type(0), Type(2.5), true);
-  // Type overdispersion = exp(log_overdispersion);
+  if(!mwi_rwa_toggle) {
 
-  // vector<Type> var_nbinom_dhs = exp(mu_obs_pred_dhs) + ((exp(mu_obs_pred_dhs)) * (exp(mu_obs_pred_dhs)) * overdispersion);
-  // vector<Type> var_nbinom_ais = exp(mu_obs_pred_ais) + ((exp(mu_obs_pred_ais)) * (exp(mu_obs_pred_ais)) * overdispersion);
+    PARAMETER_VECTOR(beta_spike_2000);
+    PARAMETER_VECTOR(beta_spike_1999);
+    PARAMETER_VECTOR(beta_spike_2001);
+    
+    // PARAMETER_VECTOR(psi_2000);
+    // PARAMETER_VECTOR(psi_1999);
+    // PARAMETER_VECTOR(psi_2001);
 
-  // nll -= dnbinom2(births_obs_dhs, exp(mu_obs_pred_dhs), var_nbinom_dhs, true).sum();
-  // nll -= dnbinom2(births_obs_ais, exp(mu_obs_pred_ais), var_nbinom_ais, true).sum();
+    DATA_MATRIX(X_spike_2000);
+    DATA_MATRIX(X_spike_1999);
+    DATA_MATRIX(X_spike_2001);
+    
+    // DATA_MATRIX(X_psi_2000);
+    // DATA_MATRIX(X_psi_1999);
+    // DATA_MATRIX(X_psi_2001);
+
+    nll -= dnorm(beta_spike_2000, Type(0.05), Type(0.2), true).sum();
+    nll -= dnorm(beta_spike_1999, Type(-0.05), Type(0.2), true).sum();
+    nll -= dnorm(beta_spike_2001, Type(-0.05), Type(0.2), true).sum();
+    
+    // nll -= dnorm(psi_2000, Type(0), Type(2.5), true).sum();
+    // nll -= dnorm(psi_1999, Type(0), Type(2.5), true).sum();
+    // nll -= dnorm(psi_2001, Type(0), Type(2.5), true).sum();
+
+    spike_1999_lh = X_spike_1999 * beta_spike_1999;
+    spike_2000_lh = X_spike_2000 * beta_spike_2000;
+    spike_2001_lh = X_spike_2001 * beta_spike_2001;
+    // vector<Type> psi_1999_lh(X_psi_1999 * psi_1999);
+    // vector<Type> psi_2000_lh(X_psi_2000 * psi_2000);
+    // vector<Type> psi_2001_lh(X_psi_2001 * psi_2001);
+
+    mu_obs_pred_dhs = mu_obs_pred_dhs
+      + X_extract_dhs * spike_1999_lh
+      + X_extract_dhs * spike_2000_lh
+      + X_extract_dhs * spike_2001_lh;
+
+    mu_obs_pred_ais = mu_obs_pred_ais
+      + X_extract_ais * spike_1999_lh
+      + X_extract_ais * spike_2000_lh
+      + X_extract_ais * spike_2001_lh;
+
+  }
 
   nll -= dpois(births_obs_dhs, exp(mu_obs_pred_dhs), true).sum();
   nll -= dpois(births_obs_ais, exp(mu_obs_pred_ais), true).sum();
@@ -502,9 +532,9 @@ Type objective_function<Type>::operator() ()
 
     vector<Type> mu_obs_pred_mics(X_extract_mics * (M_full_obs * log(lambda_out))
                                   // + X_extract_mics * tips_lh
-                                  + X_extract_mics * spike_1999_lh
-                                  + X_extract_mics * spike_2000_lh
-                                  + X_extract_mics * spike_2001_lh
+                                  // + X_extract_mics * spike_1999_lh
+                                  // + X_extract_mics * spike_2000_lh
+                                  // + X_extract_mics * spike_2001_lh
                                   // + X_extract_mics * psi_1999_lh
                                   // + X_extract_mics * psi_2000_lh
                                   // + X_extract_mics * psi_2001_lh
@@ -514,6 +544,13 @@ Type objective_function<Type>::operator() ()
                                   + log_offset_mics
 
                 );
+
+    if(!mwi_rwa_toggle) {
+      mu_obs_pred_mics = mu_obs_pred_mics
+        + X_extract_mics * spike_1999_lh
+        + X_extract_mics * spike_2000_lh
+        + X_extract_mics * spike_2001_lh;
+    }
 
     // vector<Type> var_nbinom_mics = exp(mu_obs_pred_mics) + ((exp(mu_obs_pred_mics)) * (exp(mu_obs_pred_mics)) * overdispersion);
     // nll -= dnbinom2(births_obs_mics, exp(mu_obs_pred_mics), var_nbinom_mics, true).sum();

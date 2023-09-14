@@ -1,4 +1,5 @@
 fit <- function(iso3, model_level = "national") {
+  message(iso3)
   iso3_c <- iso3
 
   lvl_map <- read.csv("global/iso_mapping_fit.csv")
@@ -186,9 +187,14 @@ fit <- function(iso3, model_level = "national") {
     A_full_obs = mf$observations$A_full_obs,
     
     mics_toggle = mf$mics_toggle,
+    mics_only_toggle = as.integer(iso3 %in% c("GNB")),
+    eth_toggle = as.integer(iso3_c == "ETH"),
+    zwe_toggle = as.integer(iso3_c == "ZWE"),
+    mwi_rwa_toggle = as.integer(iso3_c %in% c("MWI", "RWA")),
     spatial_toggle = as.integer(naomi_level > 0),
     
-    X_spike_2010 = mf$Z$X_spike_2010,
+    # X_spike_2010 = mf$Z$X_spike_2010,
+    X_spike_2010 = matrix(0),
     
     X_spike_2000 = model.matrix(~0 + spike_2000, mf$observations$full_obs),
     X_spike_1999 = model.matrix(~0 + spike_1999, mf$observations$full_obs),
@@ -204,7 +210,6 @@ fit <- function(iso3, model_level = "national") {
     
     # beta_tips_dummy_5 = rep(0, ncol(mf$Z$X_tips_dummy_5)),
     beta_tips_fe = rep(0, ncol(mf$Z$X_tips_fe)),
-    # beta_urban_dummy = rep(0, ncol(mf$Z$X_urban_dummy)),
     
     u_age = rep(0, ncol(mf$Z$Z_age)),
     log_prec_rw_age = 0,
@@ -278,6 +283,22 @@ fit <- function(iso3, model_level = "national") {
                       "log_offset_mics" = list(log(filter(mf$observations$full_obs, survtype == "MICS")$pys)),
                       "births_obs_mics" = list(filter(mf$observations$full_obs, survtype == "MICS")$births)
     )
+  }
+  
+  if(iso3_c == "ETH") {
+    tmb_int$par <- c(tmb_int$par,
+                      "beta_urban_dummy" = 0
+    )
+    
+    tmb_int$random <- c(tmb_int$random, "beta_urban_dummy")
+  }
+  
+  if(iso3_c == "ZWE") {
+    tmb_int$par <- c(tmb_int$par,
+                     "beta_spike_2010" = 0
+    )
+    
+    tmb_int$random <- c(tmb_int$random, "beta_spike_2010")
   }
   
   if(!iso3 %in% c("SSD", "CAF")) {
@@ -462,7 +483,7 @@ library(rlang)
 library(mgcv)
 
 debugonce(fit)
-fit("KEN")
+fit("MWI", "district")
 
 possibly_fit <- possibly(fit, otherwise = NULL)
-id <- map(moz.utils::ssa_iso3()[7:39], ~possibly_fit(.x, model_level = "provincial"))
+id <- map(moz.utils::ssa_iso3()[moz.utils::ssa_iso3() != "AGO"], ~possibly_fit(.x, model_level = "provincial"))
