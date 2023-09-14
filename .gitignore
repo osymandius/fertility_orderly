@@ -31,3 +31,9 @@ src/.DS_Store
 
 *~
 rdhs.json
+
+outside_orderly/asfr/outputs
+outside_orderly/fit/outputs
+outside_orderly/fit/plots_only
+outside_orderly/survey/outputs
+outside_orderly/survey/survey-bits

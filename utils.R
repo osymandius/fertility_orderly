@@ -21,13 +21,31 @@ lapply(id %>% compact(), orderly_commit)
 
 orderly_dev_start_oli("aaa_assign_populations", data.frame(iso3 = "SLE"))
 
-id <- orderly_batch("aaa_asfr", data.frame(iso3 = ssa_iso3[!ssa_iso3 %in% c("AGO", "COG", "GAB", "GMB", "LBR", "TZA")]))
+id <- orderly_batch_oli(name = "aaa_fit", parameters = data.frame(iso3 = ssa_iso3[!ssa_iso3 %in% c("GMB",
+                                                                               "ERI", "NGA", "SWZ", 
+                                                                               "BWA", "SSD", "GNQ")],
+                                                                  model_level = "national"))
+
+orderly_batch_oli <- function(...) {
+  df <- orderly::orderly_batch(...)
+  class(df) <- c("data.frame", "orderly_batch")
+  df
+}
+
+orderly_commit_oli <- function(orderly_id) {
+  if(class(orderly_id) == "orderly_batch")
+    lapply(orderly_id$id[orderly_id$success == "TRUE"], orderly::orderly_commit)
+  else
+    orderly::orderly_commit(orderly_id)
+}
+
+orderly_commit_oli(id)
 
 tsks <- list.files("src", pattern = "survey") %>%
   lapply(grep, pattern  = "phia", invert = TRUE, value = TRUE) %>%
   unlist()
 
-id <- map(names(fail_id), ~possibly_run(.x))
+id <- map(tsks, ~possibly_run(.x))
 names(id) <- names(fail_id)
 
 lapply(id %>% compact(), orderly_commit)
@@ -39,11 +57,11 @@ fail### SEARCH
 orderly::orderly_search(name = 'aaa_scale_pop', query = paste0('latest(parameter:iso3 == "', "MLI", '")'), draft = FALSE)
 orderly::orderly_search(name = 'aaa_inputs_orderly_pull', query = paste0('latest(parameter:iso3 == "', "GNB", '")'), draft = FALSE)
 
-id <- lapply("COD", function(x){
-  orderly::orderly_search(name = "aaa_scale_pop", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
+id <- lapply(ssa_iso3, function(x){
+  orderly::orderly_search(name = "aaa_areas_pull", query = paste0('latest(parameter:iso3 == "', x, '" && parameter:version == 2021)'), draft = FALSE)
 })
 
-id <- map(c("COD", "TZA", "COG"), ~possibly_pull("aaa_fit", id = paste0('latest(parameter:iso3 == "', .x, '")'), recursive = FALSE))
+id <- map(moz.utils::ssa_iso3(), ~possibly_pull("aaa_areas_pull", id = paste0('latest(parameter:iso3 == "', .x, '" & parameter:version == 2021)'), recursive = F, remote = "main"))
 
 orderly_pull_archive("aaa_scale_pop", id = paste0('latest(parameter:iso3 == "', "ETH", '")'), recursive = FALSE, remote = "real")
 
@@ -76,3 +94,9 @@ id <- map(paste0(tolower(ssa_iso3), "_survey"), ~possibly_run(.x))
 map(ssa_iso3, ~possibly_push("aaa_data_population_worldpop", remote = "real"))
 
 id <- map(ssa_iso3, ~possibly_pull("aaa_areas_pull", id = paste0('latest(parameter:iso3 == "', .x, '" && parameter:version == 2021)'), recursive = FALSE))
+
+areas <- lapply(paste0("archive/aaa_areas_pull/", id[!is.na(id)], "/naomi_areas.geojson"), sf::read_sf)
+
+names(areas) <- names(id[!is.na(id)])
+
+saveRDS(areas, "global/areas.rds")

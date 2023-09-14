@@ -42,7 +42,8 @@ if(str_detect(model_level, "district")) {
 
 admin1_lvl <- lvl_map$admin1_level[lvl_map$iso3 == iso3]
 
-population <- read.csv("depends/interpolated_population.csv") %>%
+population <- readRDS("../../global/pop.rds")[["AGO"]] %>%
+  # read.csv("depends/interpolated_population.csv") %>%
   rename(period = year) %>%
   mutate(iso3 = iso3) %>%
   filter(sex == "female")
@@ -85,11 +86,18 @@ asfr <- asfr %>%
          !(tips == 6 & survey_id == "MOZ2015AIS"),
          !(tips == 5 & survey_id == "TGO2017MICS"),
          !(tips == 5 & survey_id == "SLE2017MICS"),
-         !(survey_id == "AGO2011MIS" & tips > 5)
+         !(survey_id == "AGO2006MIS" & tips > 5)
+         !(survey_id == "TCD2019MICS" & tips > 4),
+         !(survey_id == "SWZ2000MICS" & tips > 4),
+         !(survey_id == "NGA2021MIS" & tips > 4),
+         !(survey_id == "MLI2015MIS" & tips > 5),
+         !(survey_id == "MLI2015MICS" & tips > 4),
+         !(survey_id == "MLI2009MICS" & tips > 4),
+         !(survey_id == "COD2017MICS" & tips > 10),
          )
 
 # debugonce(make_model_frames_dev)
-mf <- make_model_frames_dev(iso3_c, population, asfr,  areas, naomi_level, project=2022)
+mf <- make_model_frames_dev(iso3_c, population, asfr,  areas, naomi_level, project=2020)
 
 validate_model_frame(mf, areas)
 # # 
@@ -97,9 +105,6 @@ validate_model_frame(mf, areas)
 # library(Matrix)
 # library(dfertility)
 # library(TMB)
-
-# TMB::compile("models/model7_national.cpp", flags = "-w")               # Compile the C++ file
-dyn.load(TMB::dynlib("models/model7_national"))
 
 
 # Z_period <- Matrix::sparse.model.matrix(~0 + period, mf$mf_model)
@@ -315,22 +320,51 @@ dyn.load(TMB::dynlib("models/model7_national"))
 
 # obj <- make_tmb_obj(iso3, tmb_int)
 
-f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
-                               parameters = tmb_int$par,
-                               DLL = "model7_national",
-                               silent=0,
-                               checkParameterOrder=FALSE)
-})
-# #
-if(is.null(parallel::mccollect(f)[[1]])) {
-  stop("TMB model is invalid. This is most likely an indexing error e.g. iterating over dimensions in an array that do not exist. Check mf model object")
-}
-
-obj <-  TMB::MakeADFun(data = tmb_int$data,
-                       parameters = tmb_int$par,
-                       DLL = "model7_national",
-                       random = tmb_int$random,
-                       hessian = FALSE)
+  if(naomi_level == 0) {
+    
+    TMB::compile("src/aaa_fit/models/2023_09_11_national.cpp", flags = "-w")               # Compile the C++ file
+    dyn.load(TMB::dynlib("src/aaa_fit/models/2023_09_11_national"))
+    
+    f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
+                                              parameters = tmb_int$par,
+                                              DLL = "2023_09_11_national",
+                                              silent=0,
+                                              checkParameterOrder=FALSE)
+    })
+    # #
+    if(is.null(parallel::mccollect(f)[[1]])) {
+      stop("TMB model is invalid. This is most likely an indexing error e.g. iterating over dimensions in an array that do not exist. Check mf model object")
+    }
+    
+    obj <-  TMB::MakeADFun(data = tmb_int$data,
+                           parameters = tmb_int$par,
+                           DLL = "2023_09_11_national",
+                           random = tmb_int$random,
+                           hessian = FALSE)
+    
+  } else {
+    
+    TMB::compile("src/aaa_fit/models/2023_09_11_subnational.cpp", flags = "-w")               # Compile the C++ file
+    dyn.load(TMB::dynlib("src/aaa_fit/models/2023_09_11_subnational"))
+    
+    f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
+                                              parameters = tmb_int$par,
+                                              DLL = "2023_09_11_subnational",
+                                              silent=0,
+                                              checkParameterOrder=FALSE)
+    })
+    # #
+    if(is.null(parallel::mccollect(f)[[1]])) {
+      stop("TMB model is invalid. This is most likely an indexing error e.g. iterating over dimensions in an array that do not exist. Check mf model object")
+    }
+    
+    obj <-  TMB::MakeADFun(data = tmb_int$data,
+                           parameters = tmb_int$par,
+                           DLL = "2023_09_11_subnational",
+                           random = tmb_int$random,
+                           hessian = FALSE)
+    
+  }
 
 f <- stats::nlminb(obj$par, obj$fn, obj$gr)
 f$par.fixed <- f$par

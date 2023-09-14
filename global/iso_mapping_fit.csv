@@ -18,7 +18,7 @@ kenya-moh,Kenya,KEN,orderly,2,1,1,1
 liberia,Liberia,LBR,worldpop,2,1,0,1
 lesotho,Lesotho,LSO,orderly,2,1,1,1
 mali,Mali,MLI,worldpop,2,1,1,1
-mozambique,Mozambique,MOZ,orderly,2,1,1,1
+mozambique,Mozambique,MOZ,orderly,3,1,1,1
 malawi-moh,Malawi,MWI,orderly,5,1,1,1
 namibia,Namibia,NAM,gpw,2,1,0,1
 niger,Niger,NER,worldpop,2,1,0,1
@@ -30,7 +30,7 @@ sierra-leone,Sierra Leone,SLE,worldpop,2,1,1,1
 eswatini,Eswatini,SWZ,orderly,2,1,1,1
 chad,Chad,TCD,worldpop,2,1,1,1
 togo,Togo,TGO,orderly,2,1,1,1
-tanzania,"Tanzania, United Republic of",TZA,orderly,3,2,0,1
+tanzania,"Tanzania, United Republic of",TZA,orderly,4,2,0,1
 uganda,Uganda,UGA,orderly,3,1,0,1
 ,South Africa,ZAF,,2,1,0,1
 zambia-moh,Zambia,ZMB,orderly,2,1,0,1
