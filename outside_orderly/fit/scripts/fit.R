@@ -7,7 +7,10 @@ fit <- function(iso3, model_level = "national") {
   if(str_detect(model_level, "district")) {
     
     asfr <- readRDS(paste0("outside_orderly/asfr/outputs/", iso3_c, "/", iso3_c, "_asfr.rds"))$district 
-    phia_asfr <- read_csv("global/phia_asfr.csv", show_col_types = F) %>% moz.utils::separate_survey_id(F) %>% filter(iso3 == iso3_c)
+    phia_asfr <- read_csv("global/phia_asfr.csv", show_col_types = F) %>%
+                    moz.utils::separate_survey_id(F) %>% 
+                    filter(iso3 == iso3_c) %>%
+                    mutate(survtype = "PHIA")
     fr_plot <- bind_rows(readRDS(paste0("outside_orderly/asfr/outputs/", iso3_c,  "/", iso3_c, "_fr_plot.rds"))) %>%
       bind_rows(phia_asfr %>%
                   group_by(iso3, survey_id, year, period, area_id) %>%
@@ -19,7 +22,11 @@ fit <- function(iso3, model_level = "national") {
   } else if(str_detect(model_level, "provincial")) {
     
     asfr <- readRDS(paste0("outside_orderly/asfr/outputs/", iso3_c,  "/", iso3_c, "_asfr.rds"))$provincial
-    phia_asfr <- read_csv("global/phia_asfr_admin1.csv", show_col_types = F) %>% moz.utils::separate_survey_id(F) %>% filter(iso3 == iso3_c) %>% rename(area_id = area_id1)
+    phia_asfr <- read_csv("global/phia_asfr_admin1.csv", show_col_types = F) %>% 
+                    moz.utils::separate_survey_id(F) %>% 
+                    filter(iso3 == iso3_c) %>% 
+                    rename(area_id = area_id1) %>%
+                    mutate(survtype = "PHIA")
     fr_plot <- bind_rows(readRDS(paste0("outside_orderly/asfr/outputs/", iso3_c, "/", iso3_c,  "_fr_plot.rds"))) %>%
       bind_rows(phia_asfr %>%
                   group_by(iso3, survey_id, year, period, area_id) %>%
@@ -31,7 +38,11 @@ fit <- function(iso3, model_level = "national") {
   } else {
     
     asfr <- readRDS(paste0("outside_orderly/asfr/outputs/", iso3_c, "/", iso3_c,  "_asfr.rds"))$national
-    phia_asfr <- read_csv("global/phia_asfr_admin0.csv", show_col_types = F) %>% moz.utils::separate_survey_id(F) %>% filter(iso3 == iso3_c) %>% mutate(area_id = iso3)
+    phia_asfr <- read_csv("global/phia_asfr_admin0.csv", show_col_types = F) %>% 
+                    moz.utils::separate_survey_id(F) %>% 
+                    filter(iso3 == iso3_c) %>% 
+                    mutate(area_id = iso3,
+                           survtype = "PHIA")
     fr_plot <- readRDS(paste0("outside_orderly/asfr/outputs/", iso3_c, "/", iso3_c,  "_fr_plot.rds"))$national %>%
       bind_rows(phia_asfr %>%
                   group_by(iso3, survey_id, year, period, area_id) %>%
@@ -100,7 +111,7 @@ fit <- function(iso3, model_level = "national") {
     ) %>%
     filter(period < 2021) ## THIS IS BAD - PROJECT THE POPULPATIONS BEYOND 2020
   
-  # debugonce(make_model_frames_dev)
+  debugonce(make_model_frames_dev)
   mf <- make_model_frames_dev(iso3_c, population, asfr,  areas, naomi_level, project=2020)
   
   validate_model_frame(mf, areas)
@@ -503,6 +514,13 @@ library(mgcv)
 
 debugonce(fit)
 fit("MWI")
+fit("MWI", "provincial")
+fit("MWI", "district")
+fit("ZWE", "provincial")
+fit("ZWE", "district")
+fit("RWA")
+fit("RWA", "provincial")
+fit("RWA", "district")
 
 possibly_fit <- possibly(fit, otherwise = NULL)
 id <- map(moz.utils::ssa_iso3()[moz.utils::ssa_iso3() != "AGO"], ~possibly_fit(.x, model_level = "provincial"))
