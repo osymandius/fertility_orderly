@@ -80,7 +80,6 @@ Type objective_function<Type>::operator() ()
 
   DATA_MATRIX(X_urban_dummy);
   DATA_SPARSE_MATRIX(X_spike_2010);
-  DATA_SPARSE_MATRIX(X_spike_famine);
 
 
   nll -= dnorm(beta_0, Type(0), Type(sqrt(1/0.001)), true);
@@ -305,6 +304,7 @@ Type objective_function<Type>::operator() ()
   if(mwi_toggle) {
 
     PARAMETER_VECTOR(beta_spike_famine);
+    DATA_SPARSE_MATRIX(X_spike_famine);
     nll -= dnorm(beta_spike_famine, Type(0), Type(2.5), true).sum();
 
     log_lambda = log_lambda + (X_spike_famine * beta_spike_famine);
