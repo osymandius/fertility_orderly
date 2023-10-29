@@ -1,4 +1,39 @@
-fit <- function(iso3, model_level = "national") {
+library(dplyr)
+library(tidyr)
+library(dfertility)
+library(ggplot2)
+library(naomi)
+library(tidyverse)
+library(sf)
+library(stringr)
+library(TMB)
+library(Matrix)
+library(forcats)
+# library(parallel)
+library(purrr)
+library(rlang)
+library(mgcv)
+library(moz.utils)
+
+tmb_unload <- function(name) {
+  ldll <- getLoadedDLLs() 
+  idx  <- grep(name, names(ldll))
+  for (i in seq_along(idx)) dyn.unload(unlist(ldll[[idx[i]]])$path)
+  cat('Unload ', length(idx), "loaded versions.\n")
+}
+
+
+time_options <- crossing(time = c("rw", "rw2", "ar1", "arima"),
+                         trend = c(0,1))
+
+time_map_df <- crossing(iso3 = ssa_iso3()[!ssa_iso3() %in% c("SSD", "CAF", "GNB", "ERI", "BWA", "GNQ", "NGA", "COD", "CMR", "BDI")],
+                        time_options)
+
+iso3 <- time_map_df[1,]$iso3
+time <- time_map_df[1,]$time
+trend <- time_map_df[1,]$trend
+
+fit <- function(iso3, time, trend, model_level = "district") {
   message(iso3)
   iso3_c <- iso3
 
@@ -114,6 +149,12 @@ fit <- function(iso3, model_level = "national") {
   # debugonce(make_model_frames_dev)
   mf <- make_model_frames_dev(iso3_c, population, asfr,  areas, naomi_level, project=2020)
   
+  mf$observations$full_obs <- mf$observations$full_obs %>%
+    separate_survey_id() %>%
+    rename(survyear = year)
+  
+  end_year <- max(mf$observations$full_obs$survyear) - 5
+  
   validate_model_frame(mf, areas, naomi_level)
   # # 
   # library(tidyverse)
@@ -129,6 +170,85 @@ fit <- function(iso3, model_level = "national") {
   # Z_period <- Z_period %*% spline_mat
   
   # tmb_int <- make_tmb_inputs(iso3, mf, naomi_level)
+  
+  mf$observations$full_obs <- mf$observations$full_obs %>% 
+    ungroup() %>% 
+    mutate(survtype = ifelse(survtype %in% c("AIS", "MIS"), "AIS-MIS", survtype)) %>%
+    group_by(survtype) %>% 
+    mutate(row_num = row_number())
+  
+  
+  dhs_ppd_join <- mf$observations$full_obs %>%
+    filter(survtype == "DHS") %>%
+    ungroup() %>%
+    dplyr::mutate(col_idx = dplyr::row_number()) %>%
+    dplyr::select(col_idx, survyear) %>%
+    type.convert(as.is = T) %>%
+    dplyr::filter(survyear < end_year) %>%
+    dplyr::mutate(row_idx = dplyr::row_number(),
+                  x=1)
+  
+  X_extract_dhs_ppd <- Matrix::spMatrix(
+    nrow(dhs_ppd_join),
+    nrow(mf$observations$full_obs %>% filter(survtype == "DHS")),
+    i = dhs_ppd_join$row_idx,
+    j = dhs_ppd_join$col_idx,
+    x = dhs_ppd_join$x
+  )
+  
+  ais_ppd_join <- mf$observations$full_obs %>%
+    filter(survtype == "AIS-MIS") %>%
+    ungroup() %>%
+    dplyr::mutate(col_idx = dplyr::row_number()) %>%
+    dplyr::select(col_idx, survyear) %>%
+    type.convert(as.is = T) %>%
+    dplyr::filter(survyear < end_year) %>%
+    dplyr::mutate(row_idx = dplyr::row_number(),
+                  x=1)
+  
+  X_extract_ais_ppd <- Matrix::spMatrix(
+    nrow(ais_ppd_join),
+    nrow(mf$observations$full_obs %>% filter(survtype == "AIS-MIS")),
+    i = ais_ppd_join$row_idx,
+    j = ais_ppd_join$col_idx,
+    x = ais_ppd_join$x
+  )
+  
+  phia_ppd_join <- mf$observations$full_obs %>%
+    filter(survtype == "PHIA") %>%
+    ungroup() %>%
+    dplyr::mutate(col_idx = dplyr::row_number()) %>%
+    dplyr::select(col_idx, survyear) %>%
+    type.convert(as.is = T) %>%
+    dplyr::filter(survyear < end_year) %>%
+    dplyr::mutate(row_idx = dplyr::row_number(),
+                  x=1)
+  
+  X_extract_phia_ppd <- Matrix::spMatrix(
+    nrow(phia_ppd_join),
+    nrow(mf$observations$full_obs %>% filter(survtype == "PHIA")),
+    i = phia_ppd_join$row_idx,
+    j = phia_ppd_join$col_idx,
+    x = phia_ppd_join$x
+  )
+  
+  mics_ppd_join <- mf$observations$full_obs %>%
+    filter(survtype == "MICS") %>%
+    ungroup() %>%
+    dplyr::mutate(col_idx = dplyr::row_number()) %>%
+    dplyr::select(col_idx, survyear) %>%
+    type.convert(as.is = T) %>%
+    dplyr::filter(survyear < end_year) %>%
+    dplyr::mutate(row_idx = dplyr::row_number(),
+                  x=1)
+  
+  X_extract_mics_ppd <- Matrix::spMatrix(
+    nrow(mics_ppd_join),
+    nrow(mf$observations$full_obs %>% filter(survtype == "MICS")),
+    i = mics_ppd_join$row_idx,
+    j = mics_ppd_join$col_idx,
+    x = mics_ppd_join$x
+  )
   
   tmb_int <- list()
   
@@ -182,14 +302,32 @@ fit <- function(iso3, model_level = "national") {
     log_offset_naomi = log(mf$observations$naomi_level_obs$pys),
     births_obs_naomi = mf$observations$naomi_level_obs$births,
     
-    log_offset_dhs = log(filter(mf$observations$full_obs, survtype == "DHS")$pys),
-    births_obs_dhs = filter(mf$observations$full_obs, survtype == "DHS")$births,
+    # log_offset_dhs = log(filter(mf$observations$full_obs, survtype == "DHS")$pys),
+    # births_obs_dhs = filter(mf$observations$full_obs, survtype == "DHS")$births,
+    # 
+    # log_offset_ais = log(filter(mf$observations$full_obs, survtype == "AIS-MIS")$pys),
+    # births_obs_ais = filter(mf$observations$full_obs, survtype == "AIS-MIS")$births,
+    # 
+    # log_offset_phia = log(filter(mf$observations$full_obs, survtype == "PHIA")$pys),
+    # births_obs_phia = filter(mf$observations$full_obs, survtype == "PHIA")$births,
     
-    log_offset_ais = log(filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS"))$pys),
-    births_obs_ais = filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS"))$births,
+    log_offset = log(filter(mf$observations$full_obs)$pys),
+    births_obs = mf$observations$full_obs$births,
     
-    log_offset_phia = log(filter(mf$observations$full_obs, survtype == "PHIA")$pys),
-    births_obs_phia = filter(mf$observations$full_obs, survtype == "PHIA")$births,
+    X_extract_dhs_ppd = X_extract_dhs_ppd,
+    X_extract_ais_ppd = X_extract_ais_ppd,
+    X_extract_phia_ppd = X_extract_phia_ppd,
+    X_extract_mics_ppd = X_extract_mics_ppd,
+    
+    # include_dhs_obs = filter(mf$observations$full_obs, survtype == "DHS", survyear < end_year)$row_num,
+    # include_ais_obs = filter(mf$observations$full_obs, survtype == "AIS-MIS", survyear < end_year)$row_num,
+    # include_phia_obs = filter(mf$observations$full_obs, survtype == "PHIA", survyear < end_year)$row_num,
+    # include_mics_obs = filter(mf$observations$full_obs, survtype == "MICS", survyear < end_year)$row_num,
+    # 
+    # exclude_dhs_obs = filter(mf$observations$full_obs, survtype == "DHS", survyear >= end_year)$row_num,
+    # exclude_ais_obs = filter(mf$observations$full_obs, survtype == "AIS-MIS", survyear >= end_year)$row_num,
+    # exclude_phia_obs = filter(mf$observations$full_obs, survtype == "PHIA", survyear >= end_year)$row_num,
+    # exclude_mics_obs = filter(mf$observations$full_obs, survtype == "MICS", survyear >= end_year)$row_num,
     
     pop = mf$mf_model$population,
     # A_asfr_out = mf$out$A_asfr_out,
@@ -205,6 +343,11 @@ fit <- function(iso3, model_level = "national") {
     mwi_toggle = as.integer(iso3_c == "MWI"),
     subnational_toggle = as.integer(naomi_level > 0),
     multiple_survey_toggle = as.integer(length(unique(mf$observations$full_obs$survey_id)) > 1),
+    
+    rw_toggle = 0,
+    ar1_toggle = 0,
+    arima_toggle = 0,
+    trend_toggle = 0,
     
     X_spike_2010 = mf$Z$X_spike_2010,
     # X_spike_2010 = matrix(0),
@@ -247,8 +390,8 @@ fit <- function(iso3, model_level = "national") {
     log_prec_rw_period = 0,
     # logit_phi_period = 0,
     # lag_logit_phi_period = 0,
-    lag_logit_phi_arima_period = 0,
-    beta_period = 0,
+    # lag_logit_phi_arima_period = 0,
+    # beta_period = 0,
     
     log_prec_smooth_iid = 0,
     u_smooth_iid = rep(0, ncol(mf$R$R_smooth_iid)),
@@ -265,7 +408,7 @@ fit <- function(iso3, model_level = "national") {
                       "u_age",
                       "u_period",
                       "u_smooth_iid",
-                      "beta_period",
+                      # "beta_period",
                       "beta_tips_fe",
                       "eta1"
   )
@@ -371,13 +514,47 @@ fit <- function(iso3, model_level = "national") {
     tmb_int$random <- c(tmb_int$random, "beta_spike_famine")
   }
   
-  lapply(list.files("src/aaa_fit/models/", pattern = "\\.o|\\.so", full.names = T), file.remove)
-  TMB::compile("src/aaa_fit/models/2023_09_11_all_levels.cpp", flags = "-w")               # Compile the C++ file
-  dyn.load(TMB::dynlib("src/aaa_fit/models/2023_09_11_all_levels"))
+  tmb_int_curr <- tmb_int
+  
+  if(time == "ar1") {
+    tmb_int_curr$par <- c(tmb_int$par, "lag_logit_phi_period" = 0)
+    tmb_int_curr$data$ar1_toggle <- 1
     
-  f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
-                                              parameters = tmb_int$par,
-                                              DLL = "2023_09_11_all_levels",
+  } else if(time == "arima") {
+    tmb_int_curr$par <- c(tmb_int$par,"lag_logit_phi_arima_period" = 0)
+    tmb_int_curr$data$arima_toggle <- 1
+    
+  } else if(time == "rw1") {
+    tmb_int_curr$data$R_period <- make_rw_structure_matrix(ncol(mf$Z$Z_period), 1, adjust_diagonal = TRUE)
+    tmb_int_curr$data$rw_toggle <- 1
+  } else {
+    tmb_int_curr$data$R_period <- make_rw_structure_matrix(ncol(mf$Z$Z_period), 2, adjust_diagonal = TRUE)
+    tmb_int_curr$data$rw_toggle <- 1
+  }
+  
+  if(trend == 1) {
+    tmb_int_curr$par <- c(tmb_int_curr$par,
+                          "beta_period" = 0
+    )
+    
+    tmb_int_curr$random <- c(tmb_int$random, "beta_period")
+    
+    tmb_int_curr$data$trend_toggle <- 1
+  }
+
+  TMB::compile("src/aaa_fit/models/2023_09_15_all_levels_time.cpp", flags = "-w")               # Compile the C++ file
+  dyn.load(TMB::dynlib("src/aaa_fit/models/2023_09_15_all_levels_time"))
+  
+  # tmb_unload <- function(name) {
+  #   ldll <- getLoadedDLLs() 
+  #   idx  <- grep(name, names(ldll))
+  #   for (i in seq_along(idx)) dyn.unload(unlist(ldll[[idx[i]]])$path)
+  #   cat('Unload ', length(idx), "loaded versions.\n")
+  # }
+
+  f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int_curr$data,
+                                              parameters = tmb_int_curr$par,
+                                              DLL = "2023_09_15_all_levels_time",
                                               silent=0,
                                               checkParameterOrder=FALSE)
   })
@@ -385,11 +562,14 @@ fit <- function(iso3, model_level = "national") {
   if(is.null(parallel::mccollect(f)[[1]])) {
       stop("TMB model is invalid. This is most likely an indexing error e.g. iterating over dimensions in an array that do not exist. Check mf model object")
   }
+  
+  # lapply(list.files("src/aaa_fit/models/", pattern = "\\.o|\\.so", full.names = T), file.remove)
+  # tmb_unload("2023_09_15_all_levels_time")
     
-  obj <-  TMB::MakeADFun(data = tmb_int$data,
-                           parameters = tmb_int$par,
-                           DLL = "2023_09_11_all_levels",
-                           random = tmb_int$random,
+  obj <-  TMB::MakeADFun(data = tmb_int_curr$data,
+                           parameters = tmb_int_curr$par,
+                           DLL = "2023_09_15_all_levels_time",
+                           random = tmb_int_curr$random,
                            hessian = FALSE)
   
   f <- stats::nlminb(obj$par, obj$fn, obj$gr)
@@ -397,22 +577,200 @@ fit <- function(iso3, model_level = "national") {
   f$par.full <- obj$env$last.par
   
   fit <- c(f, obj = list(obj))
-  fit$sdreport <- sdreport(fit$obj, fit$par)
-  
-  sd_report <- fit$sdreport
-  sd_report <- summary(sd_report, "all")
-  
-  sd_report <- data.frame(sd_report, "hyper" = rownames(sd_report), iso = iso3)
+  # fit$sdreport <- sdreport(fit$obj, fit$par)
+  # 
+  # sd_report <- fit$sdreport
+  # sd_report <- summary(sd_report, "all")
+  # 
+  # sd_report <- data.frame(sd_report, "hyper" = rownames(sd_report), iso = iso3)
   # sd_report <- data.frame(x= "foo")
   
-  write_csv(sd_report, file.path("outside_orderly/fit/outputs", iso3_c, model_level, "sd_report.csv"))
+  # write_csv(sd_report, file.path("outside_orderly/fit/outputs", iso3_c, model_level, "sd_report.csv"))
   
   class(fit) <- "naomi_fit"  # this is hacky...
   fit <- naomi::sample_tmb(fit, random_only=TRUE)
   tmb_results <- dfertility::tmb_outputs(fit, mf, areas)
   
   write_csv(tmb_results, file.path("outside_orderly/fit/outputs", iso3_c, model_level, "fr.csv"))
-  saveRDS(fit$sample, file.path("outside_orderly/fit/outputs/", iso3_c, model_level, "fixed.rds"))
+  # saveRDS(fit$sample, file.path("outside_orderly/fit/outputs/", iso3_c, model_level, "fixed.rds"))
+  
+  quant_pos_sum <- function(births, x) {
+    if(births < x)
+      0
+    else
+      1
+  }
+  
+  dhs_ppd <- mf$observations$full_obs %>%
+    ungroup() %>%
+    filter(survtype == "DHS", 
+           # survyear >= end_year
+           )
+  
+  # dhs_ppd <- dhs_ppd %>%
+  #   filter(row_num %in% tmb_int_curr$data$exclude_dhs_obs)
+  #
+  
+  ## These two bits should go in that if statement.
+  dhs_num <-  as.numeric(X_extract_dhs_ppd %*% mf$X_extract$X_extract_dhs %*% mf$observations$full_obs$row_num)
+  
+  dhs_ppd <- dhs_ppd %>%
+    type.convert(as.is = T) %>%
+    select(survey_id, area_id, period, age_group, births, tips, pys, row_num) %>%
+    bind_cols(data.frame(exp(fit$sample$log_rate_pred_dhs))) %>%
+    filter(!row_num %in% as.numeric(dhs_num))
+  
+  if(nrow(dhs_ppd)) {
+    # dhsMatrix <- exp(fit$sample$log_rate_exclude_dhs)
+    dhsMatrix <- X_extract_dhs_ppd %*% exp(fit$sample$log_rate_pred_dhs)
+    dhs_ppd <- dhs_ppd %>% 
+      select(survey_id, area_id, period, age_group, births, tips, pys) %>%
+      type.convert(as.is = T) %>%
+      bind_cols(data.frame(as.matrix(dhsMatrix)))
+      
+      # filter(period >= end_year)
+  } else {
+    dhs_ppd <- data.frame()
+  }
+  
+  ais_ppd <- mf$observations$full_obs %>%
+    ungroup() %>%
+    filter(survtype == "AIS-MIS", survyear >= end_year)
+  
+  
+  if(nrow(ais_ppd)) {
+    aisMatrix <- exp(fit$sample$log_rate_exclude_ais)
+    ais_ppd <- ais_ppd %>%
+      select(survey_id, area_id, period, age_group, births, tips, pys) %>%
+      bind_cols(data.frame(aisMatrix)) %>%
+      type.convert() %>%
+      filter(period >= end_year)
+  } else {
+    ais_ppd <- data.frame()
+  }
+  
+  phia_ppd <- mf$observations$full_obs %>%
+    ungroup() %>%
+    filter(survtype == "PHIA", survyear >= end_year)
+  
+  
+  if(nrow(phia_ppd)) {
+    phiaMatrix <- exp(fit$sample$log_rate_exclude_phia)
+    phia_ppd <- phia_ppd %>% 
+      select(survey_id, area_id, period, age_group, births, tips, pys) %>%
+      bind_cols(data.frame(phiaMatrix)) %>%
+      type.convert() %>%
+      filter(period >= end_year)
+  } else {
+    phia_ppd <- data.frame()
+  }
+  
+  mics_ppd <- mf$observations$full_obs %>%
+    ungroup() %>%
+    filter(survtype == "MICS", survyear >= end_year)
+  
+  
+  if(nrow(mics_ppd)) {
+    micsMatrix <- exp(fit$sample$log_rate_exclude_mics)
+    mics_ppd <- mics_ppd %>% 
+      select(survey_id, area_id, period, age_group, births, tips, pys) %>%
+      bind_cols(data.frame(micsMatrix)) %>%
+      type.convert() %>%
+      filter(period >= end_year)
+  } else {
+    mics_ppd <- data.frame()
+  }
+  
+  dxpois <- function(x, lambda, log = TRUE) {
+    val <- x * log(lambda) - lambda - lgamma(x+1)
+    if (log) {
+      val <- exp(val)
+    }
+    val
+  }
+  
+  
+  ppd <- bind_rows(dhs_ppd, ais_ppd, phia_ppd, mics_ppd) %>%
+    ungroup() %>%
+    mutate(idx = row_number())
+  
+  true_values <- ppd %>%
+    select(births, pys) %>%
+    mutate(observed_asfr = births/pys) %>%
+    .$observed_asfr
+  
+  predictions <- ppd %>%
+    select(X1:X1000) %>%
+    as.matrix()
+  
+  crps = sum(scoringutils::crps_sample(true_values, predictions))
+  
+  est_births <- as.matrix(ppd[,paste0("X", 1:1000)]) * ppd$pys
+  ll_pred <- dxpois(ppd$births, est_births, TRUE)
+  elpd <- loo::elpd(t(ll_pred))
+  elpd <- elpd$estimates %>%
+    as.data.frame() %>%
+    mutate(source = time)
+  
+  system.time(ppd %>%
+                ungroup() %>%
+                rowwise() %>%
+                # group_by(idx) %>%
+                mutate(across(starts_with("X"), ~rpois(1, pys*.x))))
+  
+  # poisson_sample_births <- function(x) {
+  #   pys <- as.numeric(x["pys"])
+  #   int <- as.numeric(x[paste0("X", 1:1000)])
+  #   births <- sapply(int, function(x) rpois(1, pys * x))
+  #   x[paste0("X", 1:1000)] <- births
+  #   x
+  # }
+  # 
+  # flib <- ppd[1,]
+  # 
+  # debugonce(poisson_sample_births)
+  # foo <- apply(ppd, 1, poisson_sample_births)
+  # 
+  # system.time(apply(ppd, 1, poisson_sample_births))
+  
+ppd <- ppd %>%
+    # ungroup() %>%
+    # rowwise() %>%
+    group_by(idx) %>%
+    mutate(across(starts_with("X"), ~rpois(1, pys*.x)))
+    # type.convert() %>%
+    
+foo <- ppd %>%
+    # mutate(period = plyr::round_any(period, 2, round)) %>%
+    ungroup() %>%
+    aggregate_to_admin(c("survey_id", "period", "age_group", "tips"),
+                       c(paste0("X", 1:1000), "births", "pys"),
+                       1,
+                       areas) %>%
+    mutate(survey_asfr = births/pys,
+           across(starts_with("X"), ~.x/pys)) %>%
+    select(survey_id:pys, survey_asfr, everything()) %>%
+    group_by(survey_id, period, area_id,tips) %>%
+    summarise(
+      survey_tfr = 5*sum(survey_asfr),
+      across(starts_with("X"), ~5*sum(.x)),
+      observed_births = sum(births),
+      pys = sum(pys)
+    ) %>%
+    ungroup() %>%
+    select(survey_id:survey_tfr, observed_births, pys, everything())
+  
+  qtls <- apply(select(ppd, starts_with("X")), 1, quantile, c(0.025, 0.5, 0.975))
+  
+  ppd <- ppd %>%
+    group_by(survey_id, area_id, period, tips, observed_births, pys, survey_tfr) %>%
+    rowwise() %>%
+    summarise(quant_pos = sum(across(starts_with("X"), ~quant_pos_sum(survey_tfr, .x)))) %>%
+    ungroup %>%
+    mutate(lower = qtls[1,],
+           median = qtls[2,],
+           upper = qtls[3,],
+           source = "rw")
   
   # fit <- naomi::sample_tmb(fit, random_only=FALSE)
   # hyper <- fit$sample %>%
@@ -422,6 +780,7 @@ fit <- function(iso3, model_level = "national") {
   
   
   fr_plot <- fr_plot %>%
+    filter(area_id %in% c("MWI", "MWI_1_1", "MWI_1_2", "MWI_1_3")) %>%
     left_join(areas %>% sf::st_drop_geometry() %>% select(area_id, area_name)) %>%
     filter(!(area_id == iso3 & survey_id %in% subnational_surveys))
   
@@ -486,8 +845,31 @@ library(rlang)
 library(mgcv)
 
 debugonce(fit)
-fit("MWI")
-fit("MWI", "district")
+# # MWI, province: 
+# time  trend
+# ar1       0 YES
+# ar1       1 YES
+# arima     0 YES
+# arima     1 YES
+# rw        0 YES
+# rw        1 YES
+# rw2       0 YES
+# rw2       1 YES
+
+# # MWI, district: 
+# time  trend
+# ar1       0 YES
+# ar1       1 
+# arima     0 
+# arima     1 
+# rw        0 
+# rw        1 
+# rw2       0 
+# rw2       1 
+
+debugonce(fit)
+fit("ZWE", "ar1", 1, "district")
+fit("MWI", "provincial")
 fit("MWI", "district")
 fit("ZWE", "provincial")
 fit("ZWE", "district")

@@ -6,7 +6,7 @@ asfr <- function(iso3_c) {
   # library(demogsurv)
   # library(sf)
   # library(dfertility)
-  
+
   message(iso3_c)
   
   # iso3_c <- iso3

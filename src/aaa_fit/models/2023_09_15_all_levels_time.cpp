@@ -60,14 +60,27 @@ Type objective_function<Type>::operator() ()
   DATA_VECTOR(log_offset_naomi);
   DATA_VECTOR(births_obs_naomi);
 
-  DATA_VECTOR(log_offset_dhs);
-  DATA_VECTOR(births_obs_dhs);
+  // DATA_VECTOR(log_offset_dhs);
+  // DATA_VECTOR(births_obs_dhs);
 
-  DATA_VECTOR(log_offset_ais);
-  DATA_VECTOR(births_obs_ais);
+  // DATA_VECTOR(log_offset_ais);
+  // DATA_VECTOR(births_obs_ais);
 
-  DATA_VECTOR(log_offset_phia);
-  DATA_VECTOR(births_obs_phia);
+  // DATA_VECTOR(log_offset_phia);
+  // DATA_VECTOR(births_obs_phia);
+
+  DATA_VECTOR(log_offset);
+  DATA_VECTOR(births_obs);
+
+  // DATA_IVECTOR(include_dhs_obs);
+  // DATA_IVECTOR(include_ais_obs);
+  // DATA_IVECTOR(include_phia_obs);
+  // DATA_IVECTOR(include_mics_obs);
+
+  // DATA_IVECTOR(exclude_dhs_obs);
+  // DATA_IVECTOR(exclude_ais_obs);
+  // DATA_IVECTOR(exclude_phia_obs);
+  // DATA_IVECTOR(exclude_mics_obs);
 
   DATA_VECTOR(pop);
   DATA_INTEGER(mics_toggle);
@@ -79,11 +92,24 @@ Type objective_function<Type>::operator() ()
   DATA_INTEGER(subnational_toggle);
   DATA_INTEGER(multiple_survey_toggle);
 
+  DATA_INTEGER(rw_toggle);
+  DATA_INTEGER(ar1_toggle);
+  DATA_INTEGER(arima_toggle);
+  DATA_INTEGER(trend_toggle);
+
   DATA_SPARSE_MATRIX(A_full_obs);
   DATA_SPARSE_MATRIX(A_tfr_out);
 
   DATA_MATRIX(X_urban_dummy);
   DATA_SPARSE_MATRIX(X_spike_2010);
+
+  vector<Type> log_offset_dhs = X_extract_dhs * log_offset;
+  vector<Type> log_offset_ais = X_extract_ais * log_offset;
+  vector<Type> log_offset_phia = X_extract_phia * log_offset;
+
+  vector<Type> births_obs_dhs = X_extract_dhs * births_obs;
+  vector<Type> births_obs_ais = X_extract_ais * births_obs;
+  vector<Type> births_obs_phia = X_extract_phia * births_obs;
 
 
   nll -= dnorm(beta_0, Type(0), Type(sqrt(1/0.001)), true);
@@ -170,57 +196,44 @@ Type objective_function<Type>::operator() ()
 
   DATA_SPARSE_MATRIX(Z_period);
   DATA_SPARSE_MATRIX(R_period);
+  DATA_SPARSE_MATRIX(X_period);
   PARAMETER(log_prec_rw_period);
   PARAMETER_VECTOR(u_period);
 
-
   nll -= dnorm(log_prec_rw_period, Type(6.3), Type(2.5), true);
   Type prec_rw_period = exp(log_prec_rw_period);
-  // nll -= dgamma(prec_rw_period, Type(1), Type(2000), true);
-  // nll -= dnorm(prec_rw_period, Type(6.3), Type(2.5), true);
 
 
-  // // RW
-  // nll -= Type(-0.5) * (u_period * (R_period * u_period)).sum();
-  // nll -= dnorm(u_period.sum(), Type(0), Type(0.01) * u_period.size(), true);
-
-  // AR1
-  // PARAMETER(lag_logit_phi_period);
-
-  //use this
-  // nll -= dnorm(lag_logit_phi_period, Type(0), Type(sqrt(1/0.15)), true);
-  // Type phi_period = 2*exp(lag_logit_phi_period)/(1+exp(lag_logit_phi_period))-1;
+  if(rw_toggle) {
+    nll -= Type(-0.5) * (u_period * (R_period * u_period)).sum();
+    nll -= dnorm(u_period.sum(), Type(0), Type(0.01) * u_period.size(), true);
+  }
   
-  // not this
-  // Type phi_period(exp(logit_phi_period)/(1+exp(logit_phi_period)));
-  // nll -= log(phi_period) +  log(1 - phi_period); // Jacobian adjustment for inverse logit'ing the parameter...
-  // nll -= dbeta(phi_period, Type(0.5), Type(0.5), true);
-
-  // Type phi_period = 0.99;
-
-  // nll += AR1(Type(phi_period))(u_period);
-
-  // ARIMA(1,1,0) with trend
-  DATA_SPARSE_MATRIX(X_period);
-  PARAMETER(lag_logit_phi_arima_period);
-
-  PARAMETER_VECTOR(beta_period);
-  nll -= dnorm(beta_period, Type(-0.01309), Type(0.01441), true).sum();
-
-  nll -= dnorm(lag_logit_phi_arima_period, Type(0), Type(sqrt(1/0.15)), true);
-  Type phi_arima_period = 2*exp(lag_logit_phi_arima_period)/(1+exp(lag_logit_phi_arima_period))-1;
-
-  int n = u_period.size();
-
-  vector<Type> u_period_diff(n - 1);
-
-  for (int i = 1; i < n; i++) {
-    u_period_diff[i - 1] = u_period[i] - u_period[i - 1];
+  if(ar1_toggle) {
+    PARAMETER(lag_logit_phi_period);
+    nll -= dnorm(lag_logit_phi_period, Type(0), Type(sqrt(1/0.15)), true);
+    Type phi_period = 2*exp(lag_logit_phi_period)/(1+exp(lag_logit_phi_period))-1;
+    nll += AR1(Type(phi_period))(u_period);
   }
 
-  nll += AR1(Type(phi_arima_period))(u_period_diff);
-  
-  nll -= dnorm(u_period.sum(), Type(0), Type(0.01) * u_period.size(), true);
+  if(arima_toggle) {
+    PARAMETER(lag_logit_phi_arima_period);
+
+    nll -= dnorm(lag_logit_phi_arima_period, Type(0), Type(sqrt(1/0.15)), true);
+    Type phi_arima_period = 2*exp(lag_logit_phi_arima_period)/(1+exp(lag_logit_phi_arima_period))-1;
+
+    int n = u_period.size();
+
+    vector<Type> u_period_diff(n - 1);
+
+    for (int i = 1; i < n; i++) {
+      u_period_diff[i - 1] = u_period[i] - u_period[i - 1];
+    }
+
+    nll += AR1(Type(phi_arima_period))(u_period_diff);
+    
+    nll -= dnorm(u_period.sum(), Type(0), Type(0.01) * u_period.size(), true);
+  }
 
   ///
 
@@ -288,8 +301,16 @@ Type objective_function<Type>::operator() ()
                      beta_0
                      + Z_age * u_age * sqrt(1/prec_rw_age)
                      + Z_period * u_period * sqrt(1/prec_rw_period)
-                     + X_period * beta_period
                      );
+
+  if(trend_toggle) {
+
+    PARAMETER_VECTOR(beta_period);
+    nll -= dnorm(beta_period, Type(-0.01309), Type(0.01441), true).sum();
+    
+    log_lambda = log_lambda 
+      + X_period * beta_period;
+  }
 
   if(zwe_toggle) {
 
@@ -440,21 +461,21 @@ Type objective_function<Type>::operator() ()
   vector<Type> spike_2000_lh;
   vector<Type> spike_2001_lh;
 
-  vector<Type> mu_obs_pred_dhs(X_extract_dhs * (M_full_obs * log(lambda_out))
+  vector<Type> log_rate_pred_dhs(X_extract_dhs * (M_full_obs * log(lambda_out))
                                 + X_extract_dhs * tips_fe_lh
                                 + X_extract_dhs * u_smooth_lh
                                 + log_offset_dhs
 
                 );
 
-  vector<Type> mu_obs_pred_ais(X_extract_ais * (M_full_obs * log(lambda_out))
+  vector<Type> log_rate_pred_ais(X_extract_ais * (M_full_obs * log(lambda_out))
                                 + X_extract_ais * u_smooth_lh
                                 + X_extract_ais * tips_fe_lh
                                 + log_offset_ais
 
                 );
 
-  vector<Type> mu_obs_pred_phia(X_extract_phia * (M_full_obs * log(lambda_out))
+  vector<Type> log_rate_pred_phia(X_extract_phia * (M_full_obs * log(lambda_out))
                                  + log_offset_phia
 
   );
@@ -477,12 +498,12 @@ Type objective_function<Type>::operator() ()
     spike_2000_lh = X_spike_2000 * beta_spike_2000;
     spike_2001_lh = X_spike_2001 * beta_spike_2001;
 
-    mu_obs_pred_dhs = mu_obs_pred_dhs
+    log_rate_pred_dhs = log_rate_pred_dhs
       + X_extract_dhs * spike_1999_lh
       + X_extract_dhs * spike_2000_lh
       + X_extract_dhs * spike_2001_lh;
 
-    mu_obs_pred_ais = mu_obs_pred_ais
+    log_rate_pred_ais = log_rate_pred_ais
       + X_extract_ais * spike_1999_lh
       + X_extract_ais * spike_2000_lh
       + X_extract_ais * spike_2001_lh;
@@ -501,28 +522,65 @@ Type objective_function<Type>::operator() ()
     vector<Type> zeta2_v(zeta2);
     zeta2_lh = Z_zeta2  * zeta2_v * sqrt(1/prec_zeta2);
 
-    mu_obs_pred_dhs = mu_obs_pred_dhs
+    log_rate_pred_dhs = log_rate_pred_dhs
       + X_extract_dhs * zeta2_lh;
     
-    mu_obs_pred_ais = mu_obs_pred_ais
+    log_rate_pred_ais = log_rate_pred_ais
       + X_extract_ais * zeta2_lh;
     
   }
 
-  nll -= dpois(births_obs_dhs, exp(mu_obs_pred_dhs), true).sum();
-  nll -= dpois(births_obs_ais, exp(mu_obs_pred_ais), true).sum();
-  nll -= dpois(births_obs_phia, exp(mu_obs_pred_phia), true).sum();
+  vector<Type> mu_obs_pred_dhs = log_rate_pred_dhs + log_offset_dhs;
+  vector<Type> mu_obs_pred_ais = log_rate_pred_ais + log_offset_ais;
+  vector<Type> mu_obs_pred_phia = log_rate_pred_phia + log_offset_phia;
+
+
+  // births_obs_dhs_trim = births_obs_dhs(include_dhs_obs);
+  // mu_obs_pred_dhs_trim = mu_obs_pred_dhs(include_dhs_obs);
+
+  DATA_SPARSE_MATRIX(X_extract_dhs_ppd);
+  DATA_SPARSE_MATRIX(X_extract_ais_ppd);
+  DATA_SPARSE_MATRIX(X_extract_phia_ppd);
+
+  vector<Type> births_obs_dhs_trim = X_extract_dhs_ppd * births_obs_dhs;
+  vector<Type> mu_obs_pred_dhs_trim = X_extract_dhs_ppd * mu_obs_pred_dhs;
+
+  vector<Type> births_obs_ais_trim = X_extract_ais_ppd * births_obs_ais;
+  vector<Type> mu_obs_pred_ais_trim = X_extract_ais_ppd * mu_obs_pred_ais;
+
+  vector<Type> births_obs_phia_trim = X_extract_phia_ppd * births_obs_phia;
+  vector<Type> mu_obs_pred_phia_trim = X_extract_phia_ppd * mu_obs_pred_phia;
+
+  // vector<Type> births_obs_ais_trim;
+  // vector<Type> mu_obs_pred_ais_trim;
+
+  // births_obs_ais_trim = births_obs_ais(include_ais_obs);
+  // mu_obs_pred_ais_trim = mu_obs_pred_ais(include_ais_obs);
+
+  // vector<Type> births_obs_phia_trim;
+  // vector<Type> mu_obs_pred_phia_trim;
+
+  // births_obs_phia_trim = births_obs_phia(include_phia_obs);
+  // mu_obs_pred_phia_trim = mu_obs_pred_phia(include_phia_obs);
+
+  nll -= dpois(births_obs_dhs_trim, exp(mu_obs_pred_dhs_trim), true).sum();  
+  nll -= dpois(births_obs_ais_trim, exp(mu_obs_pred_ais_trim), true).sum();
+  nll -= dpois(births_obs_phia_trim, exp(mu_obs_pred_phia_trim), true).sum(); 
 
 
   if(mics_toggle) {
 
     DATA_SPARSE_MATRIX(Z_tips_mics);
     DATA_SPARSE_MATRIX(R_tips_mics);
+    DATA_SPARSE_MATRIX(X_extract_mics_ppd);
 
-    DATA_VECTOR(log_offset_mics);
-    DATA_VECTOR(births_obs_mics);
+    // DATA_VECTOR(log_offset_mics);
+    // DATA_VECTOR(births_obs_mics);
 
-    vector<Type> mu_obs_pred_mics(X_extract_mics * (M_full_obs * log(lambda_out))
+    vector<Type> log_offset_mics = X_extract_mics * log_offset;
+    vector<Type> births_obs_mics = X_extract_mics * births_obs;
+
+    vector<Type> log_rate_pred_mics(X_extract_mics * (M_full_obs * log(lambda_out))
                                   + X_extract_mics * u_smooth_lh
                                   + X_extract_mics * tips_fe_lh
                                   + log_offset_mics
@@ -530,26 +588,49 @@ Type objective_function<Type>::operator() ()
                 );
 
     if(!mwi_rwa_toggle) {
-      mu_obs_pred_mics = mu_obs_pred_mics
+      log_rate_pred_mics = log_rate_pred_mics
         + X_extract_mics * spike_1999_lh
         + X_extract_mics * spike_2000_lh
         + X_extract_mics * spike_2001_lh;
     }
 
     if(multiple_survey_toggle) {
-      mu_obs_pred_mics = mu_obs_pred_mics
+      log_rate_pred_mics = log_rate_pred_mics
         + X_extract_mics * zeta2_lh;
     }
 
-    nll -= dpois(births_obs_mics, exp(mu_obs_pred_mics), true).sum();
+    vector<Type> mu_obs_pred_mics = log_rate_pred_mics + log_offset_mics;
 
-    // REPORT(mu_obs_pred_mics);
+    vector<Type> births_obs_mics_trim = X_extract_mics_ppd * births_obs_mics;
+    vector<Type> mu_obs_pred_mics_trim = X_extract_mics_ppd * mu_obs_pred_mics;
+
+
+    // nll -= dpois(births_obs_mics, exp(mu_obs_pred_mics), true).sum();
+    nll -= dpois(births_obs_mics_trim, exp(mu_obs_pred_mics_trim), true).sum();
+
+    // vector<Type> log_rate_exclude_mics = log_rate_pred_mics(exclude_mics_obs);
+
+    REPORT(log_rate_pred_mics); 
 
   }
 
 
+  // vector<Type> log_rate_exclude_dhs = log_rate_pred_dhs(exclude_dhs_obs);
+  // vector<Type> log_rate_exclude_ais = log_rate_pred_ais(exclude_ais_obs);
+  // vector<Type> log_rate_exclude_phia = log_rate_pred_phia(exclude_phia_obs);
+
   REPORT(tfr_out);
   REPORT(lambda_out);
+
+  // REPORT(log_rate_exclude_dhs);
+  // REPORT(log_rate_exclude_ais);
+  // REPORT(log_rate_exclude_phia);
+
+  REPORT(log_rate_pred_dhs);
+  REPORT(log_rate_pred_ais);
+  REPORT(log_rate_pred_phia);
+
+
   // REPORT(u_period_lh);
   // REPORT(lambda);
 
