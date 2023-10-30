@@ -289,6 +289,7 @@ Type objective_function<Type>::operator() ()
                      + Z_age * u_age * sqrt(1/prec_rw_age)
                      + Z_period * u_period * sqrt(1/prec_rw_period)
                      + X_period * beta_period
+                     + Z_interaction1 * eta1_v * sqrt(1/prec_eta1)
                      );
 
   if(zwe_toggle) {
@@ -398,7 +399,6 @@ Type objective_function<Type>::operator() ()
 
     log_lambda = log_lambda
                   + Z_spatial * u_spatial_str * sqrt(1/prec_spatial)
-                  + Z_interaction1 * eta1_v * sqrt(1/prec_eta1)
                   + Z_interaction2 * eta2_v * sqrt(1/prec_eta2)
                   + Z_interaction3 * eta3_v * sqrt(1/prec_eta3);
 

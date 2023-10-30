@@ -311,7 +311,7 @@ fit <- function(iso3, time, trend, model_level = "district") {
     # log_offset_phia = log(filter(mf$observations$full_obs, survtype == "PHIA")$pys),
     # births_obs_phia = filter(mf$observations$full_obs, survtype == "PHIA")$births,
     
-    log_offset = log(filter(mf$observations$full_obs)$pys),
+    log_offset = log(mf$observations$full_obs$pys),
     births_obs = mf$observations$full_obs$births,
     
     X_extract_dhs_ppd = X_extract_dhs_ppd,
@@ -577,19 +577,49 @@ fit <- function(iso3, time, trend, model_level = "district") {
   f$par.full <- obj$env$last.par
   
   fit <- c(f, obj = list(obj))
-  # fit$sdreport <- sdreport(fit$obj, fit$par)
-  # 
-  # sd_report <- fit$sdreport
-  # sd_report <- summary(sd_report, "all")
-  # 
-  # sd_report <- data.frame(sd_report, "hyper" = rownames(sd_report), iso = iso3)
-  # sd_report <- data.frame(x= "foo")
+
+  fit$sdreport <- sdreport(fit$obj, fit$par)
+
+  sd_report <- fit$sdreport
+  sd_report <- summary(sd_report, "all")
+
+  sd_report <- data.frame(sd_report, "hyper" = rownames(sd_report), iso = iso3)
   
   # write_csv(sd_report, file.path("outside_orderly/fit/outputs", iso3_c, model_level, "sd_report.csv"))
   
   class(fit) <- "naomi_fit"  # this is hacky...
   fit <- naomi::sample_tmb(fit, random_only=TRUE)
   tmb_results <- dfertility::tmb_outputs(fit, mf, areas)
+  
+  fr_plot <- fr_plot %>%
+    left_join(areas %>% sf::st_drop_geometry() %>% select(area_id, area_name)) %>%
+    filter(!(area_id == iso3 & survey_id %in% subnational_surveys))
+  
+  cntry_name <- countrycode::countrycode(iso3, "iso3c", "country.name")
+  
+  tfr_plot <- tmb_results %>%
+    filter(area_level %in% c(0, admin1_lvl), variable == "tfr") %>%
+    ggplot(aes(x=period, y=median)) +
+    geom_line(size=1) +
+    geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
+    geom_point(data = fr_plot %>% 
+                 filter(variable == "tfr", value <10, !survey_id %in% remove_survey) %>%
+                 left_join(areas %>% st_drop_geometry()) %>%
+                 filter(area_level %in% c(0, admin1_lvl)), aes(y=value, color=survey_id, size = pys)) +
+    geom_point(data = fr_plot %>% 
+                 filter(variable == "tfr", value <10, survey_id %in% remove_survey) %>%
+                 left_join(areas %>% st_drop_geometry()) %>%
+                 filter(area_level %in% c(0, admin1_lvl)), aes(y=value, color=survey_id, size = pys), shape=22, fill=NA) +
+    facet_wrap(~fct_inorder(area_name), ncol=5) +
+    # facet_wrap(~area_name) +
+    labs(y="TFR", x=element_blank(), color="Survey ID", title=paste(iso3, "| Provincial TFR")) +
+    theme_minimal() +
+    theme(
+      legend.position = "bottom",
+      text = element_text(size=14)
+    )
+  
+  tfr_plot
   
   write_csv(tmb_results, file.path("outside_orderly/fit/outputs", iso3_c, model_level, "fr.csv"))
   # saveRDS(fit$sample, file.path("outside_orderly/fit/outputs/", iso3_c, model_level, "fixed.rds"))
@@ -710,13 +740,18 @@ fit <- function(iso3, time, trend, model_level = "district") {
   elpd <- loo::elpd(t(ll_pred))
   elpd <- elpd$estimates %>%
     as.data.frame() %>%
-    mutate(source = time)
+    mutate(source = paste0(time, " ", trend))
   
   system.time(ppd %>%
                 ungroup() %>%
                 rowwise() %>%
                 # group_by(idx) %>%
                 mutate(across(starts_with("X"), ~rpois(1, pys*.x))))
+  
+  int <- rowMeans(ppd[,paste0("X", 1:1000)])
+  ppd %>%
+    select(!starts_with("X")) %>%
+    mutate(mean = int)
   
   # poisson_sample_births <- function(x) {
   #   pys <- as.numeric(x["pys"])
@@ -733,14 +768,14 @@ fit <- function(iso3, time, trend, model_level = "district") {
   # 
   # system.time(apply(ppd, 1, poisson_sample_births))
   
-ppd <- ppd %>%
+ppd2 <- ppd %>%
     # ungroup() %>%
     # rowwise() %>%
     group_by(idx) %>%
     mutate(across(starts_with("X"), ~rpois(1, pys*.x)))
     # type.convert() %>%
     
-foo <- ppd %>%
+foo <- ppd2 %>%
     # mutate(period = plyr::round_any(period, 2, round)) %>%
     ungroup() %>%
     aggregate_to_admin(c("survey_id", "period", "age_group", "tips"),
@@ -750,7 +785,9 @@ foo <- ppd %>%
     mutate(survey_asfr = births/pys,
            across(starts_with("X"), ~.x/pys)) %>%
     select(survey_id:pys, survey_asfr, everything()) %>%
-    group_by(survey_id, period, area_id,tips) %>%
+    group_by(survey_id, period, area_id,tips)
+  
+foo2 <- foo %>%
     summarise(
       survey_tfr = 5*sum(survey_asfr),
       across(starts_with("X"), ~5*sum(.x)),
@@ -759,10 +796,12 @@ foo <- ppd %>%
     ) %>%
     ungroup() %>%
     select(survey_id:survey_tfr, observed_births, pys, everything())
+
+rowMeans(foo2[,paste0("X", 1:1000)])
   
-  qtls <- apply(select(ppd, starts_with("X")), 1, quantile, c(0.025, 0.5, 0.975))
+  qtls <- apply(select(foo2, starts_with("X")), 1, quantile, c(0.025, 0.5, 0.975))
   
-  ppd <- ppd %>%
+  foo2 <- foo2 %>%
     group_by(survey_id, area_id, period, tips, observed_births, pys, survey_tfr) %>%
     rowwise() %>%
     summarise(quant_pos = sum(across(starts_with("X"), ~quant_pos_sum(survey_tfr, .x)))) %>%
@@ -845,30 +884,7 @@ library(rlang)
 library(mgcv)
 
 debugonce(fit)
-# # MWI, province: 
-# time  trend
-# ar1       0 YES
-# ar1       1 YES
-# arima     0 YES
-# arima     1 YES
-# rw        0 YES
-# rw        1 YES
-# rw2       0 YES
-# rw2       1 YES
-
-# # MWI, district: 
-# time  trend
-# ar1       0 YES
-# ar1       1 
-# arima     0 
-# arima     1 
-# rw        0 
-# rw        1 
-# rw2       0 
-# rw2       1 
-
-debugonce(fit)
-fit("ZWE", "ar1", 1, "district")
+fit("MWI", "ar1", 1, "national")
 fit("MWI", "provincial")
 fit("MWI", "district")
 fit("ZWE", "provincial")
