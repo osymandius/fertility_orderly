@@ -23,15 +23,15 @@ tmb_unload <- function(name) {
 }
 
 
-time_options <- crossing(time = c("rw", "rw2", "ar1", "arima"),
-                         trend = c(0,1))
-
-time_map_df <- crossing(iso3 = ssa_iso3()[!ssa_iso3() %in% c("SSD", "CAF", "GNB", "ERI", "BWA", "GNQ", "NGA", "COD", "CMR", "BDI")],
-                        time_options)
-
-iso3 <- time_map_df[1,]$iso3
-time <- time_map_df[1,]$time
-trend <- time_map_df[1,]$trend
+# time_options <- crossing(time = c("rw", "rw2", "ar1", "arima"),
+#                          trend = c(0,1))
+# 
+# time_map_df <- crossing(iso3 = ssa_iso3()[!ssa_iso3() %in% c("SSD", "CAF", "GNB", "ERI", "BWA", "GNQ", "NGA", "COD", "CMR", "BDI")],
+#                         time_options)
+# 
+# iso3 <- time_map_df[1,]$iso3
+# time <- time_map_df[1,]$time
+# trend <- time_map_df[1,]$trend
 
 fit <- function(iso3, time, trend, model_level = "district") {
   message(iso3)
@@ -578,50 +578,20 @@ fit <- function(iso3, time, trend, model_level = "district") {
   
   fit <- c(f, obj = list(obj))
 
-  fit$sdreport <- sdreport(fit$obj, fit$par)
-
-  sd_report <- fit$sdreport
-  sd_report <- summary(sd_report, "all")
-
-  sd_report <- data.frame(sd_report, "hyper" = rownames(sd_report), iso = iso3)
-  
-  # write_csv(sd_report, file.path("outside_orderly/fit/outputs", iso3_c, model_level, "sd_report.csv"))
+  # fit$sdreport <- sdreport(fit$obj, fit$par)
+  # 
+  # sd_report <- fit$sdreport
+  # sd_report <- summary(sd_report, "all")
+  # 
+  # sd_report <- data.frame(sd_report, "hyper" = rownames(sd_report), iso = iso3)
+  # 
+  # write_csv(sd_report, file.path("outside_orderly/fit/outputs/selection", paste0(time, "-", trend), iso3_c, "sd_report.csv"))
   
   class(fit) <- "naomi_fit"  # this is hacky...
   fit <- naomi::sample_tmb(fit, random_only=TRUE)
   tmb_results <- dfertility::tmb_outputs(fit, mf, areas)
   
-  fr_plot <- fr_plot %>%
-    left_join(areas %>% sf::st_drop_geometry() %>% select(area_id, area_name)) %>%
-    filter(!(area_id == iso3 & survey_id %in% subnational_surveys))
-  
-  cntry_name <- countrycode::countrycode(iso3, "iso3c", "country.name")
-  
-  tfr_plot <- tmb_results %>%
-    filter(area_level %in% c(0, admin1_lvl), variable == "tfr") %>%
-    ggplot(aes(x=period, y=median)) +
-    geom_line(size=1) +
-    geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
-    geom_point(data = fr_plot %>% 
-                 filter(variable == "tfr", value <10, !survey_id %in% remove_survey) %>%
-                 left_join(areas %>% st_drop_geometry()) %>%
-                 filter(area_level %in% c(0, admin1_lvl)), aes(y=value, color=survey_id, size = pys)) +
-    geom_point(data = fr_plot %>% 
-                 filter(variable == "tfr", value <10, survey_id %in% remove_survey) %>%
-                 left_join(areas %>% st_drop_geometry()) %>%
-                 filter(area_level %in% c(0, admin1_lvl)), aes(y=value, color=survey_id, size = pys), shape=22, fill=NA) +
-    facet_wrap(~fct_inorder(area_name), ncol=5) +
-    # facet_wrap(~area_name) +
-    labs(y="TFR", x=element_blank(), color="Survey ID", title=paste(iso3, "| Provincial TFR")) +
-    theme_minimal() +
-    theme(
-      legend.position = "bottom",
-      text = element_text(size=14)
-    )
-  
-  tfr_plot
-  
-  write_csv(tmb_results, file.path("outside_orderly/fit/outputs", iso3_c, model_level, "fr.csv"))
+  write_csv(tmb_results, file.path("outside_orderly/fit/outputs/selection", paste0(time, "-", trend), iso3_c, "fr.csv"))
   # saveRDS(fit$sample, file.path("outside_orderly/fit/outputs/", iso3_c, model_level, "fixed.rds"))
   
   quant_pos_sum <- function(births, x) {
@@ -633,80 +603,67 @@ fit <- function(iso3, time, trend, model_level = "district") {
   
   dhs_ppd <- mf$observations$full_obs %>%
     ungroup() %>%
-    filter(survtype == "DHS", 
-           # survyear >= end_year
-           )
-  
-  # dhs_ppd <- dhs_ppd %>%
-  #   filter(row_num %in% tmb_int_curr$data$exclude_dhs_obs)
-  #
-  
-  ## These two bits should go in that if statement.
-  dhs_num <-  as.numeric(X_extract_dhs_ppd %*% mf$X_extract$X_extract_dhs %*% mf$observations$full_obs$row_num)
-  
-  dhs_ppd <- dhs_ppd %>%
-    type.convert(as.is = T) %>%
-    select(survey_id, area_id, period, age_group, births, tips, pys, row_num) %>%
-    bind_cols(data.frame(exp(fit$sample$log_rate_pred_dhs))) %>%
-    filter(!row_num %in% as.numeric(dhs_num))
+    filter(survtype == "DHS")
   
   if(nrow(dhs_ppd)) {
-    # dhsMatrix <- exp(fit$sample$log_rate_exclude_dhs)
-    dhsMatrix <- X_extract_dhs_ppd %*% exp(fit$sample$log_rate_pred_dhs)
-    dhs_ppd <- dhs_ppd %>% 
-      select(survey_id, area_id, period, age_group, births, tips, pys) %>%
+    
+    dhs_num <-  as.numeric(X_extract_dhs_ppd %*% mf$X_extract$X_extract_dhs %*% mf$observations$full_obs$row_num)
+    dhs_ppd <- dhs_ppd %>%
       type.convert(as.is = T) %>%
-      bind_cols(data.frame(as.matrix(dhsMatrix)))
+      select(survey_id, area_id, period, age_group, births, tips, pys, row_num) %>%
+      bind_cols(data.frame(exp(fit$sample$log_rate_pred_dhs))) %>%
+      filter(!row_num %in% as.numeric(dhs_num))
       
-      # filter(period >= end_year)
   } else {
     dhs_ppd <- data.frame()
   }
   
   ais_ppd <- mf$observations$full_obs %>%
     ungroup() %>%
-    filter(survtype == "AIS-MIS", survyear >= end_year)
+    filter(survtype == "AIS-MIS")
   
   
   if(nrow(ais_ppd)) {
-    aisMatrix <- exp(fit$sample$log_rate_exclude_ais)
+    
+    ais_num <-  as.numeric(X_extract_ais_ppd %*% mf$X_extract$X_extract_ais %*% mf$observations$full_obs$row_num)
     ais_ppd <- ais_ppd %>%
-      select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-      bind_cols(data.frame(aisMatrix)) %>%
-      type.convert() %>%
-      filter(period >= end_year)
+      type.convert(as.is = T) %>%
+      select(survey_id, area_id, period, age_group, births, tips, pys, row_num) %>%
+      bind_cols(data.frame(exp(fit$sample$log_rate_pred_ais))) %>%
+      filter(!row_num %in% as.numeric(ais_num))
+    
   } else {
     ais_ppd <- data.frame()
   }
   
   phia_ppd <- mf$observations$full_obs %>%
     ungroup() %>%
-    filter(survtype == "PHIA", survyear >= end_year)
+    filter(survtype == "PHIA")
   
   
   if(nrow(phia_ppd)) {
-    phiaMatrix <- exp(fit$sample$log_rate_exclude_phia)
-    phia_ppd <- phia_ppd %>% 
-      select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-      bind_cols(data.frame(phiaMatrix)) %>%
-      type.convert() %>%
-      filter(period >= end_year)
+    phia_num <-  as.numeric(X_extract_phia_ppd %*% mf$X_extract$X_extract_phia %*% mf$observations$full_obs$row_num)
+    phia_ppd <- phia_ppd %>%
+      type.convert(as.is = T) %>%
+      select(survey_id, area_id, period, age_group, births, tips, pys, row_num) %>%
+      bind_cols(data.frame(exp(fit$sample$log_rate_pred_phia))) %>%
+      filter(!row_num %in% as.numeric(phia_num))
   } else {
     phia_ppd <- data.frame()
   }
   
   mics_ppd <- mf$observations$full_obs %>%
     ungroup() %>%
-    filter(survtype == "MICS", survyear >= end_year)
+    filter(survtype == "MICS")
   
   
   if(nrow(mics_ppd)) {
-    micsMatrix <- exp(fit$sample$log_rate_exclude_mics)
-    mics_ppd <- mics_ppd %>% 
-      select(survey_id, area_id, period, age_group, births, tips, pys) %>%
-      bind_cols(data.frame(micsMatrix)) %>%
-      type.convert() %>%
-      filter(period >= end_year)
+    mics_num <-  as.numeric(X_extract_mics_ppd %*% mf$X_extract$X_extract_mics %*% mf$observations$full_obs$row_num)
+    mics_ppd <- mics_ppd %>%
+      type.convert(as.is = T) %>%
+      select(survey_id, area_id, period, age_group, births, tips, pys, row_num) %>%
+      bind_cols(data.frame(exp(fit$sample$log_rate_pred_mics))) %>%
+      filter(!row_num %in% as.numeric(mics_num))
   } else {
     mics_ppd <- data.frame()
   }
@@ -738,20 +695,24 @@ fit <- function(iso3, time, trend, model_level = "district") {
   est_births <- as.matrix(ppd[,paste0("X", 1:1000)]) * ppd$pys
   ll_pred <- dxpois(ppd$births, est_births, TRUE)
   elpd <- loo::elpd(t(ll_pred))
-  elpd <- elpd$estimates %>%
+  crps_elpd <- elpd$estimates %>%
     as.data.frame() %>%
+    rownames_to_column("indicator") %>%
+    add_row(indicator = "crps", Estimate = crps) %>%
     mutate(source = paste0(time, " ", trend))
   
-  system.time(ppd %>%
-                ungroup() %>%
-                rowwise() %>%
-                # group_by(idx) %>%
-                mutate(across(starts_with("X"), ~rpois(1, pys*.x))))
+  write_csv(crps_elpd, file.path("outside_orderly/fit/outputs/selection", paste0(time, "-", trend), iso3_c, "crps_elpd.csv"))
   
-  int <- rowMeans(ppd[,paste0("X", 1:1000)])
-  ppd %>%
-    select(!starts_with("X")) %>%
-    mutate(mean = int)
+  # system.time(ppd %>%
+  #               ungroup() %>%
+  #               rowwise() %>%
+  #               # group_by(idx) %>%
+  #               mutate(across(starts_with("X"), ~rpois(1, pys*.x))))
+  # 
+  # int <- rowMeans(ppd[,paste0("X", 1:1000)])
+  # ppd %>%
+  #   select(!starts_with("X")) %>%
+  #   mutate(mean = int)
   
   # poisson_sample_births <- function(x) {
   #   pys <- as.numeric(x["pys"])
@@ -768,26 +729,24 @@ fit <- function(iso3, time, trend, model_level = "district") {
   # 
   # system.time(apply(ppd, 1, poisson_sample_births))
   
-ppd2 <- ppd %>%
+ppd <- ppd %>%
     # ungroup() %>%
     # rowwise() %>%
     group_by(idx) %>%
-    mutate(across(starts_with("X"), ~rpois(1, pys*.x)))
-    # type.convert() %>%
-    
-foo <- ppd2 %>%
+    mutate(across(starts_with("X"), ~rpois(1, pys*.x))) %>%
     # mutate(period = plyr::round_any(period, 2, round)) %>%
     ungroup() %>%
     aggregate_to_admin(c("survey_id", "period", "age_group", "tips"),
                        c(paste0("X", 1:1000), "births", "pys"),
                        1,
                        areas) %>%
+    distinct() %>%
     mutate(survey_asfr = births/pys,
            across(starts_with("X"), ~.x/pys)) %>%
     select(survey_id:pys, survey_asfr, everything()) %>%
     group_by(survey_id, period, area_id,tips)
   
-foo2 <- foo %>%
+ppd <- ppd %>%
     summarise(
       survey_tfr = 5*sum(survey_asfr),
       across(starts_with("X"), ~5*sum(.x)),
@@ -796,12 +755,10 @@ foo2 <- foo %>%
     ) %>%
     ungroup() %>%
     select(survey_id:survey_tfr, observed_births, pys, everything())
-
-rowMeans(foo2[,paste0("X", 1:1000)])
   
-  qtls <- apply(select(foo2, starts_with("X")), 1, quantile, c(0.025, 0.5, 0.975))
+  qtls <- apply(select(ppd, starts_with("X")), 1, quantile, c(0.025, 0.5, 0.975))
   
-  foo2 <- foo2 %>%
+  ppd <- ppd %>%
     group_by(survey_id, area_id, period, tips, observed_births, pys, survey_tfr) %>%
     rowwise() %>%
     summarise(quant_pos = sum(across(starts_with("X"), ~quant_pos_sum(survey_tfr, .x)))) %>%
@@ -809,7 +766,9 @@ rowMeans(foo2[,paste0("X", 1:1000)])
     mutate(lower = qtls[1,],
            median = qtls[2,],
            upper = qtls[3,],
-           source = "rw")
+           source = paste0(time, "-", trend))
+  
+  write_csv(ppd, file.path("outside_orderly/fit/outputs/selection", paste0(time, "-", trend), iso3_c, "ppd.csv"))
   
   # fit <- naomi::sample_tmb(fit, random_only=FALSE)
   # hyper <- fit$sample %>%
@@ -819,9 +778,11 @@ rowMeans(foo2[,paste0("X", 1:1000)])
   
   
   fr_plot <- fr_plot %>%
-    filter(area_id %in% c("MWI", "MWI_1_1", "MWI_1_2", "MWI_1_3")) %>%
-    left_join(areas %>% sf::st_drop_geometry() %>% select(area_id, area_name)) %>%
-    filter(!(area_id == iso3 & survey_id %in% subnational_surveys))
+    left_join(areas %>% sf::st_drop_geometry() %>% select(area_id, area_name, area_level)) %>%
+    filter(!survey_id %in% subnational_surveys,
+           area_level %in% c(0, admin1_lvl)) %>%
+    select(-survyear) %>%
+    separate(survey_id, into = c(NA, "survyear", NA), sep = c(3,7), remove = F, convert = T)
   
   cntry_name <- countrycode::countrycode(iso3, "iso3c", "country.name")
   
@@ -830,8 +791,8 @@ rowMeans(foo2[,paste0("X", 1:1000)])
     ggplot(aes(x=period, y=median)) +
     geom_line(size=1) +
     geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
-    geom_point(data = fr_plot %>% filter(variable == "tfr", value <10, !survey_id %in% remove_survey), aes(y=value, color=survey_id, size = pys)) +
-    geom_point(data = fr_plot %>% filter(variable == "tfr", value <10, survey_id %in% remove_survey), aes(y=value, color=survey_id, size = pys), shape=22, fill=NA) +
+    geom_point(data = fr_plot %>% filter(variable == "tfr", value <10, !survey_id %in% remove_survey, survyear < end_year), aes(y=value, color=survey_id, size = pys)) +
+    geom_point(data = fr_plot %>% filter(variable == "tfr", value <10, survyear >= end_year), aes(y=value, color=survey_id, size = pys), shape=22, fill=NA) +
     facet_wrap(~fct_inorder(area_name), ncol=5) +
     # facet_wrap(~area_name) +
     labs(y="TFR", x=element_blank(), color="Survey ID", title=paste(iso3, "| Provincial TFR")) +
@@ -841,21 +802,7 @@ rowMeans(foo2[,paste0("X", 1:1000)])
       text = element_text(size=14)
     )
   
-  if(str_detect(model_level, "district")) {
-    
-    district_tfr <- tmb_results %>%
-      filter(area_level == naomi_level, variable == "tfr") %>%
-      ggplot(aes(x=period, y=median)) +
-      geom_line() +
-      geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5) +
-      facet_wrap(~area_name, ncol=8) +
-      theme_minimal() +
-      labs(y="TFR", x=element_blank(), title=paste(iso3, "| District TFR"))
-  } else {
-    district_tfr <- data.frame()
-  }
-  
-  path <- file.path("outside_orderly/fit/outputs", iso3_c, model_level, "tfr_plot.png")
+  path <- file.path("outside_orderly/fit/outputs/selection", paste0(time, "-", trend), iso3_c, "tfr_plot.png")
   png(path, h = 800, w = 1200)
   print(tfr_plot)
   dev.off()
@@ -866,6 +813,7 @@ rowMeans(foo2[,paste0("X", 1:1000)])
   tfr_plot
   
 }
+
 
 library(dplyr)
 library(tidyr)
@@ -883,8 +831,17 @@ library(purrr)
 library(rlang)
 library(mgcv)
 
+for (iso3 in foo[!foo %in% c("AGO","GIN", "SSD", "CAF", "GNB", "ERI", "BWA", "GNQ", "NGA", "COD", "CMR", "BDI")]) {
+  for(time in c("rw", "rw2", "ar1", "arima")) {
+    for(trend in c(0,1)) {
+      fit(iso3, time, trend)
+    }
+  }
+} 
+
+
 debugonce(fit)
-fit("MWI", "ar1", 1, "national")
+fit("AGO", "ar1", 1, "national")
 fit("MWI", "provincial")
 fit("MWI", "district")
 fit("ZWE", "provincial")

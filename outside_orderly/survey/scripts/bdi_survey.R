@@ -33,7 +33,7 @@ survey_clusters <- assign_dhs_cluster_areas(survey_clusters, survey_region_areas
 
 # Filter out 4 clusters from 2012 DHS that have been placed on ~0 lat, 0 long
 survey_clusters <- survey_clusters %>%
-  filter(geoloc_distance < 6)
+  filter(geoloc_distance < 6 | is.na(geoloc_distance))
   
 
 survey_clusters <- survey_clusters %>%

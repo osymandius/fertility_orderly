@@ -60,14 +60,17 @@ Type objective_function<Type>::operator() ()
   DATA_VECTOR(log_offset_naomi);
   DATA_VECTOR(births_obs_naomi);
 
-  DATA_VECTOR(log_offset_dhs);
-  DATA_VECTOR(births_obs_dhs);
+  DATA_VECTOR(log_offset);
+  DATA_VECTOR(births_obs);
 
-  DATA_VECTOR(log_offset_ais);
-  DATA_VECTOR(births_obs_ais);
+  // DATA_VECTOR(log_offset_dhs);
+  // DATA_VECTOR(births_obs_dhs);
 
-  DATA_VECTOR(log_offset_phia);
-  DATA_VECTOR(births_obs_phia);
+  // DATA_VECTOR(log_offset_ais);
+  // DATA_VECTOR(births_obs_ais);
+
+  // DATA_VECTOR(log_offset_phia);
+  // DATA_VECTOR(births_obs_phia);
 
   DATA_VECTOR(pop);
   DATA_INTEGER(mics_toggle);
@@ -85,6 +88,13 @@ Type objective_function<Type>::operator() ()
   DATA_MATRIX(X_urban_dummy);
   DATA_SPARSE_MATRIX(X_spike_2010);
 
+  vector<Type> log_offset_dhs = X_extract_dhs * log_offset;
+  vector<Type> log_offset_ais = X_extract_ais * log_offset;
+  vector<Type> log_offset_phia = X_extract_phia * log_offset;
+
+  vector<Type> births_obs_dhs = X_extract_dhs * births_obs;
+  vector<Type> births_obs_ais = X_extract_ais * births_obs;
+  vector<Type> births_obs_phia = X_extract_phia * births_obs;
 
   nll -= dnorm(beta_0, Type(0), Type(sqrt(1/0.001)), true);
 
@@ -174,7 +184,8 @@ Type objective_function<Type>::operator() ()
   PARAMETER_VECTOR(u_period);
 
 
-  nll -= dnorm(log_prec_rw_period, Type(6.3), Type(2.5), true);
+  nll -= dnorm(log_prec_rw_period, Type(6.3), Type(0.5), true);
+  // nll -= dnorm(log_prec_rw_period, Type(6.3), Type(2.5), true);
   Type prec_rw_period = exp(log_prec_rw_period);
   // nll -= dgamma(prec_rw_period, Type(1), Type(2000), true);
   // nll -= dnorm(prec_rw_period, Type(6.3), Type(2.5), true);
@@ -257,8 +268,11 @@ Type objective_function<Type>::operator() ()
   // Type eta1_phi_period = 2*exp(lag_logit_eta1_phi_period)/(1+exp(lag_logit_eta1_phi_period))-1;
   ///////////
 
+  // Type prec_eta1 = exp(log_prec_eta1);
+  // nll -= dgamma(prec_eta1, Type(1), Type(2000), true);
+
+  nll -= dnorm(log_prec_eta1, Type(3), Type(0.5), true);
   Type prec_eta1 = exp(log_prec_eta1);
-  nll -= dgamma(prec_eta1, Type(1), Type(2000), true);
 
   Type eta1_phi_age(exp(logit_eta1_phi_age)/(1+exp(logit_eta1_phi_age)));
   nll -= log(eta1_phi_age) +  log(1 - eta1_phi_age); // Jacobian adjustment for inverse logit'ing the parameter...
@@ -266,7 +280,8 @@ Type objective_function<Type>::operator() ()
 
   Type eta1_phi_period(exp(logit_eta1_phi_period)/(1+exp(logit_eta1_phi_period)));
   nll -= log(eta1_phi_period) +  log(1 - eta1_phi_period); // Jacobian adjustment for inverse logit'ing the parameter...
-  nll -= dbeta(eta1_phi_period, Type(0.5), Type(0.5), true);
+  // nll -= dbeta(eta1_phi_period, Type(0.5), Type(0.5), true);
+  nll -= dnorm(eta1_phi_period, Type(1.5), Type(0.2), true);
 
   nll += SEPARABLE(AR1(Type(eta1_phi_age)), SEPARABLE(AR1(Type(eta1_phi_period)), GMRF(R_country)))(eta1);
   vector<Type> eta1_v(eta1);
@@ -348,8 +363,11 @@ Type objective_function<Type>::operator() ()
     // Type eta2_phi_period = 2*exp(lag_logit_eta2_phi_period)/(1+exp(lag_logit_eta2_phi_period))-1;
 
     // Type log_prec_eta2 = 8;
+    // Type prec_eta2 = exp(log_prec_eta2);
+    // nll -= dgamma(prec_eta2, Type(1), Type(2000), true);
+
+    nll -= dnorm(log_prec_eta2, Type(5), Type(0.1), true);
     Type prec_eta2 = exp(log_prec_eta2);
-    nll -= dgamma(prec_eta2, Type(1), Type(2000), true);
 
     Type eta2_phi_period(exp(logit_eta2_phi_period)/(1+exp(logit_eta2_phi_period)));
     nll -= log(eta2_phi_period) +  log(1 - eta2_phi_period); // Jacobian adjustment for inverse logit'ing the parameter...
@@ -489,7 +507,7 @@ Type objective_function<Type>::operator() ()
 
   }
 
-  if(multiple_survey_toggle) {
+  if(multiple_survey_toggle && !mics_only_toggle) {
 
     PARAMETER_ARRAY(zeta2);
     PARAMETER(log_prec_zeta2);
@@ -536,7 +554,7 @@ Type objective_function<Type>::operator() ()
         + X_extract_mics * spike_2001_lh;
     }
 
-    if(multiple_survey_toggle) {
+    if(multiple_survey_toggle && !mics_only_toggle) {
       mu_obs_pred_mics = mu_obs_pred_mics
         + X_extract_mics * zeta2_lh;
     }

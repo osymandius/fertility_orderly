@@ -301,6 +301,7 @@ Type objective_function<Type>::operator() ()
                      beta_0
                      + Z_age * u_age * sqrt(1/prec_rw_age)
                      + Z_period * u_period * sqrt(1/prec_rw_period)
+                     + Z_interaction1 * eta1_v * sqrt(1/prec_eta1)
                      );
 
   if(trend_toggle) {
@@ -419,7 +420,6 @@ Type objective_function<Type>::operator() ()
 
     log_lambda = log_lambda
                   + Z_spatial * u_spatial_str * sqrt(1/prec_spatial)
-                  + Z_interaction1 * eta1_v * sqrt(1/prec_eta1)
                   + Z_interaction2 * eta2_v * sqrt(1/prec_eta2)
                   + Z_interaction3 * eta3_v * sqrt(1/prec_eta3);
 
@@ -464,19 +464,19 @@ Type objective_function<Type>::operator() ()
   vector<Type> log_rate_pred_dhs(X_extract_dhs * (M_full_obs * log(lambda_out))
                                 + X_extract_dhs * tips_fe_lh
                                 + X_extract_dhs * u_smooth_lh
-                                + log_offset_dhs
+                                // + log_offset_dhs
 
                 );
 
   vector<Type> log_rate_pred_ais(X_extract_ais * (M_full_obs * log(lambda_out))
                                 + X_extract_ais * u_smooth_lh
                                 + X_extract_ais * tips_fe_lh
-                                + log_offset_ais
+                                // + log_offset_ais
 
                 );
 
   vector<Type> log_rate_pred_phia(X_extract_phia * (M_full_obs * log(lambda_out))
-                                 + log_offset_phia
+                                 // + log_offset_phia
 
   );
 
@@ -583,7 +583,7 @@ Type objective_function<Type>::operator() ()
     vector<Type> log_rate_pred_mics(X_extract_mics * (M_full_obs * log(lambda_out))
                                   + X_extract_mics * u_smooth_lh
                                   + X_extract_mics * tips_fe_lh
-                                  + log_offset_mics
+                                  // + log_offset_mics
 
                 );
 

@@ -1,41 +1,60 @@
 library(tidyverse)
 
-get_latest_selection <- function(iso3) {
-  id <- lapply(iso3, function(x){
-    orderly::orderly_search(name = "aaa_model_selection", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
-  })
-  
-  out <- list()
-  
-  paths <- paste0(rprojroot::find_rstudio_root_file(), "/archive/aaa_model_selection/", id, "/pred.csv")
-  out$dat <- lapply(paths, read.csv) %>%
-    bind_rows()
-  
-  paths <- paste0(rprojroot::find_rstudio_root_file(), "/archive/aaa_model_selection/", id, "/crps.csv")
-  out$crps <- lapply(paths, read.csv) %>%
-    bind_rows()
-  
-  paths <- paste0(rprojroot::find_rstudio_root_file(), "/archive/aaa_model_selection/", id, "/elpd.csv")
-  out$elpd <- lapply(paths, read.csv) %>%
-    bind_rows()
-  
-  paths <- paste0(rprojroot::find_rstudio_root_file(), "/archive/aaa_model_selection/", id, "/fr.csv")
-  out$fr <- lapply(paths, read.csv) %>%
-    bind_rows()
-  
-  out
+# get_latest_selection <- function(iso3) {
+#   id <- lapply(iso3, function(x){
+#     orderly::orderly_search(name = "aaa_model_selection", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
+#   })
+#   
+#   out <- list()
+#   
+#   paths <- paste0(rprojroot::find_rstudio_root_file(), "/archive/aaa_model_selection/", id, "/pred.csv")
+#   out$dat <- lapply(paths, read.csv) %>%
+#     bind_rows()
+#   
+#   paths <- paste0(rprojroot::find_rstudio_root_file(), "/archive/aaa_model_selection/", id, "/crps.csv")
+#   out$crps <- lapply(paths, read.csv) %>%
+#     bind_rows()
+#   
+#   paths <- paste0(rprojroot::find_rstudio_root_file(), "/archive/aaa_model_selection/", id, "/elpd.csv")
+#   out$elpd <- lapply(paths, read.csv) %>%
+#     bind_rows()
+#   
+#   paths <- paste0(rprojroot::find_rstudio_root_file(), "/archive/aaa_model_selection/", id, "/fr.csv")
+#   out$fr <- lapply(paths, read.csv) %>%
+#     bind_rows()
+#   
+#   out
+# 
+# }
+# 
+# orderly_pull_oli("aaa_model_selection", c("TGO", "SLE", "SEN", "NER", "MLI", "LBR", "GIN", "GHA", "CIV", "TCD", "CMR", "BDI", "BFA", "BEN", "ZWE", "ZMB", "TZA", "UGA", "ZAF", "NAM", "MOZ", "LSO", "KEN", "SWZ", "AGO"))
+# dat <- get_latest_selection(c("TGO", "SLE", "SEN", "NER", "MLI", "LBR", "GIN", "GHA", "CIV", "TCD", "CMR", "BDI", "BFA", "BEN", "ZWE", "ZMB", "TZA", "UGA", "ZAF", "NAM", "MOZ", "LSO", "KEN", "SWZ", "AGO"))
 
-}
+sel_dat <- list.files("outside_orderly/fit/outputs/selection", full.names = T, recursive = T, pattern = "ppd.csv") %>%
+  lapply(read_csv, show_col_types = F)
 
-orderly_pull_oli("aaa_model_selection", c("TGO", "SLE", "SEN", "NER", "MLI", "LBR", "GIN", "GHA", "CIV", "TCD", "CMR", "BDI", "BFA", "BEN", "ZWE", "ZMB", "TZA", "UGA", "ZAF", "NAM", "MOZ", "LSO", "KEN", "SWZ", "AGO"))
-dat <- get_latest_selection(c("TGO", "SLE", "SEN", "NER", "MLI", "LBR", "GIN", "GHA", "CIV", "TCD", "CMR", "BDI", "BFA", "BEN", "ZWE", "ZMB", "TZA", "UGA", "ZAF", "NAM", "MOZ", "LSO", "KEN", "SWZ", "AGO"))
+elpd <- list.files("outside_orderly/fit/outputs/selection", full.names = T, recursive = T, pattern = "elpd") %>%
+  lapply(read_csv, show_col_types = F)
 
-selec <- dat$dat %>%
+names(elpd) <- str_extract(list.files("outside_orderly/fit/outputs/selection", full.names = T, recursive = T, pattern = "elpd"), "[A-Z]{3}")
+
+elpd <- elpd %>%
+  bind_rows(.id = "iso3")
+
+elpd_crs <- elpd %>%
+  select(-SE) %>%
+  filter(indicator != "ic") %>%
+  pivot_wider(names_from  = indicator, values_from = Estimate)
+
+selection <- sel_dat %>%
+  bind_rows() %>%
   mutate(within_95 = as.integer(quant_pos %in% 25:975)) %>%
-  group_by(source) %>%
+  separate_survey_id(F) %>%
+  group_by(iso3, source) %>%
   summarise(coverage = sum(within_95)/n()) %>%
   left_join(
-    dat$dat %>%
+    bind_rows(sel_dat) %>%
+      separate_survey_id(F) %>%
       filter(lower != 0,
              # upper != 0,
              survey_tfr != 0) %>%
@@ -45,24 +64,25 @@ selec <- dat$dat %>%
              pen_10 = ifelse(upper > 10, log(upper), 0),
              score = diff + pen_lower + pen_upper + pen_10
       ) %>%
-      group_by(source) %>%
+      group_by(iso3, source) %>%
       summarise(score = sum(score))
   ) %>%
   left_join(
-    dat$crps %>%
-      mutate(idx = row_number()) %>%
-      pivot_longer(-idx, names_to = "source") %>%
-      group_by(source) %>%
-      summarise(crps = sum(value))
-  ) %>%
-  left_join(
-    dat$elpd %>%
-      mutate(idx = rep(c(1,2), 150)) %>%
-      filter(idx == 1) %>%
-      group_by(source) %>%
-      summarise(elpd = sum(Estimate))
-  ) %>%
-  write_csv("~/Downloads/selection.csv")
+    elpd_crs %>% mutate(source = str_replace(source, " ", "-"))
+  )
+
+selection %>%
+  filter(!iso3 %in% c("GHA", "AGO")) %>%
+  group_by(source) %>%
+  summarise(
+    med_score = median(score),
+    score = sum(score),
+    med_elpd = median(elpd),
+    elpd = sum(elpd),
+    med_crps = median(crps),
+    crps = sum(crps))
+
+  # write_csv("~/Downloads/selection.csv")
 
 dat$fr %>%
   filter(source %in% c("AR1", "rw2"),

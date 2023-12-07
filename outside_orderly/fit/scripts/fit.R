@@ -1,3 +1,11 @@
+tmb_unload <- function(name) {
+  ldll <- getLoadedDLLs()
+  idx  <- grep(name, names(ldll))
+  for (i in seq_along(idx)) dyn.unload(unlist(ldll[[idx[i]]])$path)
+  cat('Unload ', length(idx), "loaded versions.\n")
+}
+
+
 fit <- function(iso3, model_level = "national") {
   message(iso3)
   iso3_c <- iso3
@@ -6,7 +14,11 @@ fit <- function(iso3, model_level = "national") {
   
   if(str_detect(model_level, "district")) {
     
-    asfr <- readRDS(paste0("outside_orderly/asfr/outputs/", iso3_c, "/", iso3_c, "_asfr.rds"))$district 
+    if(str_detect(iso3, "CAF|SSD"))
+      asfr <- readRDS(paste0("outside_orderly/asfr/outputs/", iso3_c,  "/", iso3_c, "_asfr.rds"))$provincial
+    else
+      asfr <- readRDS(paste0("outside_orderly/asfr/outputs/", iso3_c, "/", iso3_c, "_asfr.rds"))$district 
+    
     phia_asfr <- read_csv("global/phia_asfr.csv", show_col_types = F) %>%
                     moz.utils::separate_survey_id(F) %>% 
                     filter(iso3 == iso3_c) %>%
@@ -59,7 +71,27 @@ fit <- function(iso3, model_level = "national") {
     # read.csv("depends/interpolated_population.csv") %>%
     rename(period = year) %>%
     mutate(iso3 = iso3) %>%
-    filter(sex == "female")
+    filter(sex == "female") %>%
+    distinct() ## Deal with COD duplicated areas. Should be fixed upstream...
+  
+  if(max(population$period) == 2020) {
+    
+    extrap_pop <- population %>%
+      filter(period %in% 2015:2020, !is.na(population)) %>%
+      group_by(area_id, age_group, sex) %>%
+      mutate(
+        population = log(population),
+        population = exp(Hmisc::approxExtrap(period, population, xout = 2020:2025)$y),
+        period = period + 5)
+    
+    population <- bind_rows(
+      population %>% filter(period != 2020),
+      extrap_pop
+    )
+    
+  }
+  
+
   
   
   areas <- readRDS("global/areas.rds")[[iso3_c]]%>%
@@ -73,7 +105,8 @@ fit <- function(iso3, model_level = "national") {
   #   filter(iso3 == iso3_c) %>%
   #   mutate(survtype = "PHIA")
   
-  remove_survey <- c("CIV2005AIS",
+  remove_survey <- c(
+    # "CIV2005AIS",
                      # "CIV2006MICS", 
                      "GMB2005MICS",
                      # "MLI2009MICS", "MLI2015MICS", 
@@ -82,8 +115,9 @@ fit <- function(iso3, model_level = "national") {
                      # "BEN1996DHS",
                      "KEN2009MICS", 
                      # "COD2017MICS", 
-                     "NGA2007MICS",
-                     "TZA2007AIS", "TZA2012AIS")
+                     "NGA2007MICS"
+                     # "TZA2007AIS", "TZA2012AIS"
+                     )
   subnational_surveys <- c("KEN2009MICS", "KEN2011MICS")
   
   asfr <- asfr %>% 
@@ -107,12 +141,13 @@ fit <- function(iso3, model_level = "national") {
            !(survey_id == "MLI2015MICS" & tips > 4),
            !(survey_id == "MLI2009MICS" & tips > 4),
            !(survey_id == "COD2017MICS" & tips > 10),
+           !(survey_id == "CAF2006MICS" & tips == 5),
+           !(survey_id == "CAF2018MICS" & tips == 5),
            
-    ) %>%
-    filter(period < 2021) ## THIS IS BAD - PROJECT THE POPULPATIONS BEYOND 2020
+    )
   
   # debugonce(make_model_frames_dev)
-  mf <- make_model_frames_dev(iso3_c, population, asfr,  areas, naomi_level, project=2020)
+  mf <- make_model_frames_dev(iso3_c, population, asfr,  areas, naomi_level, project=2025)
   
   validate_model_frame(mf, areas, naomi_level)
   # # 
@@ -182,14 +217,17 @@ fit <- function(iso3, model_level = "national") {
     log_offset_naomi = log(mf$observations$naomi_level_obs$pys),
     births_obs_naomi = mf$observations$naomi_level_obs$births,
     
-    log_offset_dhs = log(filter(mf$observations$full_obs, survtype == "DHS")$pys),
-    births_obs_dhs = filter(mf$observations$full_obs, survtype == "DHS")$births,
+    log_offset = log(mf$observations$full_obs$pys),
+    births_obs = mf$observations$full_obs$births,
     
-    log_offset_ais = log(filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS"))$pys),
-    births_obs_ais = filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS"))$births,
-    
-    log_offset_phia = log(filter(mf$observations$full_obs, survtype == "PHIA")$pys),
-    births_obs_phia = filter(mf$observations$full_obs, survtype == "PHIA")$births,
+    # log_offset_dhs = log(filter(mf$observations$full_obs, survtype == "DHS")$pys),
+    # births_obs_dhs = filter(mf$observations$full_obs, survtype == "DHS")$births,
+    # 
+    # log_offset_ais = log(filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS"))$pys),
+    # births_obs_ais = filter(mf$observations$full_obs, survtype %in% c("AIS", "MIS"))$births,
+    # 
+    # log_offset_phia = log(filter(mf$observations$full_obs, survtype == "PHIA")$pys),
+    # births_obs_phia = filter(mf$observations$full_obs, survtype == "PHIA")$births,
     
     pop = mf$mf_model$population,
     # A_asfr_out = mf$out$A_asfr_out,
@@ -314,10 +352,16 @@ fit <- function(iso3, model_level = "national") {
     tmb_int$random <- c(tmb_int$random, "beta_spike_2010")
   }
   
-  if(length(unique(mf$observations$full_obs$survey_id)) > 1) {
+  if(length(unique(mf$observations$full_obs$survey_id)) > 1 & tmb_int$data$mics_only_toggle != 1) {
+    
+    tmb_int$data <- c(tmb_int$data,
+                      Z_survey = sparse.model.matrix(~0 + id.survey, mf$observations$full_obs %>% mutate(id.survey = factor(survey_id)))
+    )
+                      
     tmb_int$random <- c(tmb_int$random,
                         # "u_tips"
                         "zeta2"
+                        # "u_survey"
     )
     
     tmb_int$par <- c(tmb_int$par,
@@ -326,9 +370,11 @@ fit <- function(iso3, model_level = "national") {
                      # "lag_logit_phi_tips" = 0
                      "zeta2" = list(array(0, c(ncol(as(diag(1, length(unique(mf$observations$full_obs$survey_id))), "dgTMatrix")),
                                                ncol(mf$Z$X_tips_fe)
-                     )
+                     ),
                      )),
                      "log_prec_zeta2" = 0
+                     # "u_survey" = list(rep(0, length(unique(mf$observations$full_obs$survey_id)))),
+                     # "log_prec_survey" = 0
     )
   }
   
@@ -370,13 +416,26 @@ fit <- function(iso3, model_level = "national") {
     
     tmb_int$random <- c(tmb_int$random, "beta_spike_famine")
   }
-  
-  lapply(list.files("src/aaa_fit/models/", pattern = "\\.o|\\.so", full.names = T), file.remove)
-  TMB::compile("src/aaa_fit/models/2023_09_11_all_levels.cpp", flags = "-w")               # Compile the C++ file
+# 
+#   lapply(list.files("src/aaa_fit/models/", pattern = "\\.o|\\.so", full.names = T), file.remove)
+#   tmb_unload("2023_09_11_all_levels")
+# TMB::compile("src/aaa_fit/models/2023_09_11_all_levels.cpp", flags = "-w")               # Compile the C++ file
   dyn.load(TMB::dynlib("src/aaa_fit/models/2023_09_11_all_levels"))
+  
+
+  # lapply(list.files("src/aaa_fit/models/", pattern = "\\.o|\\.so", full.names = T), file.remove)
+  # tmb_unload("2023_10_31_all_levels_mics")
+  # TMB::compile("src/aaa_fit/models/2023_10_31_all_levels_mics.cpp", flags = "-w")               # Compile the C++ file
+  # dyn.load(TMB::dynlib("src/aaa_fit/models/2023_10_31_all_levels_mics"))
+  
+  # lapply(list.files("src/aaa_fit/models/", pattern = "\\.o|\\.so", full.names = T), file.remove)
+  # tmb_unload("2023_11_03_all_levels_survey")
+  # TMB::compile("src/aaa_fit/models/2023_11_03_all_levels_survey.cpp", flags = "-w")               # Compile the C++ file
+  # dyn.load(TMB::dynlib("src/aaa_fit/models/2023_11_03_all_levels_survey"))
     
   f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
                                               parameters = tmb_int$par,
+                                              # DLL = "2023_11_03_all_levels_survey",
                                               DLL = "2023_09_11_all_levels",
                                               silent=0,
                                               checkParameterOrder=FALSE)
@@ -403,7 +462,6 @@ fit <- function(iso3, model_level = "national") {
   sd_report <- summary(sd_report, "all")
   
   sd_report <- data.frame(sd_report, "hyper" = rownames(sd_report), iso = iso3)
-  # sd_report <- data.frame(x= "foo")
   
   write_csv(sd_report, file.path("outside_orderly/fit/outputs", iso3_c, model_level, "sd_report.csv"))
   
@@ -443,6 +501,8 @@ fit <- function(iso3, model_level = "national") {
       text = element_text(size=14)
     )
   
+  tfr_plot
+  
   if(str_detect(model_level, "district")) {
     
     district_tfr <- tmb_results %>%
@@ -464,8 +524,7 @@ fit <- function(iso3, model_level = "national") {
   # pdf("check/tfr_district.pdf", h = 12, w = 20)
   # district_tfr
   # dev.off()
-  
-  tfr_plot
+
   
 }
 
@@ -487,7 +546,7 @@ library(mgcv)
 
 debugonce(fit)
 fit("MWI")
-fit("MWI", "district")
+fit("TZA", "district")
 fit("MWI", "district")
 fit("ZWE", "provincial")
 fit("ZWE", "district")
@@ -496,4 +555,4 @@ fit("RWA", "provincial")
 fit("RWA", "district")
 
 possibly_fit <- possibly(fit, otherwise = NULL)
-id <- map(moz.utils::ssa_iso3()[moz.utils::ssa_iso3() != "AGO"], ~possibly_fit(.x, model_level = "provincial"))
+map(moz.utils::ssa_iso3()[!moz.utils::ssa_iso3() %in% c("COG", "KEN")], ~possibly_fit(.x, model_level = "district"))

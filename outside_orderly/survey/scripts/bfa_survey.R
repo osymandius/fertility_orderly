@@ -7,7 +7,8 @@ areas_wide <- spread_areas(areas)
 
 surveys <- create_surveys_dhs(iso3, survey_characteristics = NULL) %>%
   filter(as.numeric(SurveyYear) > 1994,
-         survey_id != "BFA2021DHS")
+         # survey_id != "BFA2021DHS"
+         )
 
 survey_meta <- create_survey_meta_dhs(surveys)
 
@@ -52,7 +53,7 @@ survey_clusters <- survey_clusters %>%
       left_join(survey_regions %>% select(survey_id, survey_region_id, geoloc_area_id = survey_region_area_id))
   )
 
-#p_coord_check <- plot_survey_coordinate_check(survey_clusters,
+# p_coord_check <- plot_survey_coordinate_check(survey_clusters,
 #                                               survey_region_boundaries,
 #                                               survey_region_areas)
 
