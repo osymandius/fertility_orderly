@@ -190,11 +190,17 @@ fit <- function(iso3, model_level = "national") {
   # tmb_int <- make_tmb_inputs(iso3, mf, naomi_level)
   
   mf$mf_model <- mf$mf_model %>%
+    # select(-urban_idx) %>%
     left_join(mf$mf_model %>%
                 filter(urban == 1) %>%
                 distinct(area_id) %>%
-                mutate(urban_idx = factor(row_number()))
-              )
+                mutate(urban_idx = row_number())
+              ) %>%
+    mutate(urban_idx = factor(ifelse(urban == 0, 999, urban_idx)))
+  
+  Z_urban_iid <- sparse.model.matrix(~0 + urban_idx, mf$mf_model)
+  
+  Z_urban_iid <- Z_urban_iid[ ,c(1:44)]
   
   tmb_int <- list()
   
@@ -207,7 +213,7 @@ fit <- function(iso3, model_level = "national") {
     X_tips_fe = mf$Z$X_tips_fe,
     X_period = mf$Z$X_period,
     X_urban_dummy = mf$Z$X_urban_dummy,
-    Z_urban_iid = sparse.model.matrix(~0 + urban_idx, mf$mf_model),
+    Z_urban_iid = Z_urban_iid,
     X_extract_dhs = mf$X_extract$X_extract_dhs,
     X_extract_ais = mf$X_extract$X_extract_ais,
     X_extract_mics = mf$X_extract$X_extract_mics,
@@ -222,7 +228,7 @@ fit <- function(iso3, model_level = "national") {
     # Z_interaction1 = sparse.model.matrix(~0 + id.interaction1, mf$mf_model),
     # Z_interaction2 = sparse.model.matrix(~0 + id.interaction2, mf$mf_model),
     # Z_interaction3 = sparse.model.matrix(~0 + id.interaction3, mf$mf_model),
-    Z_interaction1 = mgcv::tensor.prod.model.matrix(list(mf$Z$Z_age, mf$Z$Z_period, mf$Z$Z_country)),
+    Z_interaction1 = mgcv::tensor.prod.model.matrix(list(mf$Z$Z_age, mf$Z$Z_period, mf$Z$Z_spatial)),
     Z_interaction2 = mgcv::tensor.prod.model.matrix(list(mf$Z$Z_spatial, mf$Z$Z_period)),
     Z_interaction3 = mgcv::tensor.prod.model.matrix(list(mf$Z$Z_spatial, mf$Z$Z_age)),
     Z_country = mf$Z$Z_country,
@@ -326,7 +332,7 @@ fit <- function(iso3, model_level = "national") {
     
     # log_overdispersion = 0,
     
-    eta1 = array(0, c(ncol(mf$Z$Z_country), ncol(mf$Z$Z_period), ncol(mf$Z$Z_age))),
+    eta1 = array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_period), ncol(mf$Z$Z_age))),
     log_prec_eta1 = 0,
     logit_eta1_phi_age = 0,
     logit_eta1_phi_period = 0
@@ -349,23 +355,25 @@ fit <- function(iso3, model_level = "national") {
                      "u_spatial_str" = list(rep(0, ncol(mf$Z$Z_spatial))),
                      "log_prec_spatial" = 0,
                      
-                     "eta2" = list(array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_period)))),
-                     "log_prec_eta2" = 0,
-                     "logit_eta2_phi_period" = 0,
+                     # "eta2" = list(array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_period)))),
+                     # "log_prec_eta2" = 0,
+                     # "logit_eta2_phi_period" = 0,
                      # #
                      
                      "u_period_area" = list(rep(0, ncol(mf$Z$Z_spatial))),
-                     "log_prec_period_area" = 0,
+                     "log_prec_period_area" = 0
                      
-                     "eta3" = list(array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_age)))),
-                     "log_prec_eta3" = 0,
-                     "logit_eta3_phi_age" = 0)
+                     # "eta3" = list(array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_age)))),
+                     # "log_prec_eta3" = 0,
+                     # "logit_eta3_phi_age" = 0
+                     )
     
     tmb_int$random <- c(tmb_int$random,
                         "u_spatial_str",
-                        "u_period_area",
-                        "eta2",
-                        "eta3")
+                        "u_period_area"
+                        # "eta2",
+                        # "eta3"
+                        )
   }
   
   if(mf$mics_toggle) {
@@ -379,11 +387,13 @@ fit <- function(iso3, model_level = "national") {
   
   if(iso3_c == "ETH") {
     tmb_int$par <- c(tmb_int$par,
-                      "beta_urban_dummy" = 0,
-                     "u_urban_iid" = list(rep(0, 44))
+                      "beta_urban_dummy" = 0
+                     # "log_prec_urban_iid" = 0,
+                     # "u_urban_iid" = list(rep(0, 44))
     )
     
-    tmb_int$random <- c(tmb_int$random, "beta_urban_dummy", "u_urban_iid")
+    tmb_int$random <- c(tmb_int$random, "beta_urban_dummy")
+                        # "u_urban_iid")
   }
   
   if(iso3_c == "ZWE") {
@@ -459,12 +469,11 @@ fit <- function(iso3, model_level = "national") {
     tmb_int$random <- c(tmb_int$random, "beta_spike_famine")
   }
 # 
-  # lapply(list.files("src/aaa_fit/models/", pattern = "\\.o|\\.so", full.names = T), file.remove)
-  # tmb_unload("2024_01_08_period_area")
-  # TMB::compile("src/aaa_fit/models/2024_01_08_period_area.cpp", flags = "-w")               # Compile the C++ file
+  lapply(list.files("src/aaa_fit/models/", pattern = "\\.o|\\.so", full.names = T), file.remove)
+  tmb_unload("2024_01_17_triple")
+  TMB::compile("src/aaa_fit/models/2024_01_17_triple.cpp", flags = "-w")               # Compile the C++ file
 
-  # dyn.load(TMB::dynlib("src/aaa_fit/models/2023_09_11_all_levels"))
-  dyn.load(TMB::dynlib("src/aaa_fit/models/2024_01_08_period_area"))
+  dyn.load(TMB::dynlib("src/aaa_fit/models/2024_01_17_triple"))
   
 
   # lapply(list.files("src/aaa_fit/models/", pattern = "\\.o|\\.so", full.names = T), file.remove)
@@ -480,7 +489,7 @@ fit <- function(iso3, model_level = "national") {
   f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
                                               parameters = tmb_int$par,
                                               # DLL = "2023_11_03_all_levels_survey",
-                                              DLL = "2024_01_08_period_area",
+                                              DLL = "2024_01_17_triple",
                                               silent=0,
                                               checkParameterOrder=FALSE)
   })
@@ -491,7 +500,7 @@ fit <- function(iso3, model_level = "national") {
     
   obj <-  TMB::MakeADFun(data = tmb_int$data,
                            parameters = tmb_int$par,
-                           DLL = "2024_01_08_period_area",
+                           DLL = "2024_01_17_triple",
                            random = tmb_int$random,
                            hessian = FALSE)
   
