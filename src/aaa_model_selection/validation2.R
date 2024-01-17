@@ -71,10 +71,11 @@ selection <- sel_dat %>%
     elpd_crs %>% mutate(source = str_replace(source, " ", "-"))
   )
 
-selection %>%
+df <- selection %>%
   filter(!iso3 %in% c("GHA", "AGO")) %>%
   group_by(source) %>%
   summarise(
+    coverage = median(coverage),
     med_score = median(score),
     score = sum(score),
     med_elpd = median(elpd),
@@ -82,13 +83,42 @@ selection %>%
     med_crps = median(crps),
     crps = sum(crps))
 
-  # write_csv("~/Downloads/selection.csv")
+write_csv(df, "outside_orderly/fit/scripts/selection.csv")
 
-dat$fr %>%
-  filter(source %in% c("AR1", "rw2"),
-         area_level ==0,
-         variable == "tfr") %>%
+ken_dat <- lapply(list.files("outside_orderly/fit/outputs/selection", recursive = T, full.names = T) %>%
+  lapply(grep, pattern = "KEN", value = T) %>%
+  unlist() %>%
+  lapply(grep, pattern = "fr.csv", value = T) %>%
+  unlist(),
+  read_csv)
+
+rwa_dat <- lapply(list.files("outside_orderly/fit/outputs/selection", recursive = T, full.names = T) %>%
+                    lapply(grep, pattern = "RWA", value = T) %>%
+                    unlist() %>%
+                    lapply(grep, pattern = "fr.csv", value = T) %>%
+                    unlist(),
+                  read_csv)
+
+names(ken_dat) <- c("AR1", "AR1 + trend", "ARIMA(1,1,0)", "ARIMA(1,1,0) + trend", "RW1", "RW1 + trend", "RW2", "RW2 + trend")
+names(rwa_dat) <- names(ken_dat)
+
+ken_asfr_plot <- readRDS("outside_orderly/asfr/outputs/KEN/KEN_fr_plot.rds")$national
+
+sfig <- ken_dat %>%
+  bind_rows(.id = "source") %>%
+  filter(variable == "tfr", area_level == 0, period > 1999) %>%
   ggplot(aes(x=period, y=median)) +
-    geom_line(aes(colour=source)) +
-    geom_ribbon(aes(ymin=lower, ymax=upper, fill=source), alpha=.3) +
-    facet_wrap(~area_name, scales="free")
+    geom_line(aes(color = source), show.legend = F) +
+    geom_point(data = ken_asfr_plot %>% filter(variable == "tfr", period > 1999, !survey_id %in% c("KEN2022DHS", "KEN2020MIS")), aes(y=value, size = pys)) +
+    geom_point(data = ken_asfr_plot %>% filter(variable == "tfr", period > 1999, survey_id %in% c("KEN2022DHS", "KEN2020MIS")), aes(y=value, size = pys), color = "grey", show.legend = F) +
+    ggrepel::geom_label_repel(data = . %>% filter(period == max(period)), aes(color =source, label = source), 
+                              xlim = c(-Inf, Inf), nudge_x = 5, size=4, segment.linetype = 2, show.legend = FALSE, direction="y") +
+    scale_x_continuous(breaks = c(2000, 2010, 2020)) +
+    standard_theme() +
+    coord_cartesian(clip="off", xlim=c(2000, 2020)) +
+    theme(plot.margin = unit(c(1,9,1,0), "lines")) +
+    labs(y="TFR", x=element_blank(), size = "Person-years", title = "Kenya")
+
+png("~/OneDrive - Imperial College London/Phd/Fertility/2023-12/Supplementary materials/selection_fig.png", width = 500, height = 500)
+annotate_figure(sfig, bottom = "Grey points withheld from model calibration")
+dev.off()

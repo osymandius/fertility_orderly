@@ -67,6 +67,35 @@ survey_clusters <- survey_clusters %>%
       left_join(survey_regions %>% select(survey_id, survey_region_id, geoloc_area_id = survey_region_area_id))
   )
 
+## Code assigns Brazzaville in 2005 survey to Admin1 area Pool-Brazzaville. However - 100% of clusters are urban and the survey area is not much bigger than the Naomi boundary city. Better matched to admin2 Brazzaville.
+survey_region_boundaries %>%
+  filter(survey_id == "COG2005DHS", survey_region_id == 1) %>%
+  ggplot() + 
+  geom_sf(color = "red") + 
+  geom_sf(data = areas %>% filter(parent_area_id == "COG_2_02fq"), fill = NA)
+
+## Code matches "Pool" to "Pool-Brazzaville", but 100% of clusters are rural. Assign to admin1 Pool, excluding the city of Brazaville
+survey_region_boundaries %>%
+  filter(survey_id == "COG2011DHS", survey_region_id == 5) %>%
+  ggplot() + 
+  geom_sf(color = "red") + 
+  geom_sf(data = areas %>% filter(parent_area_id == "COG_2_11wj"), fill = NA)
+
+## Similarly - code matches Kouliou to Point-Noire-Koiliou. Clusters are all rural - assign to Kouliou district.
+survey_region_boundaries %>%
+  filter(survey_id == "COG2011DHS", survey_region_id == 1) %>%
+  ggplot() + 
+  geom_sf(color = "red") + 
+  geom_sf(data = areas %>% filter(parent_area_id == "COG_2_05pk"), fill = NA)
+
+survey_clusters <- survey_clusters %>%
+  mutate(geoloc_area_id = case_when(
+    survey_id == "COG2005DHS" & geoloc_area_id == "COG_1_02yo" ~ "COG_2_02fq",
+    survey_id == "COG2011DHS" & area_id == "COG_1_05dt" ~ "COG_2_05pk",
+    survey_id == "COG2011DHS" & area_id == "COG_1_02yo" ~ "COG_2_11wj",
+    TRUE ~ geoloc_area_id)
+  )
+
 #p_coord_check <- plot_survey_coordinate_check(survey_clusters,
 #                                               survey_region_boundaries,
 #                                               survey_region_areas)
@@ -102,3 +131,5 @@ asfr_input_data <- make_asfr_inputs(mics_survey_areas, mics_survey_data)
 
 write_csv(asfr_input_data$wm, paste0("outside_orderly/survey/outputs/", tolower(iso3), "_mics_women.csv"))
 write_csv(asfr_input_data$births_to_women, paste0("outside_orderly/survey/outputs/", tolower(iso3), "_mics_births_to_women.csv"))
+
+

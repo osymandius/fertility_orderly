@@ -1,3 +1,19 @@
+library(dplyr)
+library(tidyr)
+library(dfertility)
+library(ggplot2)
+library(naomi)
+library(tidyverse)
+library(sf)
+library(stringr)
+library(TMB)
+library(Matrix)
+library(forcats)
+# library(parallel)
+library(purrr)
+library(rlang)
+library(mgcv)
+
 tmb_unload <- function(name) {
   ldll <- getLoadedDLLs()
   idx  <- grep(name, names(ldll))
@@ -64,7 +80,6 @@ fit <- function(iso3, model_level = "national") {
     naomi_level <- 0
   }
   
-  
   admin1_lvl <- lvl_map$admin1_level[lvl_map$iso3 == iso3]
   
   population <- readRDS("global/pop.rds")[[iso3_c]] %>%
@@ -110,8 +125,8 @@ fit <- function(iso3, model_level = "national") {
                      # "CIV2006MICS", 
                      "GMB2005MICS",
                      # "MLI2009MICS", "MLI2015MICS", 
-                     "SLE2010MICS", 
-                     "TGO2006MICS", 
+                     "SLE2010MICS",
+                     "TGO2006MICS",
                      # "BEN1996DHS",
                      "KEN2009MICS", 
                      # "COD2017MICS", 
@@ -142,9 +157,18 @@ fit <- function(iso3, model_level = "national") {
            !(survey_id == "MLI2009MICS" & tips > 4),
            !(survey_id == "COD2017MICS" & tips > 10),
            !(survey_id == "CAF2006MICS" & tips == 5),
-           !(survey_id == "CAF2018MICS" & tips == 5),
+           !(survey_id == "CAF2010MICS" & tips == 5),
+           !(survey_id == "CAF2018MICS" & tips == 5)
            
     )
+  
+  asfr <- asfr %>%
+    mutate(area_id = case_when(
+      survey_id == "COG2005DHS" & area_id == "COG_1_02yo" ~ "COG_2_02fq",
+      survey_id == "COG2011DHS" & area_id == "COG_1_05dt" ~ "COG_2_05pk",
+      survey_id == "COG2011DHS" & area_id == "COG_1_02yo" ~ "COG_2_11wj",
+      TRUE ~ area_id
+    ))
   
   # debugonce(make_model_frames_dev)
   mf <- make_model_frames_dev(iso3_c, population, asfr,  areas, naomi_level, project=2025)
@@ -165,6 +189,13 @@ fit <- function(iso3, model_level = "national") {
   
   # tmb_int <- make_tmb_inputs(iso3, mf, naomi_level)
   
+  mf$mf_model <- mf$mf_model %>%
+    left_join(mf$mf_model %>%
+                filter(urban == 1) %>%
+                distinct(area_id) %>%
+                mutate(urban_idx = factor(row_number()))
+              )
+  
   tmb_int <- list()
   
   tmb_int$data <- list(
@@ -176,6 +207,7 @@ fit <- function(iso3, model_level = "national") {
     X_tips_fe = mf$Z$X_tips_fe,
     X_period = mf$Z$X_period,
     X_urban_dummy = mf$Z$X_urban_dummy,
+    Z_urban_iid = sparse.model.matrix(~0 + urban_idx, mf$mf_model),
     X_extract_dhs = mf$X_extract$X_extract_dhs,
     X_extract_ais = mf$X_extract$X_extract_ais,
     X_extract_mics = mf$X_extract$X_extract_mics,
@@ -211,6 +243,7 @@ fit <- function(iso3, model_level = "national") {
     # R_spline_mat = spline_mat,
     R_spatial = mf$R$R_spatial,
     R_spatial_iid = mf$R$R_spatial_iid,
+    R_urban_iid = as(diag(1, 44), "dgTMatrix"),
     R_country = mf$R$R_country,
     rankdef_R_spatial = 1,
     
@@ -309,6 +342,9 @@ fit <- function(iso3, model_level = "national") {
   )
   
   if(naomi_level != 0) {
+    tmb_int$data <- c(tmb_int$data,
+                      "Z_period_area" = sparse.model.matrix(~0 + area_id:id.period, mf$mf_model))
+    
     tmb_int$par <- c(tmb_int$par,
                      "u_spatial_str" = list(rep(0, ncol(mf$Z$Z_spatial))),
                      "log_prec_spatial" = 0,
@@ -317,12 +353,17 @@ fit <- function(iso3, model_level = "national") {
                      "log_prec_eta2" = 0,
                      "logit_eta2_phi_period" = 0,
                      # #
+                     
+                     "u_period_area" = list(rep(0, ncol(mf$Z$Z_spatial))),
+                     "log_prec_period_area" = 0,
+                     
                      "eta3" = list(array(0, c(ncol(mf$Z$Z_spatial), ncol(mf$Z$Z_age)))),
                      "log_prec_eta3" = 0,
                      "logit_eta3_phi_age" = 0)
     
     tmb_int$random <- c(tmb_int$random,
                         "u_spatial_str",
+                        "u_period_area",
                         "eta2",
                         "eta3")
   }
@@ -338,10 +379,11 @@ fit <- function(iso3, model_level = "national") {
   
   if(iso3_c == "ETH") {
     tmb_int$par <- c(tmb_int$par,
-                      "beta_urban_dummy" = 0
+                      "beta_urban_dummy" = 0,
+                     "u_urban_iid" = list(rep(0, 44))
     )
     
-    tmb_int$random <- c(tmb_int$random, "beta_urban_dummy")
+    tmb_int$random <- c(tmb_int$random, "beta_urban_dummy", "u_urban_iid")
   }
   
   if(iso3_c == "ZWE") {
@@ -417,10 +459,12 @@ fit <- function(iso3, model_level = "national") {
     tmb_int$random <- c(tmb_int$random, "beta_spike_famine")
   }
 # 
-#   lapply(list.files("src/aaa_fit/models/", pattern = "\\.o|\\.so", full.names = T), file.remove)
-#   tmb_unload("2023_09_11_all_levels")
-# TMB::compile("src/aaa_fit/models/2023_09_11_all_levels.cpp", flags = "-w")               # Compile the C++ file
-  dyn.load(TMB::dynlib("src/aaa_fit/models/2023_09_11_all_levels"))
+  # lapply(list.files("src/aaa_fit/models/", pattern = "\\.o|\\.so", full.names = T), file.remove)
+  # tmb_unload("2024_01_08_period_area")
+  # TMB::compile("src/aaa_fit/models/2024_01_08_period_area.cpp", flags = "-w")               # Compile the C++ file
+
+  # dyn.load(TMB::dynlib("src/aaa_fit/models/2023_09_11_all_levels"))
+  dyn.load(TMB::dynlib("src/aaa_fit/models/2024_01_08_period_area"))
   
 
   # lapply(list.files("src/aaa_fit/models/", pattern = "\\.o|\\.so", full.names = T), file.remove)
@@ -436,7 +480,7 @@ fit <- function(iso3, model_level = "national") {
   f <- parallel::mcparallel({TMB::MakeADFun(data = tmb_int$data,
                                               parameters = tmb_int$par,
                                               # DLL = "2023_11_03_all_levels_survey",
-                                              DLL = "2023_09_11_all_levels",
+                                              DLL = "2024_01_08_period_area",
                                               silent=0,
                                               checkParameterOrder=FALSE)
   })
@@ -447,7 +491,7 @@ fit <- function(iso3, model_level = "national") {
     
   obj <-  TMB::MakeADFun(data = tmb_int$data,
                            parameters = tmb_int$par,
-                           DLL = "2023_09_11_all_levels",
+                           DLL = "2024_01_08_period_area",
                            random = tmb_int$random,
                            hessian = FALSE)
   
@@ -463,14 +507,14 @@ fit <- function(iso3, model_level = "national") {
   
   sd_report <- data.frame(sd_report, "hyper" = rownames(sd_report), iso = iso3)
   
-  write_csv(sd_report, file.path("outside_orderly/fit/outputs", iso3_c, model_level, "sd_report.csv"))
+  write_csv(sd_report, file.path("outside_orderly/fit/test", iso3_c, model_level, "sd_report.csv"))
   
   class(fit) <- "naomi_fit"  # this is hacky...
   fit <- naomi::sample_tmb(fit, random_only=TRUE)
   tmb_results <- dfertility::tmb_outputs(fit, mf, areas)
   
-  write_csv(tmb_results, file.path("outside_orderly/fit/outputs", iso3_c, model_level, "fr.csv"))
-  saveRDS(fit$sample, file.path("outside_orderly/fit/outputs/", iso3_c, model_level, "fixed.rds"))
+  write_csv(tmb_results, file.path("outside_orderly/fit/test", iso3_c, model_level, "fr.csv"))
+  saveRDS(fit$sample, file.path("outside_orderly/fit/test", iso3_c, model_level, "fixed.rds"))
   
   # fit <- naomi::sample_tmb(fit, random_only=FALSE)
   # hyper <- fit$sample %>%
@@ -481,7 +525,8 @@ fit <- function(iso3, model_level = "national") {
   
   fr_plot <- fr_plot %>%
     left_join(areas %>% sf::st_drop_geometry() %>% select(area_id, area_name)) %>%
-    filter(!(area_id == iso3 & survey_id %in% subnational_surveys))
+    filter(!(area_id == iso3 & survey_id %in% subnational_surveys),
+           survey_id %in% asfr$survey_id)
   
   cntry_name <- countrycode::countrycode(iso3, "iso3c", "country.name")
   
@@ -517,7 +562,7 @@ fit <- function(iso3, model_level = "national") {
     district_tfr <- data.frame()
   }
   
-  path <- file.path("outside_orderly/fit/outputs", iso3_c, model_level, "tfr_plot.png")
+  path <- file.path("outside_orderly/fit/test", iso3_c, model_level, "tfr_plot.png")
   png(path, h = 800, w = 1200)
   print(tfr_plot)
   dev.off()
@@ -528,25 +573,13 @@ fit <- function(iso3, model_level = "national") {
   
 }
 
-library(dplyr)
-library(tidyr)
-library(dfertility)
-library(ggplot2)
-library(naomi)
-library(tidyverse)
-library(sf)
-library(stringr)
-library(TMB)
-library(Matrix)
-library(forcats)
-# library(parallel)
-library(purrr)
-library(rlang)
-library(mgcv)
+
 
 debugonce(fit)
 fit("MWI")
-fit("TZA", "district")
+fit("TGO", "district")
+fit("GMB", "district")
+fit("MOZ", "district")
 fit("MWI", "district")
 fit("ZWE", "provincial")
 fit("ZWE", "district")
@@ -555,4 +588,5 @@ fit("RWA", "provincial")
 fit("RWA", "district")
 
 possibly_fit <- possibly(fit, otherwise = NULL)
-map(moz.utils::ssa_iso3()[!moz.utils::ssa_iso3() %in% c("COG", "KEN")], ~possibly_fit(.x, model_level = "district"))
+map(moz.utils::ssa_iso3()[!moz.utils::ssa_iso3() %in% c("COG", "SSD", "CAF", "NGA", "COD", "GHA")], ~possibly_fit(.x, model_level = "district"))
+    # [!moz.utils::ssa_iso3() %in% c("GNQ", "BWA", "SSD", "COD", "NGA")]
