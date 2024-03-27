@@ -288,6 +288,14 @@ Type objective_function<Type>::operator() ()
   nll += SEPARABLE(AR1(Type(eta1_phi_age)), SEPARABLE(AR1(Type(eta1_phi_period)), GMRF(R_spatial)))(eta1);
   vector<Type> eta1_v(eta1);
 
+      // Type log_det_Qar1_eta2((eta2.cols() - 1) * log(1 - eta2_phi_period * eta2_phi_period));
+    // nll -= rankdef_R_spatial * 0.5 * (log_det_Qar1_eta2 - log(2 * PI));
+
+    // for (int i = 0; i < eta2.cols(); i++) {
+    //   nll -= dnorm(eta2.col(i).sum(), Type(0), Type(0.01) * eta2.col(i).size(), true);}
+
+    // vector<Type> eta2_v(eta2);
+
   //Smooth iid
 
   PARAMETER(log_prec_smooth_iid);

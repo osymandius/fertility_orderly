@@ -189,18 +189,18 @@ fit <- function(iso3, model_level = "national") {
   
   # tmb_int <- make_tmb_inputs(iso3, mf, naomi_level)
   
-  mf$mf_model <- mf$mf_model %>%
-    # select(-urban_idx) %>%
-    left_join(mf$mf_model %>%
-                filter(urban == 1) %>%
-                distinct(area_id) %>%
-                mutate(urban_idx = row_number())
-              ) %>%
-    mutate(urban_idx = factor(ifelse(urban == 0, 999, urban_idx)))
-  
-  Z_urban_iid <- sparse.model.matrix(~0 + urban_idx, mf$mf_model)
-  
-  Z_urban_iid <- Z_urban_iid[ ,c(1:44)]
+  # mf$mf_model <- mf$mf_model %>%
+  #   # select(-urban_idx) %>%
+  #   left_join(mf$mf_model %>%
+  #               filter(urban == 1) %>%
+  #               distinct(area_id) %>%
+  #               mutate(urban_idx = row_number())
+  #             ) %>%
+  #   mutate(urban_idx = factor(ifelse(urban == 0, 999, urban_idx)))
+  # 
+  # Z_urban_iid <- sparse.model.matrix(~0 + urban_idx, mf$mf_model)
+  # 
+  # Z_urban_iid <- Z_urban_iid[ ,c(1:44)]
   
   tmb_int <- list()
   
@@ -213,7 +213,7 @@ fit <- function(iso3, model_level = "national") {
     X_tips_fe = mf$Z$X_tips_fe,
     X_period = mf$Z$X_period,
     X_urban_dummy = mf$Z$X_urban_dummy,
-    Z_urban_iid = Z_urban_iid,
+    Z_urban_iid = sparse.model.matrix(~0, areas),
     X_extract_dhs = mf$X_extract$X_extract_dhs,
     X_extract_ais = mf$X_extract$X_extract_ais,
     X_extract_mics = mf$X_extract$X_extract_mics,
@@ -469,9 +469,9 @@ fit <- function(iso3, model_level = "national") {
     tmb_int$random <- c(tmb_int$random, "beta_spike_famine")
   }
 # 
-  lapply(list.files("src/aaa_fit/models/", pattern = "\\.o|\\.so", full.names = T), file.remove)
-  tmb_unload("2024_01_17_triple")
-  TMB::compile("src/aaa_fit/models/2024_01_17_triple.cpp", flags = "-w")               # Compile the C++ file
+  # lapply(list.files("src/aaa_fit/models/", pattern = "\\.o|\\.so", full.names = T), file.remove)
+  # tmb_unload("2024_01_17_triple")
+  # TMB::compile("src/aaa_fit/models/2024_01_17_triple.cpp", flags = "-w")               # Compile the C++ file
 
   dyn.load(TMB::dynlib("src/aaa_fit/models/2024_01_17_triple"))
   
@@ -516,14 +516,14 @@ fit <- function(iso3, model_level = "national") {
   
   sd_report <- data.frame(sd_report, "hyper" = rownames(sd_report), iso = iso3)
   
-  write_csv(sd_report, file.path("outside_orderly/fit/test", iso3_c, model_level, "sd_report.csv"))
+  write_csv(sd_report, file.path("outside_orderly/fit/triple", paste0(iso3_c, "_sd_report.csv")))
   
   class(fit) <- "naomi_fit"  # this is hacky...
   fit <- naomi::sample_tmb(fit, random_only=TRUE)
   tmb_results <- dfertility::tmb_outputs(fit, mf, areas)
   
-  write_csv(tmb_results, file.path("outside_orderly/fit/test", iso3_c, model_level, "fr.csv"))
-  saveRDS(fit$sample, file.path("outside_orderly/fit/test", iso3_c, model_level, "fixed.rds"))
+  write_csv(tmb_results, file.path("outside_orderly/fit/triple", paste0(iso3_c, "_fr.csv")))
+  saveRDS(fit$sample, file.path("outside_orderly/fit/triple", paste0(iso3_c, "_fixed.rds")))
   
   # fit <- naomi::sample_tmb(fit, random_only=FALSE)
   # hyper <- fit$sample %>%
@@ -571,7 +571,7 @@ fit <- function(iso3, model_level = "national") {
     district_tfr <- data.frame()
   }
   
-  path <- file.path("outside_orderly/fit/test", iso3_c, model_level, "tfr_plot.png")
+  path <- file.path("outside_orderly/fit/triple", paste0(iso3_c, "_tfr_plot.png"))
   png(path, h = 800, w = 1200)
   print(tfr_plot)
   dev.off()
@@ -586,7 +586,7 @@ fit <- function(iso3, model_level = "national") {
 
 debugonce(fit)
 fit("MWI")
-fit("TGO", "district")
+fit("AGO", "district")
 fit("GMB", "district")
 fit("MOZ", "district")
 fit("MWI", "district")
@@ -597,5 +597,5 @@ fit("RWA", "provincial")
 fit("RWA", "district")
 
 possibly_fit <- possibly(fit, otherwise = NULL)
-map(moz.utils::ssa_iso3()[!moz.utils::ssa_iso3() %in% c("COG", "SSD", "CAF", "NGA", "COD", "GHA")], ~possibly_fit(.x, model_level = "district"))
+map(moz.utils::ssa_iso3()[!moz.utils::ssa_iso3() %in% c("SSD", "BWA", "ERI", "GNQ", "ETH", "NGA", "COD", "GHA")], ~possibly_fit(.x, model_level = "district"))
     # [!moz.utils::ssa_iso3() %in% c("GNQ", "BWA", "SSD", "COD", "NGA")]

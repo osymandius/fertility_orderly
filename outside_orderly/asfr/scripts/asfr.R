@@ -1,11 +1,11 @@
 asfr <- function(iso3_c) {
   
-  # library(tidyverse)
-  # library(rdhs)
-  # library(naomi)
-  # library(demogsurv)
-  # library(sf)
-  # library(dfertility)
+  library(tidyverse)
+  library(rdhs)
+  library(naomi)
+  library(demogsurv)
+  library(sf)
+  library(dfertility)
 
   message(iso3_c)
   

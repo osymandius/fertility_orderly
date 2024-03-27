@@ -1336,7 +1336,11 @@ overlay <- overlay %>%
 
 names(overlay) <- nm_o
 
+comp <- lapply(list.files("outside_orderly/fit/triple", full.names = T, all.files = T, recursive = T, pattern = "fr.csv"), read_csv, show_col_types = F) %>% bind_rows()
+
 dat <- dat %>%
+  mutate(source = "interactions") %>%
+  bind_rows(comp %>% filter(iso3 %in% unique(dat$iso3)) %>% mutate(source = "triple")) %>%
   left_join(lvl) %>%
   filter(area_level == admin1_level | area_level ==0) %>%
   arrange(iso3) %>%
@@ -1372,8 +1376,8 @@ tfr_plot <- Map(function(dat, overlay) {
   dat %>%
     filter(variable == "tfr") %>%
     ggplot(aes(x=period, y=median)) +
-    geom_line() +
-    geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.3) +
+    geom_line(aes(color = source)) +
+    geom_ribbon(aes(ymin = lower, ymax = upper, fill = source), alpha = 0.3) +
     geom_point(data = overlay %>% filter(variable == "tfr", value < val, !survey_id %in% remove_survey), aes(y=value, size = pys)) +
     geom_point(data = overlay %>% filter(variable == "tfr", value < val, survey_id %in% remove_survey), aes(y=value, size = pys), shape=22, fill=NA) +
     guides(size = "none") +
@@ -1385,7 +1389,7 @@ tfr_plot <- Map(function(dat, overlay) {
 }, dat = dat, overlay = overlay[names(dat)])
 
 # pdf("~/OneDrive - Imperial College London/Phd/Fertility/2023-12/Supplementary materials/TFR.pdf", width = 15, height = 10)
-pdf("~/Downloads/TFR_test2.pdf", width = 15, height = 10)
+pdf("~/Downloads/TFR_test3.pdf", width = 15, height = 10)
 tfr_plot
 dev.off()
 

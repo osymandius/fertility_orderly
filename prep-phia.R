@@ -40,6 +40,7 @@ geo_files <- list(
                   nam = "NAM/datasets/NAMPHIA 2017 PR Geospatial Data 20210603.zip",
                   rwa = "RWA/datasets/RPHIA 2018-2019 PR Geospatial Data 20210722.zip",
                   tza = "TZA/datasets/THIS 2016-2017 PR Geospatial Data 20211014.zip",
+                  ken = "KEN/datasets/KENPHIA 2018 Geospatial Data (DTA).zip",
                   uga = "UGA/datasets/UPHIA 2016-2017 PR Geospatial Data 20210602.zip",
                   zmb = "ZMB/datasets/ZAMPHIA 2016 PR Geospatial Data 20210920.zip",
                   zwe = "ZWE/datasets/ZIMPHIA 2015-2016 PR Geospatial Data 20211001.zip")
@@ -288,11 +289,14 @@ iso3_c <- countrycode::countrycode(unique(dat$country), "country.name", "iso3c")
 
 setwd(rprojroot::find_rstudio_root_file())
 
-areas <- lapply(paste0("archive/", tolower(iso3_c), "_data_areas"), list.files, full.names= TRUE) %>%
-  lapply(tail, 1) %>%
-  lapply(list.files, full.names = TRUE, pattern = "areas.geojson") %>%
-  lapply(sf::read_sf) %>%
-  lapply(select, -any_of("epp_level"))
+id <- lapply(iso3_c, function(x){
+  orderly::orderly_search(name = "aaa_pull_naomi_estimates", query = paste0('latest(parameter:iso3 == "', x, '")'), draft = FALSE)
+})
+
+areas <- lapply(paste0("archive/aaa_pull_naomi_estimates/", id, "/outputs/naomi_areas.geojson"), read_sf)
+names(areas) <- iso3_c
+
+areas$KEN <- areas$KEN %>% filter(area_level <3)
 
 geo_raw <- geo_raw %>%
   bind_rows() %>%
@@ -310,7 +314,8 @@ centroid_areas <- geo_raw %>%
 dat %>%
   left_join(centroid_areas) %>%
   filter(is.na(area_id)) %>%
-  distinct(country, centroidid)
+  distinct(country, centroidid) %>%
+  count(country)
 
 dat <- dat %>%
   left_join(centroid_areas) %>%
